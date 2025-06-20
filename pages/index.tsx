@@ -1,7 +1,6 @@
-// pages/index.tsx
-import Head from 'next/head';
-import styled, { keyframes } from 'styled-components';
 import { useState, useEffect, useRef } from 'react';
+import styled, { keyframes } from 'styled-components';
+import { useRouter } from 'next/router'; // <-- Import router
 
 // Animation: "2" jumping off the "P"
 const jumpOffP = keyframes`
@@ -50,7 +49,7 @@ const TwoText = styled.span`
   font-weight: 900;
   font-size: 1.1em;
   position: absolute;
-  left: 2.35em; // position relative to "P" in "Jump"
+  left: 2.35em;
   top: 0.2em;
   z-index: 1;
   animation: ${jumpOffP} 2.5s ease-in-out infinite;
@@ -87,11 +86,11 @@ const Form = styled.form`
   width: 100%;
 `;
 
-const Input = styled.input`
+const Input = styled.input<{ disabled?: boolean }>`
   padding: 1rem 1.25rem;
   border-radius: 0.7rem;
   border: 1.5px solid #334155;
-  background: #1e293b;
+  background: ${({ disabled }) => (disabled ? '#64748b' : '#1e293b')};
   font-size: 1.125rem;
   font-weight: 500;
   color: #f1f5f9;
@@ -107,6 +106,8 @@ const Input = styled.input`
     background: #334155;
     box-shadow: 0 0 10px #3b82f6aa;
   }
+
+  cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'text')};
 `;
 
 const Hint = styled.small`
@@ -249,6 +250,7 @@ const CopyButton = styled.button`
   }
 `;
 
+// Helper functions (YouTube, Vimeo, timestamp)
 function isYouTubeUrl(url: URL) {
   return ['www.youtube.com', 'youtube.com', 'youtu.be'].includes(url.hostname);
 }
@@ -268,7 +270,28 @@ function parseTimestamp(input: string) {
     : parts[0] * 60 + parts[1];
 }
 
+// Debounce hook
+function useDebounce(value: string, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
+// URL validation helper
+function isValidUrl(url: string) {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export default function Home() {
+  const router = useRouter(); // <-- Initialize router
   const [link, setLink] = useState('');
   const [jumpTo, setJumpTo] = useState('');
   const [articleContent, setArticleContent] = useState('');
@@ -276,7 +299,46 @@ export default function Home() {
   const [shortUrl, setShortUrl] = useState('');
   const [loadingShort, setLoadingShort] = useState(false);
   const [shortError, setShortError] = useState('');
+  const [loadingPreview, setLoadingPreview] = useState(false);
+
   const previewRef = useRef<HTMLDivElement>(null);
+  const debouncedLink = useDebounce(link, 500);
+
+  useEffect(() => {
+    if (!debouncedLink) {
+      setArticleContent('');
+      setError('');
+      return;
+    }
+    if (!isValidUrl(debouncedLink)) {
+      setError('Please enter a valid URL.');
+      setArticleContent('');
+      return;
+    }
+
+    const fetchArticle = async () => {
+      setLoadingPreview(true);
+      setError('');
+      setArticleContent('');
+      setShortUrl('');
+      setShortError('');
+      try {
+        const res = await fetch(`/api/parse?url=${encodeURIComponent(debouncedLink)}`);
+        if (!res.ok) throw new Error('Failed to fetch article.');
+        const json = await res.json();
+        if (json.article?.content) {
+          setArticleContent(json.article.content);
+        } else {
+          setError('No preview available for this link.');
+        }
+      } catch {
+        setError('Failed to load preview. You can still create the jump link.');
+      }
+      setLoadingPreview(false);
+    };
+
+    fetchArticle();
+  }, [debouncedLink]);
 
   const handleCreate = () => {
     setError('');
@@ -289,53 +351,12 @@ export default function Home() {
 
     try {
       const url = new URL(link);
-      if (jumpTo.trim()) {
-        if (isValidTimestamp(jumpTo)) {
-          const seconds = parseTimestamp(jumpTo);
 
-          if (isYouTubeUrl(url)) {
-            url.searchParams.set('t', seconds.toString());
-            window.open(url.toString(), '_blank');
-            return;
-          } else if (isVimeoUrl(url)) {
-            url.hash = `t=${seconds}s`;
-            window.open(url.toString(), '_blank');
-            return;
-          } else {
-            url.hash = `:~:text=${encodeURIComponent(jumpTo.trim())}`;
-            window.open(url.toString(), '_blank');
-            return;
-          }
-        } else {
-          url.hash = `:~:text=${encodeURIComponent(jumpTo.trim())}`;
-          window.open(url.toString(), '_blank');
-          return;
-        }
-      } else {
-        window.open(url.toString(), '_blank');
-      }
+      // Use Next.js router to navigate to article page with URL param
+      router.push(`/article?url=${encodeURIComponent(url.toString())}`);
+
     } catch {
       setError('Invalid URL format.');
-    }
-  };
-
-  const fetchArticle = async (url: string) => {
-    setError('');
-    setArticleContent('');
-    setShortUrl('');
-    setShortError('');
-    if (!url) return;
-    try {
-      const res = await fetch(`/api/parse?url=${encodeURIComponent(url)}`);
-      if (!res.ok) throw new Error('Failed to fetch article.');
-      const json = await res.json();
-      if (json?.content) {
-        setArticleContent(json.content);
-      } else {
-        setError('No preview available for this link.');
-      }
-    } catch {
-      setError('Failed to load preview. You can still create the jump link.');
     }
   };
 
@@ -375,18 +396,6 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (link) {
-      fetchArticle(link);
-    } else {
-      setArticleContent('');
-      setJumpTo('');
-      setError('');
-      setShortUrl('');
-      setShortError('');
-    }
-  }, [link]);
-
-  useEffect(() => {
     document.addEventListener('mouseup', handleHighlight);
     return () => {
       document.removeEventListener('mouseup', handleHighlight);
@@ -395,11 +404,6 @@ export default function Home() {
 
   return (
     <Container>
-      <Head>
-        <title>Jump2 – Skip the Fluff</title>
-        <meta name="description" content="Paste a link. Highlight what matters. Share the jump." />
-      </Head>
-
       <LogoWrapper>
         <JumpText>Jump</JumpText>
         <TwoText>2</TwoText>
@@ -429,6 +433,8 @@ export default function Home() {
           autoComplete="off"
           required
           aria-label="Content link"
+          aria-invalid={!!error}
+          disabled={loadingPreview}
         />
         <Input
           type="text"
@@ -438,17 +444,26 @@ export default function Home() {
           spellCheck={false}
           autoComplete="off"
           aria-label="Jump to position"
+          disabled={!articleContent || loadingPreview}
         />
         <Hint>
           For videos, enter timestamp like <code>1:23</code> or <code>0:02:15</code>
         </Hint>
 
-        <Button type="submit">Make it a Jump2</Button>
+        <Button type="submit" disabled={loadingPreview || !link}>
+          {loadingPreview ? 'Loading Preview...' : 'Make it a Jump2'}
+        </Button>
       </Form>
 
       {error && <Feedback role="alert">{error}</Feedback>}
 
-      {articleContent && (
+      {loadingPreview && (
+        <PreviewContainer aria-live="polite" aria-busy="true">
+          <em>Loading preview...</em>
+        </PreviewContainer>
+      )}
+
+      {!loadingPreview && articleContent && (
         <PreviewContainer ref={previewRef} dangerouslySetInnerHTML={{ __html: articleContent }} />
       )}
 
@@ -513,7 +528,7 @@ export default function Home() {
           </>
         )}
 
-        {(shortError) && <Feedback role="alert">{shortError}</Feedback>}
+        {shortError && <Feedback role="alert">{shortError}</Feedback>}
       </ShareWrapper>
     </Container>
   );
