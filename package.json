@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
+    "framer-motion": "^12.18.1",
     "jsdom": "^26.1.0",
     "next": "15.3.4",
     "playwright": "^1.53.1",
