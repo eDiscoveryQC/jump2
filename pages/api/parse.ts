@@ -1,5 +1,3 @@
-// pages/api/parse.ts
-
 import { NextApiRequest, NextApiResponse } from 'next';
 import { Readability } from '@mozilla/readability';
 import { JSDOM } from 'jsdom';
@@ -13,44 +11,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Missing or invalid URL parameter.' });
   }
 
-  let browser = null;
+  let browser: any = null;
 
   try {
-    let puppeteer;
+    let puppeteer: any;
+    let chromium: any;
+
     if (isVercel) {
-      const chromium = require('chrome-aws-lambda');
+      chromium = require('chrome-aws-lambda');
       puppeteer = require('puppeteer-core');
-      browser = await puppeteer.launch({
-        args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath,
-        headless: chromium.headless,
-      });
     } else {
       puppeteer = require('puppeteer');
-      browser = await puppeteer.launch({ headless: 'new' });
     }
+
+    browser = await puppeteer.launch(
+      isVercel
+        ? {
+            args: chromium.args,
+            defaultViewport: chromium.defaultViewport,
+            executablePath: await chromium.executablePath,
+            headless: chromium.headless,
+          }
+        : { headless: 'new' }
+    );
 
     const page = await browser.newPage();
 
-    // ✅ Spoof real browser user agent to avoid blocks
+    // ✅ Spoof real browser headers
     await page.setUserAgent(
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
     );
 
-    // Optional: Block ads/trackers (you can remove this if issues arise)
+    // ✅ Block heavy requests
     await page.setRequestInterception(true);
-    page.on('request', (req) => {
-      const blocked = ['image', 'stylesheet', 'font', 'script'];
-      if (blocked.includes(req.resourceType())) {
-        req.abort();
+    page.on('request', (request: any) => {
+      const block = ['image', 'font', 'stylesheet', 'media'];
+      if (block.includes(request.resourceType())) {
+        request.abort();
       } else {
-        req.continue();
+        request.continue();
       }
     });
 
+    // ✅ Load the page
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
 
+    // ✅ Extract HTML and parse
     const html = await page.content();
     const dom = new JSDOM(html, { url });
     const reader = new Readability(dom.window.document);
@@ -59,17 +65,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await browser.close();
 
     if (!article) {
-      console.error('❌ Readability parse returned null');
-      return res.status(500).json({ error: 'Failed to parse article content.' });
+      console.error('❌ Readability returned null for:', url);
+      return res.status(500).json({ error: 'Unable to extract article content.' });
     }
 
     return res.status(200).json({ article });
-  } catch (error: any) {
+  } catch (err: any) {
     if (browser) await browser.close();
-    console.error('🧨 PARSER ERROR:', error.message);
+    console.error('🧨 Fatal parsing error for:', url, '|', err.message || err);
     return res.status(500).json({
-      error: 'Failed to load and parse page.',
-      details: error.message || 'Unknown error',
+      error: 'Internal server error while parsing URL.',
+      details: err?.message || 'Unknown failure',
     });
   }
 }
