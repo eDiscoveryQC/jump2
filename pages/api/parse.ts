@@ -1,66 +1,65 @@
+// /pages/api/parse.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { chromium } from 'playwright';
-import { Readability } from '@mozilla/readability';
+import fetch from 'node-fetch';
 import { JSDOM } from 'jsdom';
+import { Readability } from '@mozilla/readability';
+
+interface Article {
+  title: string;
+  content: string;
+  excerpt?: string;
+  byline?: string;
+  dir?: string;
+  length?: number;
+  siteName?: string;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { url } = req.query;
 
   if (!url || typeof url !== 'string') {
-    console.error('Invalid or missing URL param:', url);
     return res.status(400).json({ error: 'Missing or invalid URL parameter.' });
   }
 
-  let browser;
-
   try {
-    console.log('Launching Chromium...');
-    browser = await chromium.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    console.log(`Fetching article URL: ${url}`);
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Jump2Bot/1.0; +https://jump2share.com)',
+        Accept: 'text/html',
+      },
+      timeout: 15000,
     });
 
-    console.log('Opening new page...');
-    const page = await browser.newPage();
+    if (!response.ok) {
+      console.error(`Fetch failed with status ${response.status}`);
+      return res.status(502).json({ error: `Failed to fetch URL. Status: ${response.status}` });
+    }
 
-    console.log('Setting User-Agent...');
-    await page.setExtraHTTPHeaders({
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
-    });
-
-    console.log('Navigating to URL:', url);
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-
-    console.log('Getting page content...');
-    const html = await page.content();
-    console.log(`Page content length: ${html.length}`);
-
+    const html = await response.text();
     const dom = new JSDOM(html, { url });
     const reader = new Readability(dom.window.document);
-
-    console.log('Parsing article content...');
     const article = reader.parse();
 
     if (!article) {
-      console.error('Readability parse returned null.');
-      throw new Error('Failed to parse article content.');
+      console.error('Readability failed to parse article.');
+      return res.status(500).json({ error: 'Failed to parse article content.' });
     }
 
-    console.log('Closing browser...');
-    await browser.close();
+    const result: Article = {
+      title: article.title,
+      content: article.content,
+      excerpt: article.excerpt,
+      byline: article.byline,
+      dir: article.dir,
+      length: article.length,
+      siteName: article.siteName,
+    };
 
-    console.log('Returning article...');
-    return res.status(200).json({ article });
-
-  } catch (error: any) {
-    if (browser) {
-      try {
-        await browser.close();
-      } catch (closeErr) {
-        console.error('Error closing browser:', closeErr);
-      }
-    }
-    console.error('API parse error:', error.stack || error.message || error);
-    return res.status(500).json({ error: 'Internal server error while parsing URL.', details: error.message || error });
+    console.log(`Article parsed: "${result.title}" [${result.length} characters]`);
+    return res.status(200).json({ article: result });
+  } catch (err: any) {
+    console.error('Internal server error in /api/parse:', err);
+    return res.status(500).json({ error: 'Internal server error.', details: err.message });
   }
 }
