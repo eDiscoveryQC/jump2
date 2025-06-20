@@ -10,14 +10,15 @@
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
+    "framer-motion": "^12.18.1",
     "jsdom": "^26.1.0",
     "next": "15.3.4",
+    "openai": "^5.5.1",
     "playwright": "^1.53.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sanitize-html": "^2.17.0",
-    "styled-components": "^6.1.19",
-    "framer-motion": "^12.18.1"
+    "styled-components": "^6.1.19"
   },
   "devDependencies": {
     "@types/jsdom": "^21.1.7",
