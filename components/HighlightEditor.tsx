@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 
 const Container = styled.div`
@@ -133,7 +134,7 @@ export default function HighlightEditor({
     if (highlights.length === 0) return articleText;
 
     const sorted = [...highlights].sort((a, b) => a.start - b.start);
-    const parts: (string | JSX.Element)[] = [];
+    const parts: (string | React.ReactElement)[] = [];
     let lastIndex = 0;
 
     sorted.forEach(({ start, end, id, text }) => {

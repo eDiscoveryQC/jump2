@@ -13,7 +13,6 @@ interface ShareData {
   highlights: Highlight[];
 }
 
-// Simple in-memory store for demo only. Replace with DB in production.
 const store: Record<string, ShareData> = {};
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {

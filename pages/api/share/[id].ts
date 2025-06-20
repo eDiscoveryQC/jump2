@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const store: Record<string, any> = {}; // Use your real DB in production
+const store: Record<string, any> = {};
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;

@@ -20,7 +20,6 @@ export default function SharePage() {
         const res = await fetch(`/api/share/${id}`);
         const data = await res.json();
         if (data.url) {
-          // Fetch parsed article text dynamically:
           const parsedRes = await fetch(`/api/parse?url=${encodeURIComponent(data.url)}`);
           const parsedData = await parsedRes.json();
           setArticleText(parsedData.article?.textContent || '');
