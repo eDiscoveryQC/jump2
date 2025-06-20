@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const browser = await puppeteer.launch({
-      headless: true,  // <-- fix here
+      headless: true, // Corrected: boolean, not string
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
@@ -45,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       allowedSchemes: ['http', 'https', 'mailto', 'data'],
       allowedSchemesByTag: { img: ['http', 'https', 'data'] },
       transformTags: {
-        'a': (tagName, attribs) => ({
+        'a': (tagName: string, attribs: Record<string, string>) => ({
           tagName: 'a',
           attribs: {
             ...attribs,
