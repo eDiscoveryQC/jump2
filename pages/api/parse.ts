@@ -32,7 +32,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const page = await browser.newPage();
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+    // ✅ Spoof real browser user agent to avoid blocks
+    await page.setUserAgent(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
+    );
+
+    // Optional: Block ads/trackers (you can remove this if issues arise)
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      const blocked = ['image', 'stylesheet', 'font', 'script'];
+      if (blocked.includes(req.resourceType())) {
+        req.abort();
+      } else {
+        req.continue();
+      }
+    });
+
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
 
     const html = await page.content();
     const dom = new JSDOM(html, { url });
@@ -42,13 +59,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await browser.close();
 
     if (!article) {
+      console.error('❌ Readability parse returned null');
       return res.status(500).json({ error: 'Failed to parse article content.' });
     }
 
     return res.status(200).json({ article });
   } catch (error: any) {
     if (browser) await browser.close();
-    console.error('🧨 PARSER ERROR:', error);
-    return res.status(500).json({ error: 'Failed to load and parse page.', details: error.message });
+    console.error('🧨 PARSER ERROR:', error.message);
+    return res.status(500).json({
+      error: 'Failed to load and parse page.',
+      details: error.message || 'Unknown error',
+    });
   }
 }
