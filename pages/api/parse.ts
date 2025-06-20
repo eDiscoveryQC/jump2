@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const browser = await puppeteer.launch({
-      headless: 'new',
+      headless: true,  // <-- fix here
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
