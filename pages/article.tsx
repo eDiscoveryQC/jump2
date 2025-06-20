@@ -1,4 +1,3 @@
-// /pages/article.tsx
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import HighlightEditor from '../components/HighlightEditor';
@@ -19,9 +18,6 @@ export default function ArticlePage() {
 
     setLoading(true);
     setError(null);
-    setShareLink(null);
-    setSharing(false);
-    setShareError(null);
 
     fetch(`/api/parse?url=${encodeURIComponent(url)}`)
       .then(res => res.json())
@@ -36,37 +32,31 @@ export default function ArticlePage() {
       .finally(() => setLoading(false));
   }, [url]);
 
-  // Highlight sharing handler, type-safe
-  const handleShare = useCallback(
-    async (highlights: { id: string; text: string; start: number; end: number }[]) => {
-      setSharing(true);
-      setShareError(null);
-      setShareLink(null);
-
-      try {
-        const response = await fetch('/api/highlights', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url, highlights }),
-        });
-        const data = await response.json();
-
-        if (data.shareUrl) {
-          setShareLink(data.shareUrl);
-        } else {
-          setShareError('Failed to generate share link.');
-        }
-      } catch {
+  const handleShare = useCallback(async (highlights: any) => {
+    setSharing(true);
+    setShareError(null);
+    setShareLink(null);
+    try {
+      const response = await fetch('/api/highlights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, highlights }),
+      });
+      const data = await response.json();
+      if (data.shareUrl) {
+        setShareLink(data.shareUrl);
+      } else {
         setShareError('Failed to generate share link.');
-      } finally {
-        setSharing(false);
       }
-    },
-    [url]
-  );
+    } catch {
+      setShareError('Failed to generate share link.');
+    } finally {
+      setSharing(false);
+    }
+  }, [url]);
 
   return (
-    <main style={{ maxWidth: 900, margin: '2rem auto', padding: '0 1rem', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
+    <div style={{ maxWidth: 900, margin: '2rem auto', padding: '0 1rem' }}>
       <h1>Article Highlights</h1>
       {loading && <p>Loading article...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
@@ -74,23 +64,27 @@ export default function ArticlePage() {
       {shareLink && (
         <div style={{ marginBottom: '1rem' }}>
           <strong>Share Link:</strong>{' '}
-          <a href={shareLink} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'underline' }}>
+          <a href={shareLink} target="_blank" rel="noopener noreferrer">
             {shareLink}
           </a>
         </div>
       )}
 
-      {shareError && <p style={{ color: 'red' }}><strong>{shareError}</strong></p>}
+      {shareError && (
+        <p style={{ color: 'red' }}>
+          <strong>{shareError}</strong>
+        </p>
+      )}
 
       {articleHtml ? (
         <HighlightEditor
-          articleText={articleHtml.replace(/<[^>]+>/g, '')} // Plain text for highlights
+          articleText={articleHtml.replace(/<[^>]+>/g, '')}
           onShare={handleShare}
           sharing={sharing}
         />
       ) : (
         !loading && <p>No preview available for this link.</p>
       )}
-    </main>
+    </div>
   );
 }

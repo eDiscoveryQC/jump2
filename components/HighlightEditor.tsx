@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 
 const Container = styled.div`
@@ -159,9 +160,7 @@ export default function HighlightEditor({
 
   return (
     <Container>
-      <ArticleArea onMouseUp={addHighlight} aria-label="Article content with highlights">
-        {renderHighlightedText()}
-      </ArticleArea>
+      <ArticleArea onMouseUp={addHighlight}>{renderHighlightedText()}</ArticleArea>
       <Sidebar>
         <h3>Highlights</h3>
         {highlights.length === 0 && <p>No highlights yet. Select text above to add.</p>}
@@ -176,7 +175,7 @@ export default function HighlightEditor({
           </HighlightItem>
         ))}
         {!readOnly && highlights.length > 0 && (
-          <Button onClick={() => onShare && onShare(highlights)} disabled={sharing} aria-disabled={sharing}>
+          <Button onClick={() => onShare && onShare(highlights)} disabled={sharing}>
             {sharing ? 'Generating Link...' : 'Generate Share Link'}
           </Button>
         )}
