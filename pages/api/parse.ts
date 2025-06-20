@@ -1,7 +1,5 @@
-// pages/api/parse.ts
-
 import { NextApiRequest, NextApiResponse } from 'next';
-import { chromium } from 'playwright-chromium';
+import { chromium } from 'playwright';  // full playwright here
 import { Readability } from '@mozilla/readability';
 import { JSDOM } from 'jsdom';
 
