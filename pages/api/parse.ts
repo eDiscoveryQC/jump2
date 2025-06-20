@@ -1,3 +1,5 @@
+// pages/api/parse.ts
+
 import type { NextApiRequest, NextApiResponse } from 'next';
 import puppeteer from 'puppeteer';
 import { Readability } from '@mozilla/readability';
@@ -18,9 +20,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     const page = await browser.newPage();
-
     await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
     );
 
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
@@ -39,7 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ article });
   } catch (error: any) {
     if (browser) await browser.close();
-    console.error('API parse error:', error);
+    console.error('Parse error:', error);
     return res.status(500).json({ error: 'Internal server error while parsing URL.', details: error.message });
   }
 }
