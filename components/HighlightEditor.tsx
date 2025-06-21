@@ -1,6 +1,5 @@
-import * as React from 'react';
-import { useState, useEffect, useCallback } from 'react';
-import styled from 'styled-components';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import styled from "styled-components";
 
 const Container = styled.div`
   display: flex;
@@ -11,18 +10,21 @@ const Container = styled.div`
 
 const ArticleArea = styled.div`
   flex: 3;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1.5rem;
   line-height: 1.6;
   font-size: 1.1rem;
-  border: 1px solid #ddd;
-  padding: 1.5rem;
-  border-radius: 8px;
-  position: relative;
+  overflow-y: auto;
+  max-height: 80vh;
   user-select: text;
-`;
+  position: relative;
+  background: #fff;
+  color: #000;
 
-const HighlightedText = styled.mark`
-  background-color: #ffe58a;
-  cursor: pointer;
+  mark {
+    background-color: #ffe58a;
+  }
 `;
 
 const Sidebar = styled.div`
@@ -38,15 +40,9 @@ const HighlightItem = styled.div`
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.95rem;
-  border: 1px solid transparent;
   display: flex;
   justify-content: space-between;
   align-items: center;
-
-  &:hover {
-    border-color: #1e4268;
-    background: #e6f0ff;
-  }
 `;
 
 const RemoveButton = styled.button`
@@ -59,126 +55,122 @@ const RemoveButton = styled.button`
   line-height: 1;
 `;
 
-const Button = styled.button`
-  background-color: #1e4268;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  margin-top: 1rem;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: 600;
-  &:hover {
-    background-color: #163559;
+function serializeRange(container: HTMLElement, range: Range) {
+  // Serialize highlight as start/end container xpath + offsets
+  // For simplicity here, just saving text and offsets relative to container textContent
+  const containerText = container.textContent || "";
+  const selectedText = range.toString();
+
+  // Compute start and end offsets relative to container text
+  // Warning: This is a simplification; a robust method would handle more edge cases.
+  let preSelectionRange = document.createRange();
+  preSelectionRange.selectNodeContents(container);
+  preSelectionRange.setEnd(range.startContainer, range.startOffset);
+  const start = preSelectionRange.toString().length;
+  const end = start + selectedText.length;
+
+  return { start, end, text: selectedText };
+}
+
+function applyHighlights(
+  text: string,
+  highlights: { start: number; end: number; id: string }[]
+) {
+  if (!highlights.length) return text;
+
+  let result = [];
+  let lastIndex = 0;
+
+  // Sort highlights by start index
+  const sorted = highlights.sort((a, b) => a.start - b.start);
+
+  sorted.forEach(({ start, end, id }) => {
+    if (start > lastIndex) {
+      result.push(text.slice(lastIndex, start));
+    }
+    const highlightedText = text.slice(start, end);
+    result.push(
+      <mark key={id} data-highlight-id={id}>
+        {highlightedText}
+      </mark>
+    );
+    lastIndex = end;
+  });
+
+  if (lastIndex < text.length) {
+    result.push(text.slice(lastIndex));
   }
-`;
 
-interface Highlight {
-  id: string;
-  text: string;
-  start: number;
-  end: number;
+  return result;
 }
 
-interface Props {
-  articleText: string;
-  onShare?: (highlights: Highlight[]) => void;
-  initialHighlights?: Highlight[];
-  readOnly?: boolean;
-  sharing?: boolean;
-}
-
-export default function HighlightEditor({
-  articleText,
-  onShare,
-  initialHighlights = [],
-  readOnly = false,
-  sharing = false,
-}: Props) {
-  const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights);
-
-  useEffect(() => {
-    setHighlights(initialHighlights);
-  }, [initialHighlights]);
+export default function HighlightEditorLongTerm({ htmlContent }: { htmlContent: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [highlights, setHighlights] = useState<
+    { id: string; start: number; end: number; text: string }[]
+  >([]);
 
   const addHighlight = useCallback(() => {
-    if (readOnly) return;
+    if (!containerRef.current) return;
 
     const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
+    if (!selection || selection.isCollapsed) return;
+    if (!containerRef.current.contains(selection.anchorNode)) return;
 
-    const selectedText = selection.toString().trim();
-    if (selectedText.length < 3) return;
+    const range = selection.getRangeAt(0);
+    if (range.toString().length < 3) return;
 
-    const start = articleText.indexOf(selectedText);
-    if (start === -1) return;
-    const end = start + selectedText.length;
+    const serialized = serializeRange(containerRef.current, range);
 
-    if (highlights.some(h => h.text === selectedText)) return;
+    // Avoid duplicate highlights for same range
+    if (
+      highlights.some(
+        (h) =>
+          h.start === serialized.start &&
+          h.end === serialized.end &&
+          h.text === serialized.text
+      )
+    )
+      return;
 
-    const newHighlight: Highlight = {
-      id: Math.random().toString(36).substr(2, 9),
-      text: selectedText,
-      start,
-      end,
-    };
+    setHighlights((prev) => [
+      ...prev,
+      { ...serialized, id: Math.random().toString(36).substr(2, 9) },
+    ]);
 
-    setHighlights(prev => [...prev, newHighlight]);
     selection.removeAllRanges();
-  }, [articleText, highlights, readOnly]);
+  }, [highlights]);
 
-  const removeHighlight = (id: string) => {
-    if (readOnly) return;
-    setHighlights(prev => prev.filter(h => h.id !== id));
-  };
-
-  const renderHighlightedText = () => {
-    if (highlights.length === 0) return articleText;
-
-    const sorted = [...highlights].sort((a, b) => a.start - b.start);
-    const parts: (string | React.ReactElement)[] = [];
-    let lastIndex = 0;
-
-    sorted.forEach(({ start, end, id, text }) => {
-      if (start > lastIndex) {
-        parts.push(articleText.slice(lastIndex, start));
-      }
-      parts.push(
-        <HighlightedText key={id} title={text}>
-          {articleText.slice(start, end)}
-        </HighlightedText>
-      );
-      lastIndex = end;
-    });
-
-    if (lastIndex < articleText.length) {
-      parts.push(articleText.slice(lastIndex));
-    }
-
-    return parts;
-  };
+  // Extract plain text from HTML for highlight application
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = htmlContent;
+  const plainText = tempDiv.textContent || tempDiv.innerText || "";
 
   return (
     <Container>
-      <ArticleArea onMouseUp={addHighlight}>{renderHighlightedText()}</ArticleArea>
-      <Sidebar>
+      <ArticleArea
+        ref={containerRef}
+        onMouseUp={addHighlight}
+        aria-label="Article content with highlights"
+      >
+        {applyHighlights(plainText, highlights)}
+      </ArticleArea>
+      <Sidebar aria-label="Highlights sidebar">
         <h3>Highlights</h3>
         {highlights.length === 0 && <p>No highlights yet. Select text above to add.</p>}
-        {highlights.map(h => (
-          <HighlightItem key={h.id} title={h.text}>
-            <span>{h.text}</span>
-            {!readOnly && (
-              <RemoveButton onClick={() => removeHighlight(h.id)} aria-label="Remove highlight">
-                &times;
-              </RemoveButton>
-            )}
+        {highlights.map((h) => (
+          <HighlightItem key={h.id}>
+            <span>{h.text.length > 80 ? h.text.slice(0, 77) + "..." : h.text}</span>
+            <RemoveButton
+              onClick={() =>
+                setHighlights((prev) => prev.filter((highlight) => highlight.id !== h.id))
+              }
+              aria-label={`Remove highlight: ${h.text}`}
+            >
+              &times;
+            </RemoveButton>
           </HighlightItem>
         ))}
-        {!readOnly && highlights.length > 0 && (
-          <Button onClick={() => onShare && onShare(highlights)} disabled={sharing}>
-            {sharing ? 'Generating Link...' : 'Generate Share Link'}
-          </Button>
-        )}
       </Sidebar>
     </Container>
   );

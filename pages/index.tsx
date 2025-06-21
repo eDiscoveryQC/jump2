@@ -1,20 +1,25 @@
 import { useState, useEffect, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { useRouter } from 'next/router'; // <-- Import router
+import { useRouter } from 'next/router';
 
-// Animation: "2" jumping off the "P"
+// === Animations ===
 const jumpOffP = keyframes`
   0%, 100% { transform: translate(0, 0) rotate(0); }
   50% { transform: translate(12px, -18px) rotate(-10deg); }
 `;
 
-// Pulse animation for buttons
 const pulse = keyframes`
   0% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.7); }
   70% { box-shadow: 0 0 0 15px rgba(96, 165, 250, 0); }
   100% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0); }
 `;
 
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(8px);}
+  to { opacity: 1; transform: translateY(0);}
+`;
+
+// === Styled Components ===
 const Container = styled.main`
   min-height: 100vh;
   padding: 4rem 2rem 6rem;
@@ -166,6 +171,7 @@ const PreviewContainer = styled.section`
   overflow-y: auto;
   box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3);
   user-select: text;
+  animation: ${fadeIn} 0.4s ease forwards;
 
   h1, h2, h3, h4 {
     color: #60a5fa;
@@ -250,27 +256,31 @@ const CopyButton = styled.button`
   }
 `;
 
-// Helper functions (YouTube, Vimeo, timestamp)
-function isYouTubeUrl(url: URL) {
-  return ['www.youtube.com', 'youtube.com', 'youtu.be'].includes(url.hostname);
-}
+const VideoWrapper = styled.div`
+  margin: 2rem auto 3rem;
+  max-width: 640px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  position: relative;
+`;
 
-function isVimeoUrl(url: URL) {
-  return url.hostname.includes('vimeo.com');
-}
+const TimestampBadge = styled.div`
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  user-select: none;
+  pointer-events: none;
+`;
 
-function isValidTimestamp(input: string) {
-  return /^\d+:\d{2}(:\d{2})?$/.test(input.trim());
-}
-
-function parseTimestamp(input: string) {
-  const parts = input.split(':').map(Number);
-  return parts.length === 3
-    ? parts[0] * 3600 + parts[1] * 60 + parts[2]
-    : parts[0] * 60 + parts[1];
-}
-
-// Debounce hook
+// === Helper Functions ===
 function useDebounce(value: string, delay: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -280,39 +290,104 @@ function useDebounce(value: string, delay: number) {
   return debouncedValue;
 }
 
-// URL validation helper
-function isValidUrl(url: string) {
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
+function isYouTubeUrl(url: URL) {
+  return ['www.youtube.com', 'youtube.com', 'youtu.be'].includes(url.hostname);
 }
 
+function parseTimestamp(input: string) {
+  if (!input) return 0;
+  const parts = input.trim().split(':').map(Number);
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  if (parts.length === 1) return parts[0];
+  return 0;
+}
+
+function formatTimestamp(seconds: number) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return h > 0
+    ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+    : `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+// YouTube Player component
+function YouTubePlayer({ url, startSeconds }: { url: string; startSeconds: number }) {
+  const videoId = (() => {
+    try {
+      const u = new URL(url);
+      if (u.hostname === 'youtu.be') return u.pathname.slice(1);
+      return u.searchParams.get('v') || '';
+    } catch {
+      return '';
+    }
+  })();
+
+  const formattedTimestamp = formatTimestamp(startSeconds);
+
+  const src = `https://www.youtube.com/embed/${videoId}?start=${startSeconds}&autoplay=0&modestbranding=1&rel=0`;
+
+  return (
+    <VideoWrapper>
+      <iframe
+        width="100%"
+        height="360"
+        src={src}
+        title="YouTube video player"
+        frameBorder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+      {startSeconds > 0 && <TimestampBadge>▶ {formattedTimestamp}</TimestampBadge>}
+    </VideoWrapper>
+  );
+}
+
+// === Main Home Component ===
 export default function Home() {
-  const router = useRouter(); // <-- Initialize router
+  const router = useRouter();
   const [link, setLink] = useState('');
   const [jumpTo, setJumpTo] = useState('');
+  const [parsedSeconds, setParsedSeconds] = useState(0);
   const [articleContent, setArticleContent] = useState('');
   const [error, setError] = useState('');
   const [shortUrl, setShortUrl] = useState('');
   const [loadingShort, setLoadingShort] = useState(false);
-  const [shortError, setShortError] = useState('');
   const [loadingPreview, setLoadingPreview] = useState(false);
 
-  const previewRef = useRef<HTMLDivElement>(null);
   const debouncedLink = useDebounce(link, 500);
 
+  // Parse timestamp input & validate
+  useEffect(() => {
+    if (jumpTo.trim() === '') {
+      setParsedSeconds(0);
+      return;
+    }
+    const secs = parseTimestamp(jumpTo);
+    if (isNaN(secs) || secs < 0) {
+      setError('Invalid timestamp format. Use MM:SS or HH:MM:SS.');
+    } else {
+      setError('');
+      setParsedSeconds(secs);
+    }
+  }, [jumpTo]);
+
+  // Fetch article preview if not YouTube
   useEffect(() => {
     if (!debouncedLink) {
       setArticleContent('');
       setError('');
       return;
     }
-    if (!isValidUrl(debouncedLink)) {
-      setError('Please enter a valid URL.');
-      setArticleContent('');
+    try {
+      const url = new URL(debouncedLink);
+      if (isYouTubeUrl(url)) {
+        setArticleContent('');
+        return;
+      }
+    } catch {
+      setError('Invalid URL.');
       return;
     }
 
@@ -321,7 +396,6 @@ export default function Home() {
       setError('');
       setArticleContent('');
       setShortUrl('');
-      setShortError('');
       try {
         const res = await fetch(`/api/parse?url=${encodeURIComponent(debouncedLink)}`);
         if (!res.ok) throw new Error('Failed to fetch article.');
@@ -336,35 +410,14 @@ export default function Home() {
       }
       setLoadingPreview(false);
     };
-
     fetchArticle();
   }, [debouncedLink]);
 
-  const handleCreate = () => {
-    setError('');
-    setShortUrl('');
-    setShortError('');
-    if (!link) {
-      setError('Please paste a valid link.');
-      return;
-    }
-
-    try {
-      const url = new URL(link);
-
-      // Use Next.js router to navigate to article page with URL param
-      router.push(`/article?url=${encodeURIComponent(url.toString())}`);
-
-    } catch {
-      setError('Invalid URL format.');
-    }
-  };
-
+  // Generate short URL
   const generateShortUrl = async (fullUrl: string) => {
-    setShortError('');
     setShortUrl('');
     setLoadingShort(true);
-
+    setError('');
     try {
       const res = await fetch('/api/shorten', {
         method: 'POST',
@@ -375,32 +428,36 @@ export default function Home() {
       if (res.ok) {
         setShortUrl(data.shortUrl);
       } else {
-        setShortError(data.error || 'Failed to generate short URL');
+        setError(data.error || 'Failed to generate short URL');
       }
     } catch {
-      setShortError('Failed to generate short URL');
-    } finally {
-      setLoadingShort(false);
+      setError('Failed to generate short URL');
     }
+    setLoadingShort(false);
   };
 
-  const handleHighlight = () => {
-    const selection = window.getSelection();
-    if (!selection || selection.isCollapsed) return;
-    if (previewRef.current && previewRef.current.contains(selection.anchorNode)) {
-      const text = selection.toString();
-      if (text.length > 2) {
-        setJumpTo(text);
+  // Handle create Jump2 link
+  const handleCreate = () => {
+    setError('');
+    setShortUrl('');
+    if (!link) {
+      setError('Please paste a valid link.');
+      return;
+    }
+
+    try {
+      const url = new URL(link);
+      if (parsedSeconds > 0 && isYouTubeUrl(url)) {
+        url.searchParams.set('t', parsedSeconds.toString());
+      } else if (jumpTo.trim() !== '') {
+        url.hash = `:~:text=${encodeURIComponent(jumpTo.trim())}`;
       }
+
+      generateShortUrl(url.toString());
+    } catch {
+      setError('Invalid URL format.');
     }
   };
-
-  useEffect(() => {
-    document.addEventListener('mouseup', handleHighlight);
-    return () => {
-      document.removeEventListener('mouseup', handleHighlight);
-    };
-  }, []);
 
   return (
     <Container>
@@ -412,9 +469,7 @@ export default function Home() {
       <Subtitle>Skip the fluff. Jump2 the good part.</Subtitle>
 
       <Description>
-        Tired of telling people to "scroll to 3:42" or "jump to paragraph 5"? With Jump2, just paste a
-        link and highlight the best part — whether it's a timestamp in a video, a quote in an article,
-        or a keyword in a podcast. Share a clean shortcut that gets right to the point.
+        Paste a link (article or video) and highlight the best part — timestamp, quote, or keyword.
       </Description>
 
       <Form
@@ -434,24 +489,24 @@ export default function Home() {
           required
           aria-label="Content link"
           aria-invalid={!!error}
-          disabled={loadingPreview}
+          disabled={loadingPreview || loadingShort}
         />
         <Input
           type="text"
-          placeholder="Jump to... (timestamp, phrase, or highlight below)"
+          placeholder="Jump to... (timestamp or highlight)"
           value={jumpTo}
           onChange={(e) => setJumpTo(e.target.value)}
           spellCheck={false}
           autoComplete="off"
           aria-label="Jump to position"
-          disabled={!articleContent || loadingPreview}
+          disabled={!link || loadingPreview || loadingShort}
         />
         <Hint>
           For videos, enter timestamp like <code>1:23</code> or <code>0:02:15</code>
         </Hint>
 
-        <Button type="submit" disabled={loadingPreview || !link}>
-          {loadingPreview ? 'Loading Preview...' : 'Make it a Jump2'}
+        <Button type="submit" disabled={loadingPreview || loadingShort || !link || (jumpTo && error !== '')}>
+          {loadingShort ? 'Generating...' : 'Make it a Jump2'}
         </Button>
       </Form>
 
@@ -464,49 +519,14 @@ export default function Home() {
       )}
 
       {!loadingPreview && articleContent && (
-        <PreviewContainer ref={previewRef} dangerouslySetInnerHTML={{ __html: articleContent }} />
+        <PreviewContainer dangerouslySetInnerHTML={{ __html: articleContent }} />
+      )}
+
+      {link && isYouTubeUrl(new URL(link)) && (
+        <YouTubePlayer url={link} startSeconds={parsedSeconds} />
       )}
 
       <ShareWrapper>
-        {!shortUrl && (
-          <Button
-            onClick={() => {
-              try {
-                const fullJumpUrl = (() => {
-                  const url = new URL(link);
-                  if (jumpTo.trim()) {
-                    if (isValidTimestamp(jumpTo)) {
-                      const seconds = parseTimestamp(jumpTo);
-                      if (isYouTubeUrl(url)) {
-                        url.searchParams.set('t', seconds.toString());
-                        return url.toString();
-                      } else if (isVimeoUrl(url)) {
-                        url.hash = `t=${seconds}s`;
-                        return url.toString();
-                      } else {
-                        url.hash = `:~:text=${encodeURIComponent(jumpTo.trim())}`;
-                        return url.toString();
-                      }
-                    } else {
-                      url.hash = `:~:text=${encodeURIComponent(jumpTo.trim())}`;
-                      return url.toString();
-                    }
-                  }
-                  return url.toString();
-                })();
-                generateShortUrl(fullJumpUrl);
-              } catch {
-                setShortError('Invalid link for shortening');
-              }
-            }}
-            disabled={loadingShort || !link}
-            aria-disabled={loadingShort || !link}
-            aria-label="Generate short URL"
-          >
-            {loadingShort ? 'Generating Short URL...' : 'Generate Short URL'}
-          </Button>
-        )}
-
         {shortUrl && (
           <>
             <ShortUrlInput
@@ -527,8 +547,6 @@ export default function Home() {
             </CopyButton>
           </>
         )}
-
-        {shortError && <Feedback role="alert">{shortError}</Feedback>}
       </ShareWrapper>
     </Container>
   );
