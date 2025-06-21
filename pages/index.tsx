@@ -1,5 +1,12 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import styled, { keyframes, css } from 'styled-components';
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  Fragment,
+} from "react";
+import styled, { keyframes, css } from "styled-components";
 
 // === Animations ===
 const glowPulse = keyframes`
@@ -133,7 +140,7 @@ const Input = styled.input<{ disabled?: boolean }>`
   padding: 1rem 1.25rem;
   border-radius: 0.7rem;
   border: 1.5px solid #334155;
-  background: ${({ disabled }) => (disabled ? '#64748b' : '#1e293b')};
+  background: ${({ disabled }) => (disabled ? "#64748b" : "#1e293b")};
   font-size: 1.125rem;
   font-weight: 500;
   color: #f1f5f9;
@@ -151,7 +158,7 @@ const Input = styled.input<{ disabled?: boolean }>`
     box-shadow: 0 0 10px #3b82f6aa;
   }
 
-  cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'text')};
+  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "text")};
 `;
 
 const Hint = styled.small`
@@ -432,8 +439,87 @@ const ChipRemoveButton = styled.button`
   }
 `;
 
-// ==== Helper Hooks & Utils ====
+const HamburgerButton = styled.button`
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  background: #2563eb;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.6rem 1rem;
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  z-index: 1100;
+  user-select: none;
 
+  &:hover {
+    background: #3b82f6;
+  }
+`;
+
+const MobileMenu = styled.nav<{ open: boolean }>`
+  position: fixed;
+  top: 0;
+  left: ${({ open }) => (open ? "0" : "-100%")};
+  width: 250px;
+  height: 100vh;
+  background: #1e293b;
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.6);
+  padding: 3rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  transition: left 0.3s ease;
+  z-index: 1099;
+`;
+
+const MobileMenuClose = styled.button`
+  align-self: flex-end;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: #60a5fa;
+  cursor: pointer;
+  user-select: none;
+`;
+
+const LightboxBackdrop = styled.div<{ open: boolean }>`
+  display: ${({ open }) => (open ? "flex" : "none")};
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.9);
+  z-index: 1200;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+`;
+
+const LightboxContent = styled.div`
+  max-width: 480px;
+  background: #1e293b;
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 0 30px #2563ebaa;
+  color: #cbd5e1;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  user-select: text;
+`;
+
+const ContactEmail = styled.a`
+  color: #3b82f6;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+
+  &:hover {
+    color: #60a5fa;
+  }
+`;
+
+// === Helper hooks & utils ===
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState<T>(value);
   useEffect(() => {
@@ -444,11 +530,11 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 const isYouTubeUrl = (url: URL) =>
-  ['www.youtube.com', 'youtube.com', 'youtu.be'].includes(url.hostname);
+  ["www.youtube.com", "youtube.com", "youtu.be"].includes(url.hostname);
 
 function parseTimestamp(input: string): number {
   if (!input) return 0;
-  const parts = input.trim().split(':').map(Number);
+  const parts = input.trim().split(":").map(Number);
   if (parts.some(isNaN)) return NaN;
   if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
   if (parts.length === 2) return parts[0] * 60 + parts[1];
@@ -457,25 +543,33 @@ function parseTimestamp(input: string): number {
 }
 
 function formatTimestamp(seconds: number) {
-  if (seconds < 0) return '';
+  if (seconds < 0) return "";
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
   if (h > 0) {
-    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    return `${h}:${m.toString().padStart(2, "0")}:${s
+      .toString()
+      .padStart(2, "0")}`;
   }
-  return `${m}:${s.toString().padStart(2, '0')}`;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-// === Component: YouTube Player embed ===
-const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: number }) => {
+// === YouTube Player ===
+const YouTubePlayer = ({
+  url,
+  startSeconds,
+}: {
+  url: string;
+  startSeconds: number;
+}) => {
   const videoId = useMemo(() => {
     try {
       const u = new URL(url);
-      if (u.hostname === 'youtu.be') return u.pathname.slice(1);
-      return u.searchParams.get('v') || '';
+      if (u.hostname === "youtu.be") return u.pathname.slice(1);
+      return u.searchParams.get("v") || "";
     } catch {
-      return '';
+      return "";
     }
   }, [url]);
 
@@ -492,7 +586,7 @@ const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: numbe
         height="360"
         src={src}
         title="YouTube video player"
-        frameBorder="0"
+        frameBorder={0}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
       />
@@ -507,34 +601,38 @@ const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: numbe
 
 // === Main Component ===
 export default function Home() {
-  const [link, setLink] = useState('');
-  const [jumpTo, setJumpTo] = useState('');
+  const [link, setLink] = useState("");
+  const [jumpTo, setJumpTo] = useState("");
   const [parsedSeconds, setParsedSeconds] = useState(0);
-  const [articleContent, setArticleContent] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [error, setError] = useState('');
-  const [shortUrl, setShortUrl] = useState('');
+  const [articleContent, setArticleContent] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [error, setError] = useState("");
+  const [shortUrl, setShortUrl] = useState("");
   const [loadingShort, setLoadingShort] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);
-  const previewRef = useRef<HTMLDivElement>(null);
-
   const [highlightList, setHighlightList] = useState<string[]>([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showLightbox, setShowLightbox] = useState(true);
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [feedbackEmail, setFeedbackEmail] = useState("");
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
 
+  const previewRef = useRef<HTMLDivElement>(null);
   const debouncedLink = useDebounce(link, 600);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   // Validate and parse jumpTo timestamp/text
   useEffect(() => {
-    if (jumpTo.trim() === '') {
+    if (jumpTo.trim() === "") {
       setParsedSeconds(0);
-      setError('');
+      setError("");
       return;
     }
     const secs = parseTimestamp(jumpTo);
     if (isNaN(secs) || secs < 0) {
-      setError('Invalid timestamp format. Use MM:SS or HH:MM:SS.');
+      setError("Invalid timestamp format. Use MM:SS or HH:MM:SS.");
     } else {
-      setError('');
+      setError("");
       setParsedSeconds(secs);
     }
   }, [jumpTo]);
@@ -542,9 +640,9 @@ export default function Home() {
   // Fetch article preview if link changes (excluding YouTube)
   useEffect(() => {
     if (!debouncedLink) {
-      setArticleContent('');
-      setError('');
-      setShortUrl('');
+      setArticleContent("");
+      setError("");
+      setShortUrl("");
       setHighlightList([]);
       return;
     }
@@ -552,38 +650,38 @@ export default function Home() {
     try {
       url = new URL(debouncedLink);
       if (isYouTubeUrl(url)) {
-        setArticleContent('');
-        setError('');
-        setShortUrl('');
+        setArticleContent("");
+        setError("");
+        setShortUrl("");
         setHighlightList([]);
         return;
       }
     } catch {
-      setError('Invalid URL.');
+      setError("Invalid URL.");
       return;
     }
 
     const fetchArticle = async () => {
       setLoadingPreview(true);
-      setError('');
-      setArticleContent('');
-      setShortUrl('');
+      setError("");
+      setArticleContent("");
+      setShortUrl("");
       setHighlightList([]);
       try {
         const res = await fetch(`/api/parse?url=${encodeURIComponent(debouncedLink)}`, {
-          headers: { Accept: 'application/json' },
-          method: 'GET',
+          headers: { Accept: "application/json" },
+          method: "GET",
         });
-        if (!res.ok) throw new Error('Failed to fetch article preview.');
+        if (!res.ok) throw new Error("Failed to fetch article preview.");
         const json = await res.json();
         if (json.article?.content) {
           setArticleContent(json.article.content);
         } else {
-          setError('No preview available for this link.');
+          setError("No preview available for this link.");
         }
       } catch (e) {
-        console.error('Fetch article error:', e);
-        setError('Failed to load preview. You can still create the jump link.');
+        console.error("Fetch article error:", e);
+        setError("Failed to load preview. You can still create the jump link.");
       }
       setLoadingPreview(false);
     };
@@ -593,12 +691,12 @@ export default function Home() {
 
   // Generate deep short URL for link + timestamp + highlights
   const generateShortUrl = useCallback(async () => {
-    setShortUrl('');
+    setShortUrl("");
     setLoadingShort(true);
-    setError('');
+    setError("");
 
     if (!link) {
-      setError('Please paste a valid link.');
+      setError("Please paste a valid link.");
       setLoadingShort(false);
       return;
     }
@@ -608,21 +706,19 @@ export default function Home() {
       try {
         url = new URL(link);
       } catch (e) {
-        console.error('Invalid URL input:', e);
-        setError('Invalid URL format.');
+        console.error("Invalid URL input:", e);
+        setError("Invalid URL format.");
         setLoadingShort(false);
         return;
       }
 
-      // If YouTube, add t= query param for start time
       if (parsedSeconds > 0 && isYouTubeUrl(url)) {
-        url.searchParams.set('t', parsedSeconds.toString());
+        url.searchParams.set("t", parsedSeconds.toString());
       }
 
-      // Compose highlight text hash param (no duplicates)
-      let highlightParam = highlightList.join(',');
+      let highlightParam = highlightList.join(",");
       if (jumpTo.trim() && !highlightList.includes(jumpTo.trim())) {
-        highlightParam = highlightParam ? highlightParam + ',' + jumpTo.trim() : jumpTo.trim();
+        highlightParam = highlightParam ? highlightParam + "," + jumpTo.trim() : jumpTo.trim();
       }
 
       if (highlightParam) {
@@ -630,32 +726,25 @@ export default function Home() {
       } else if (jumpTo.trim()) {
         url.hash = `:~:text=${encodeURIComponent(jumpTo.trim())}`;
       } else {
-        url.hash = '';
+        url.hash = "";
       }
 
-      console.log('Sending deepLink to API:', url.toString());
-
-      const res = await fetch('/api/links', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/links", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ deepLink: url.toString() }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        console.error('API error response:', data);
-        throw new Error(data.error || 'Short URL generation failed');
+        throw new Error(data.error || "Short URL generation failed");
       }
 
-      // Compose full short URL for display (handles shortCode or shortUrl)
       const fullShortUrl = `${window.location.origin}/s/${data.shortCode || data.shortUrl}`;
       setShortUrl(fullShortUrl);
-
-      console.log('Short URL generated:', fullShortUrl);
     } catch (e: any) {
-      console.error('Short URL generation error:', e);
-      setError(e.message || 'Failed to generate short URL');
+      setError(e.message || "Failed to generate short URL");
     }
     setLoadingShort(false);
   }, [link, parsedSeconds, highlightList, jumpTo]);
@@ -667,7 +756,7 @@ export default function Home() {
   const handleCopy = useCallback(() => {
     if (!shortUrl) return;
     navigator.clipboard.writeText(shortUrl).then(() => {
-      alert('Short URL copied to clipboard!');
+      alert("Short URL copied to clipboard!");
     });
   }, [shortUrl]);
 
@@ -683,26 +772,25 @@ export default function Home() {
       selectedText.length < 150 &&
       !highlightList.includes(selectedText)
     ) {
-      setHighlightList(prev => [...prev, selectedText]);
-      setJumpTo('');
+      setHighlightList((prev) => [...prev, selectedText]);
+      setJumpTo("");
       selection.removeAllRanges();
     }
   };
 
   const removeHighlight = useCallback((text: string) => {
-    setHighlightList(prev => prev.filter(h => h !== text));
+    setHighlightList((prev) => prev.filter((h) => h !== text));
   }, []);
 
-  // Detect if link is a media file (video/audio) for placeholder text
   const isMediaFile = useMemo(() => {
     if (!link) return false;
     try {
       const urlObj = new URL(link);
-      const mediaExts = ['mp3', 'wav', 'ogg', 'm4a', 'mp4', 'webm', 'mov', 'avi'];
+      const mediaExts = ["mp3", "wav", "ogg", "m4a", "mp4", "webm", "mov", "avi"];
       const path = urlObj.pathname.toLowerCase();
-      if (mediaExts.some(ext => path.endsWith(`.${ext}`))) return true;
-      const mediaHosts = ['youtube.com', 'youtu.be', 'soundcloud.com', 'vimeo.com'];
-      if (mediaHosts.some(h => urlObj.hostname.includes(h))) return true;
+      if (mediaExts.some((ext) => path.endsWith(`.${ext}`))) return true;
+      const mediaHosts = ["youtube.com", "youtu.be", "soundcloud.com", "vimeo.com"];
+      if (mediaHosts.some((h) => urlObj.hostname.includes(h))) return true;
       return false;
     } catch {
       return false;
@@ -717,183 +805,293 @@ export default function Home() {
 
     // Remove existing highlights
     const innerHTML = contentEl.innerHTML;
-    const cleanedHTML = innerHTML.replace(/<mark class="highlight">([^<]*)<\/mark>/gi, '$1');
+    const cleanedHTML = innerHTML.replace(/<mark class="highlight">([^<]*)<\/mark>/gi, "$1");
     contentEl.innerHTML = cleanedHTML;
 
     if (!search) return;
 
     // Highlight all matches of search term (case-insensitive)
-    const regex = new RegExp(`(${search.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+    const regex = new RegExp(`(${search.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")})`, "gi");
     contentEl.innerHTML = contentEl.innerHTML.replace(regex, '<mark class="highlight">$1</mark>');
 
     // Scroll first highlight into view
-    const firstMark = contentEl.querySelector('mark.highlight');
+    const firstMark = contentEl.querySelector("mark.highlight");
     if (firstMark) {
-      firstMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      firstMark.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [debouncedSearchTerm, articleContent]);
 
+  // --- Mobile menu toggle ---
+  const toggleMobileMenu = () => setMobileMenuOpen((o) => !o);
+
+  // --- Lightbox feedback submit ---
+  const submitFeedback = async () => {
+    if (!feedbackMessage.trim()) return alert("Please enter your message.");
+    setFeedbackSubmitting(true);
+    try {
+      // Replace with your real feedback endpoint or email integration
+      await new Promise((res) => setTimeout(res, 1500));
+      alert("Thanks for your feedback!");
+      setFeedbackMessage("");
+      setFeedbackEmail("");
+      setShowLightbox(false);
+    } catch {
+      alert("Failed to send feedback.");
+    }
+    setFeedbackSubmitting(false);
+  };
+
   return (
-    <PageContainer role="main" aria-label="Jump2 content sharer">
-      <LeftColumn>
-        <LogoWrapper aria-label="Jump2 logo" role="img" tabIndex={-1}>
-          <JumpText>Jump</JumpText>
-          <TwoText>2</TwoText>
-        </LogoWrapper>
-
-        <Subtitle>Skip the fluff. Jump2 the good part.</Subtitle>
-
+    <>
+      <HamburgerButton aria-label="Toggle menu" onClick={toggleMobileMenu}>
+        ☰ Menu
+      </HamburgerButton>
+      <MobileMenu open={mobileMenuOpen} aria-hidden={!mobileMenuOpen}>
+        <MobileMenuClose
+          aria-label="Close menu"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          ×
+        </MobileMenuClose>
+        <Subtitle>Jump2 — Content Sharer</Subtitle>
         <Description>
-          Paste a link (article or video) and highlight the best part — timestamp, quote, or keyword.
+          Paste any link (articles, videos) to highlight and share the best parts.
         </Description>
+        <ContactEmail href="mailto:contact@jump2.com">Contact: contact@jump2.com</ContactEmail>
+      </MobileMenu>
 
-        <FormWrapper aria-live="polite" aria-atomic="true" aria-describedby="form-error">
-          <Form
-            onSubmit={e => {
+      <LightboxBackdrop open={showLightbox} role="dialog" aria-modal="true" aria-labelledby="welcomeTitle" aria-describedby="welcomeDesc">
+        <LightboxContent>
+          <h2 id="welcomeTitle">Welcome to Jump2!</h2>
+          <p id="welcomeDesc">
+            Easily highlight the best parts of any article or video, generate a
+            quick shareable link, and skip the fluff.
+          </p>
+          <p>
+            Have feedback or questions? Drop us a note below or email us anytime at{" "}
+            <ContactEmail href="mailto:contact@jump2.com">contact@jump2.com</ContactEmail>.
+          </p>
+          <form
+            onSubmit={(e) => {
               e.preventDefault();
-              handleCreate();
+              submitFeedback();
             }}
-            noValidate
           >
-            <Input
-              type="url"
-              placeholder="Paste a link (article or video)..."
-              value={link}
-              onChange={e => setLink(e.target.value.trim())}
-              spellCheck={false}
-              autoComplete="off"
+            <label htmlFor="feedbackMessage">Your Message</label>
+            <textarea
+              id="feedbackMessage"
+              value={feedbackMessage}
+              onChange={(e) => setFeedbackMessage(e.target.value)}
+              rows={4}
+              style={{
+                width: "100%",
+                borderRadius: "0.5rem",
+                border: "1.5px solid #334155",
+                backgroundColor: "#1e293b",
+                color: "#f1f5f9",
+                padding: "0.75rem",
+                marginTop: "0.25rem",
+                marginBottom: "1rem",
+                fontSize: "1rem",
+              }}
               required
-              aria-label="Content link"
-              aria-invalid={!!error}
-              disabled={loadingPreview || loadingShort}
-              autoFocus
+              disabled={feedbackSubmitting}
             />
-
-            <Input
-              type="text"
-              placeholder={
-                isMediaFile
-                  ? 'Jump to timestamp like 1:23 or 0:02:15'
-                  : 'Jump to highlight text or timestamp'
-              }
-              value={jumpTo}
-              onChange={e => setJumpTo(e.target.value)}
-              spellCheck={false}
-              autoComplete="off"
-              aria-label="Jump to position"
-              disabled={!link || loadingPreview || loadingShort}
+            <label htmlFor="feedbackEmail">Your Email (optional)</label>
+            <input
+              id="feedbackEmail"
+              type="email"
+              value={feedbackEmail}
+              onChange={(e) => setFeedbackEmail(e.target.value)}
+              placeholder="you@example.com"
+              style={{
+                width: "100%",
+                borderRadius: "0.5rem",
+                border: "1.5px solid #334155",
+                backgroundColor: "#1e293b",
+                color: "#f1f5f9",
+                padding: "0.75rem",
+                marginTop: "0.25rem",
+                marginBottom: "1rem",
+                fontSize: "1rem",
+              }}
+              disabled={feedbackSubmitting}
             />
+            <Button type="submit" disabled={feedbackSubmitting} aria-busy={feedbackSubmitting}>
+              {feedbackSubmitting ? "Sending..." : "Send Feedback"}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setShowLightbox(false)}
+              style={{ marginLeft: "1rem", backgroundColor: "#64748b", animation: "none" }}
+            >
+              Close
+            </Button>
+          </form>
+        </LightboxContent>
+      </LightboxBackdrop>
 
-            {highlightList.length > 0 && (
-              <HighlightChipsContainer aria-label="Selected highlights">
-                {highlightList.map(text => (
-                  <HighlightChip key={text}>
-                    {text}
-                    <ChipRemoveButton
-                      onClick={() => removeHighlight(text)}
-                      aria-label={`Remove highlight: ${text}`}
-                      title="Remove highlight"
-                    >
-                      ×
-                    </ChipRemoveButton>
-                  </HighlightChip>
-                ))}
-              </HighlightChipsContainer>
+      <PageContainer role="main" aria-label="Jump2 content sharer">
+        <LeftColumn>
+          <LogoWrapper aria-label="Jump2 logo" role="img" tabIndex={-1}>
+            <JumpText>Jump</JumpText>
+            <TwoText>2</TwoText>
+          </LogoWrapper>
+
+          <Subtitle>Skip the fluff. Jump2 the good part.</Subtitle>
+
+          <Description>
+            Paste a link (article or video) and highlight the best part — timestamp, quote, or keyword.
+          </Description>
+
+          <FormWrapper aria-live="polite" aria-atomic="true" aria-describedby="form-error">
+            <Form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleCreate();
+              }}
+              noValidate
+            >
+              <Input
+                type="url"
+                placeholder="Paste a link (article or video)..."
+                value={link}
+                onChange={(e) => setLink(e.target.value.trim())}
+                spellCheck={false}
+                autoComplete="off"
+                required
+                aria-label="Content link"
+                aria-invalid={!!error}
+                disabled={loadingPreview || loadingShort}
+                autoFocus
+              />
+
+              <Input
+                type="text"
+                placeholder={
+                  isMediaFile
+                    ? "Jump to timestamp like 1:23 or 0:02:15"
+                    : "Jump to highlight text or timestamp"
+                }
+                value={jumpTo}
+                onChange={(e) => setJumpTo(e.target.value)}
+                spellCheck={false}
+                autoComplete="off"
+                aria-label="Jump to position"
+                disabled={!link || loadingPreview || loadingShort}
+              />
+
+              {highlightList.length > 0 && (
+                <HighlightChipsContainer aria-label="Selected highlights">
+                  {highlightList.map((text) => (
+                    <HighlightChip key={text}>
+                      {text}
+                      <ChipRemoveButton
+                        onClick={() => removeHighlight(text)}
+                        aria-label={`Remove highlight: ${text}`}
+                        title="Remove highlight"
+                      >
+                        ×
+                      </ChipRemoveButton>
+                    </HighlightChip>
+                  ))}
+                </HighlightChipsContainer>
+              )}
+
+              <Hint>
+                {isMediaFile ? (
+                  <>
+                    For videos/audio, enter timestamp like 1:23 or 0:02:15
+                    <InfoIcon data-tooltip="Use MM:SS or HH:MM:SS formats for timestamps. Example: 1:23, 0:02:15">
+                      ?
+                    </InfoIcon>
+                  </>
+                ) : (
+                  "For articles, paste a quote or keyword to highlight"
+                )}
+              </Hint>
+
+              <Button
+                type="submit"
+                disabled={loadingPreview || loadingShort || !link || (!!jumpTo && error !== "")}
+                aria-disabled={loadingPreview || loadingShort || !link || (!!jumpTo && error !== "")}
+                aria-live="polite"
+                aria-busy={loadingShort}
+              >
+                {loadingShort ? "Generating..." : "Make it a Jump2"}
+              </Button>
+            </Form>
+            {error && (
+              <Feedback id="form-error" role="alert" aria-live="assertive" aria-atomic="true">
+                {error}
+              </Feedback>
             )}
 
-            <Hint>
-              {isMediaFile ? (
+            <ShareWrapper>
+              {shortUrl && (
                 <>
-                  For videos/audio, enter timestamp like 1:23 or 0:02:15
-                  <InfoIcon data-tooltip="Use MM:SS or HH:MM:SS formats for timestamps. Example: 1:23, 0:02:15">
-                    ?
-                  </InfoIcon>
+                  <ShortUrlInput
+                    type="text"
+                    readOnly
+                    value={shortUrl}
+                    onFocus={(e) => e.target.select()}
+                    aria-label="Short URL"
+                  />
+                  <CopyButton
+                    type="button"
+                    onClick={handleCopy}
+                    aria-label="Copy short URL to clipboard"
+                  >
+                    Copy Short URL
+                  </CopyButton>
                 </>
-              ) : (
-                'For articles, paste a quote or keyword to highlight'
               )}
-            </Hint>
+            </ShareWrapper>
+          </FormWrapper>
+        </LeftColumn>
 
-            <Button
-              type="submit"
-              disabled={loadingPreview || loadingShort || !link || (!!jumpTo && error !== '')}
-              aria-disabled={loadingPreview || loadingShort || !link || (!!jumpTo && error !== '')}
-              aria-live="polite"
-              aria-busy={loadingShort}
+        <PreviewWrapper
+          aria-live="polite"
+          aria-label="Article preview or video player"
+          tabIndex={0}
+          onMouseUp={handleTextSelect}
+        >
+          <PreviewSearch
+            type="search"
+            placeholder="Search preview text..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="Search article preview"
+            disabled={loadingPreview}
+          />
+          {searchTerm && (
+            <CopyButton
+              type="button"
+              onClick={() => setSearchTerm("")}
+              aria-label="Clear preview search"
+              style={{ alignSelf: "flex-end", marginBottom: "1rem" }}
             >
-              {loadingShort ? 'Generating...' : 'Make it a Jump2'}
-            </Button>
-          </Form>
-          {error && (
-            <Feedback id="form-error" role="alert" aria-live="assertive" aria-atomic="true">
-              {error}
-            </Feedback>
+              Clear Search
+            </CopyButton>
           )}
 
-          <ShareWrapper>
-            {shortUrl && (
-              <>
-                <ShortUrlInput
-                  type="text"
-                  readOnly
-                  value={shortUrl}
-                  onFocus={e => e.target.select()}
-                  aria-label="Short URL"
-                />
-                <CopyButton
-                  type="button"
-                  onClick={handleCopy}
-                  aria-label="Copy short URL to clipboard"
-                >
-                  Copy Short URL
-                </CopyButton>
-              </>
-            )}
-          </ShareWrapper>
-        </FormWrapper>
-      </LeftColumn>
+          {loadingPreview && <em>Loading preview...</em>}
 
-      <PreviewWrapper
-        aria-live="polite"
-        aria-label="Article preview or video player"
-        tabIndex={0}
-        onMouseUp={handleTextSelect}
-      >
-        <PreviewSearch
-          type="search"
-          placeholder="Search preview text..."
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          aria-label="Search article preview"
-          disabled={loadingPreview}
-        />
-        {searchTerm && (
-          <CopyButton
-            type="button"
-            onClick={() => setSearchTerm('')}
-            aria-label="Clear preview search"
-            style={{ alignSelf: 'flex-end', marginBottom: '1rem' }}
-          >
-            Clear Search
-          </CopyButton>
-        )}
+          {!loadingPreview && articleContent && (
+            <div ref={previewRef} dangerouslySetInnerHTML={{ __html: articleContent }} />
+          )}
 
-        {loadingPreview && <em>Loading preview...</em>}
-
-        {!loadingPreview && articleContent && (
-          <div ref={previewRef} dangerouslySetInnerHTML={{ __html: articleContent }} />
-        )}
-
-        {link &&
-          (() => {
-            try {
-              const urlObj = new URL(link);
-              return isYouTubeUrl(urlObj);
-            } catch {
-              return false;
-            }
-          })() && <YouTubePlayer url={link} startSeconds={parsedSeconds} />}
-      </PreviewWrapper>
-    </PageContainer>
+          {link &&
+            (() => {
+              try {
+                const urlObj = new URL(link);
+                return isYouTubeUrl(urlObj);
+              } catch {
+                return false;
+              }
+            })() && <YouTubePlayer url={link} startSeconds={parsedSeconds} />}
+        </PreviewWrapper>
+      </PageContainer>
+    </>
   );
 }
