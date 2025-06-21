@@ -1,11 +1,4 @@
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-  Fragment,
-} from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import styled, { keyframes, css } from "styled-components";
 
 // === Animations ===
@@ -31,8 +24,8 @@ const pulse = keyframes`
 `;
 
 const fadeInUp = keyframes`
-  from { opacity: 0; transform: translateY(8px);}
-  to { opacity: 1; transform: translateY(0);}
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 `;
 
 const highlightFade = keyframes`
@@ -52,7 +45,7 @@ const PageContainer = styled.main`
   grid-template-columns: 1fr 2fr;
   gap: 3rem;
   background: radial-gradient(circle at top, #0f172a, #1e293b);
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #cbd5e1;
   user-select: none;
 
@@ -540,92 +533,7 @@ const ContactEmail = styled.a`
   }
 `;
 
-// === Helper hooks & utils ===
-function useDebounce<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState<T>(value);
-  useEffect(() => {
-    const timeout = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(timeout);
-  }, [value, delay]);
-  return debounced;
-}
-
-const isYouTubeUrl = (url: URL) =>
-  ["www.youtube.com", "youtube.com", "youtu.be"].includes(url.hostname);
-
-function parseTimestamp(input: string): number {
-  if (!input) return 0;
-  const parts = input.trim().split(":").map(Number);
-  if (parts.some(isNaN)) return NaN;
-  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
-  if (parts.length === 2) return parts[0] * 60 + parts[1];
-  if (parts.length === 1) return parts[0];
-  return 0;
-}
-
-function formatTimestamp(seconds: number) {
-  if (seconds < 0) return "";
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0) {
-    return `${h}:${m.toString().padStart(2, "0")}:${s
-      .toString()
-      .padStart(2, "0")}`;
-  }
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
-// === YouTube Player ===
-const YouTubePlayer = ({
-  url,
-  startSeconds,
-}: {
-  url: string;
-  startSeconds: number;
-}) => {
-  const videoId = useMemo(() => {
-    try {
-      const u = new URL(url);
-      if (u.hostname === "youtu.be") return u.pathname.slice(1);
-      return u.searchParams.get("v") || "";
-    } catch {
-      return "";
-    }
-  }, [url]);
-
-  const src = useMemo(
-    () =>
-      `https://www.youtube.com/embed/${videoId}?start=${startSeconds}&autoplay=0&modestbranding=1&rel=0`,
-    [videoId, startSeconds]
-  );
-
-  return (
-    <VideoWrapper role="region" aria-label="YouTube video player">
-      <iframe
-        width="100%"
-        height="360"
-        src={src}
-        title="YouTube video player"
-        frameBorder={0}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-      />
-      {startSeconds > 0 && (
-        <TimestampBadge
-          aria-live="polite"
-          aria-atomic="true"
-          aria-relevant="additions"
-        >
-          ▶ {formatTimestamp(startSeconds)}
-        </TimestampBadge>
-      )}
-    </VideoWrapper>
-  );
-};
-
-// === Main Component ===
-export default function Home() {
+const Home = () => {
   const [link, setLink] = useState("");
   const [jumpTo, setJumpTo] = useState("");
   const [parsedSeconds, setParsedSeconds] = useState(0);
@@ -646,7 +554,6 @@ export default function Home() {
   const debouncedLink = useDebounce(link, 600);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Validate and parse jumpTo timestamp/text
   useEffect(() => {
     if (jumpTo.trim() === "") {
       setParsedSeconds(0);
@@ -662,7 +569,6 @@ export default function Home() {
     }
   }, [jumpTo]);
 
-  // Fetch article preview if link changes (excluding YouTube)
   useEffect(() => {
     if (!debouncedLink) {
       setArticleContent("");
@@ -714,7 +620,6 @@ export default function Home() {
     fetchArticle();
   }, [debouncedLink]);
 
-  // Generate deep short URL for link + timestamp + highlights
   const generateShortUrl = useCallback(async () => {
     setShortUrl("");
     setLoadingShort(true);
@@ -785,7 +690,6 @@ export default function Home() {
     });
   }, [shortUrl]);
 
-  // Handle text selection in preview for highlight addition
   const handleTextSelect = () => {
     if (!window.getSelection) return;
     const selection = window.getSelection();
@@ -822,39 +726,32 @@ export default function Home() {
     }
   }, [link]);
 
-  // Highlight search term in article preview
   useEffect(() => {
     if (!previewRef.current) return;
     const contentEl = previewRef.current;
     const search = debouncedSearchTerm.trim();
 
-    // Remove existing highlights
     const innerHTML = contentEl.innerHTML;
     const cleanedHTML = innerHTML.replace(/<mark class="highlight">([^<]*)<\/mark>/gi, "$1");
     contentEl.innerHTML = cleanedHTML;
 
     if (!search) return;
 
-    // Highlight all matches of search term (case-insensitive)
     const regex = new RegExp(`(${search.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")})`, "gi");
     contentEl.innerHTML = contentEl.innerHTML.replace(regex, '<mark class="highlight">$1</mark>');
 
-    // Scroll first highlight into view
     const firstMark = contentEl.querySelector("mark.highlight");
     if (firstMark) {
       firstMark.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [debouncedSearchTerm, articleContent]);
 
-  // --- Mobile menu toggle ---
   const toggleMobileMenu = () => setMobileMenuOpen((o) => !o);
 
-  // --- Lightbox feedback submit ---
   const submitFeedback = async () => {
     if (!feedbackMessage.trim()) return alert("Please enter your message.");
     setFeedbackSubmitting(true);
     try {
-      // Replace with your real feedback endpoint or email integration
       await new Promise((res) => setTimeout(res, 1500));
       alert("Thanks for your feedback!");
       setFeedbackMessage("");
@@ -1103,4 +1000,4 @@ export default function Home() {
       </PageContainer>
     </>
   );
-}
+};
