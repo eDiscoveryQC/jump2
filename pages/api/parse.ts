@@ -26,21 +26,22 @@ export default async function handler(
 
   try {
     let puppeteer;
-    let executablePath;
-    let args = [];
+    let executablePath: string | undefined;
+    let args: string[] = [];
 
     if (process.env.NODE_ENV === 'production') {
-      // Import the module and access .default for correct typing and usage
+      // Dynamic imports for production environment (serverless)
       const chromiumModule = await import('chrome-aws-lambda');
       puppeteer = await import('puppeteer-core');
 
-      // Access executablePath and args from default export of chrome-aws-lambda
       executablePath = await chromiumModule.default.executablePath;
       args = chromiumModule.default.args;
 
       console.log('[parse.ts] Using chrome-aws-lambda in production');
     } else {
+      // Local development environment
       puppeteer = await import('puppeteer');
+
       executablePath = undefined;
       args = ['--no-sandbox', '--disable-setuid-sandbox'];
 
@@ -57,6 +58,7 @@ export default async function handler(
 
     const page = await browser.newPage();
 
+    // Set consistent User-Agent to avoid bot detection
     await page.setUserAgent(
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' +
         'AppleWebKit/537.36 (KHTML, like Gecko) ' +
