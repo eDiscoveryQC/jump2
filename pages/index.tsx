@@ -321,12 +321,15 @@ const PreviewSearch = styled.input`
 `;
 
 const ShareWrapper = styled.div`
-  margin-top: 2.5rem;
+  margin-top: 2rem;
+  padding: 1rem;
+  background: #1e293b;
+  border: 1.5px solid #3b82f6;
+  border-radius: 0.75rem;
   display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 1rem;
-  ${fadeInUpMixin};
+  align-items: center;
+  animation: ${fadeInUp} 0.5s ease forwards;
 `;
 
 const ShortUrlInput = styled.input`
@@ -506,7 +509,6 @@ const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: numbe
 // === Main Component ===
 export default function Home() {
   const [link, setLink] = useState('');
-  // jumpTo input now only for timestamp or single highlight phrase (used for convenience)
   const [jumpTo, setJumpTo] = useState('');
   const [parsedSeconds, setParsedSeconds] = useState(0);
   const [articleContent, setArticleContent] = useState('');
@@ -517,13 +519,11 @@ export default function Home() {
   const [loadingPreview, setLoadingPreview] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
-  // New state: list of all highlights selected
   const [highlightList, setHighlightList] = useState<string[]>([]);
 
   const debouncedLink = useDebounce(link, 600);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Timestamp validation (same as before)
   useEffect(() => {
     if (jumpTo.trim() === '') {
       setParsedSeconds(0);
@@ -539,7 +539,6 @@ export default function Home() {
     }
   }, [jumpTo]);
 
-  // Fetch article preview (unchanged)
   useEffect(() => {
     if (!debouncedLink) {
       setArticleContent('');
@@ -590,7 +589,6 @@ export default function Home() {
     fetchArticle();
   }, [debouncedLink]);
 
-  // Short URL generation: join highlights with commas, also append timestamp param if any
   const generateShortUrl = useCallback(async () => {
     setShortUrl('');
     setLoadingShort(true);
@@ -605,22 +603,18 @@ export default function Home() {
     try {
       const url = new URL(link);
 
-      // Append YouTube timestamp param if present
       if (parsedSeconds > 0 && isYouTubeUrl(url)) {
         url.searchParams.set('t', parsedSeconds.toString());
       }
 
-      // Compose highlight param string: comma-separated highlights + optional jumpTo if single phrase entered but not in list
       let highlightParam = highlightList.join(',');
       if (jumpTo.trim() && !highlightList.includes(jumpTo.trim())) {
         highlightParam = highlightParam ? highlightParam + ',' + jumpTo.trim() : jumpTo.trim();
       }
 
-      // Append hash with multiple highlights if any
       if (highlightParam) {
         url.hash = `:~:text=${encodeURIComponent(highlightParam)}`;
       } else if (jumpTo.trim()) {
-        // fallback single jumpTo phrase in hash
         url.hash = `:~:text=${encodeURIComponent(jumpTo.trim())}`;
       }
 
@@ -641,12 +635,10 @@ export default function Home() {
     setLoadingShort(false);
   }, [link, parsedSeconds, highlightList, jumpTo]);
 
-  // Handle create button click
   const handleCreate = useCallback(() => {
     generateShortUrl();
   }, [generateShortUrl]);
 
-  // Copy short URL to clipboard
   const handleCopy = useCallback(() => {
     if (!shortUrl) return;
     navigator.clipboard.writeText(shortUrl).then(() => {
@@ -654,33 +646,27 @@ export default function Home() {
     });
   }, [shortUrl]);
 
-  // Handle text selection in preview pane to add multiple highlights
   const handleTextSelect = () => {
     if (!window.getSelection) return;
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed) return;
     const selectedText = selection.toString().trim();
 
-    // Prevent duplicates & ignore if too short or too long
     if (
       selectedText.length > 2 &&
       selectedText.length < 150 &&
       !highlightList.includes(selectedText)
     ) {
       setHighlightList(prev => [...prev, selectedText]);
-      // Clear jumpTo input since highlights are managed as a list now
       setJumpTo('');
-      // Clear selection for UX
       selection.removeAllRanges();
     }
   };
 
-  // Remove highlight chip
   const removeHighlight = useCallback((text: string) => {
     setHighlightList(prev => prev.filter(h => h !== text));
   }, []);
 
-  // Detect media type (audio/video)
   const isMediaFile = useMemo(() => {
     if (!link) return false;
     try {
@@ -696,24 +682,20 @@ export default function Home() {
     }
   }, [link]);
 
-  // Highlight search inside preview with scroll to first match
   useEffect(() => {
     if (!previewRef.current) return;
     const contentEl = previewRef.current;
     const search = debouncedSearchTerm.trim();
 
-    // Remove old highlights
     const innerHTML = contentEl.innerHTML;
     const cleanedHTML = innerHTML.replace(/<mark class="highlight">([^<]*)<\/mark>/gi, '$1');
     contentEl.innerHTML = cleanedHTML;
 
     if (search === '') return;
 
-    // Highlight new matches (simple text match)
     const regex = new RegExp(`(${search.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
     contentEl.innerHTML = contentEl.innerHTML.replace(regex, '<mark class="highlight">$1</mark>');
 
-    // Scroll to first match
     const firstMark = contentEl.querySelector('mark.highlight');
     if (firstMark) {
       firstMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -771,7 +753,6 @@ export default function Home() {
               disabled={!link || loadingPreview || loadingShort}
             />
 
-            {/* Show chips for all highlights */}
             {highlightList.length > 0 && (
               <HighlightChipsContainer aria-label="Selected highlights">
                 {highlightList.map(text => (
@@ -812,12 +793,33 @@ export default function Home() {
               {loadingShort ? 'Generating...' : 'Make it a Jump2'}
             </Button>
           </Form>
-
           {error && (
             <Feedback id="form-error" role="alert" aria-live="assertive" aria-atomic="true">
               {error}
             </Feedback>
           )}
+
+          {/* Moved ShareWrapper here for better visibility */}
+          <ShareWrapper>
+            {shortUrl && (
+              <>
+                <ShortUrlInput
+                  type="text"
+                  readOnly
+                  value={shortUrl}
+                  onFocus={e => e.target.select()}
+                  aria-label="Short URL"
+                />
+                <CopyButton
+                  type="button"
+                  onClick={handleCopy}
+                  aria-label="Copy short URL to clipboard"
+                >
+                  Copy Short URL
+                </CopyButton>
+              </>
+            )}
+          </ShareWrapper>
         </FormWrapper>
       </LeftColumn>
 
@@ -861,27 +863,6 @@ export default function Home() {
               return false;
             }
           })() && <YouTubePlayer url={link} startSeconds={parsedSeconds} />}
-
-        <ShareWrapper>
-          {shortUrl && (
-            <>
-              <ShortUrlInput
-                type="text"
-                readOnly
-                value={shortUrl}
-                onFocus={e => e.target.select()}
-                aria-label="Short URL"
-              />
-              <CopyButton
-                type="button"
-                onClick={handleCopy}
-                aria-label="Copy short URL to clipboard"
-              >
-                Copy Short URL
-              </CopyButton>
-            </>
-          )}
-        </ShareWrapper>
       </PreviewWrapper>
     </PageContainer>
   );

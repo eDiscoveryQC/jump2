@@ -1,12 +1,8 @@
 import { GetServerSideProps } from 'next';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../lib/supabase';
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  const shortCode = context.params?.shortCode as string;
-
-  if (!shortCode) {
-    return { notFound: true };
-  }
+  const { shortCode } = context.params!;
 
   const { data, error } = await supabase
     .from('short_links')
@@ -15,7 +11,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     .single();
 
   if (error || !data) {
-    return { notFound: true };
+    return {
+      notFound: true,
+    };
   }
 
   return {
@@ -26,6 +24,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   };
 };
 
-export default function Redirect() {
-  return null; // This component never renders
+export default function RedirectPage() {
+  return null; // This page never renders because of redirect
 }
