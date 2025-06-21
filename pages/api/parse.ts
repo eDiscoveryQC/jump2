@@ -1,5 +1,3 @@
-// pages/api/parse.ts
-
 import type { NextApiRequest, NextApiResponse } from 'next';
 import puppeteer from 'puppeteer';
 import { Readability } from '@mozilla/readability';
@@ -17,6 +15,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     browser = await puppeteer.launch({
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
       headless: true,
+      executablePath: process.env.CHROME_EXECUTABLE_PATH || undefined,
+      // Optional: userDataDir can help cache Chromium if needed
+      // userDataDir: '/tmp/puppeteer_cache',
     });
 
     const page = await browser.newPage();
