@@ -9,8 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "type-check": "tsc --noEmit"
-	"postinstall": "node ./scripts/download-chromium.js"
+    "type-check": "tsc --noEmit",
+    "postinstall": "node ./scripts/download-chromium.js"
   },
   "dependencies": {
     "next": "15.3.4",
