@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import styled from "styled-components";
-import HighlightEditorLongTerm from "../components/HighlightEditorLongTerm"; // The component from the previous message
+import HighlightEditor from "../components/HighlightEditor"; // The component from the previous message
 
 const PageContainer = styled.div`
   max-width: 960px;
