@@ -10,32 +10,26 @@
     "lint": "next lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "type-check": "tsc --noEmit"
+	"postinstall": "node ./scripts/download-chromium.js"
   },
   "dependencies": {
-    "@mozilla/readability": "^0.6.0",
-    "@next/bundle-analyzer": "^15.3.4",
-    "chrome-aws-lambda": "^10.1.0",
-    "framer-motion": "^12.18.1",
-    "jsdom": "^26.1.0",
     "next": "15.3.4",
-    "openai": "^5.6.0",
-    "puppeteer": "^24.10.2",
-    "puppeteer-core": "^10.1.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "styled-components": "^5.3.11",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "chrome-aws-lambda": "^10.1.0",
+    "puppeteer-core": "^10.1.0"
   },
   "devDependencies": {
-    "@types/jsdom": "^21.1.7",
     "@types/node": "^20.3.1",
     "@types/react": "^18.2.6",
     "@types/styled-components": "^5.1.26",
-    "@typescript-eslint/eslint-plugin": "^6.8.0",
-    "@typescript-eslint/parser": "^6.8.0",
     "eslint": "^8.43.0",
     "eslint-config-next": "15.3.4",
-    "prettier": "^3.0.0"
+    "prettier": "^3.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.8.0",
+    "@typescript-eslint/parser": "^6.8.0"
   },
   "engines": {
     "node": ">=18.0.0"
