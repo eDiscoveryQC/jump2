@@ -1,35 +1,31 @@
 # Stage 1: Build
-FROM node:20-alpine AS builder
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Install dependencies
-COPY package.json package-lock.json* ./
-RUN npm ci --legacy-peer-deps
+# Install dependencies first to leverage Docker cache
+COPY package.json package-lock.json ./
+RUN npm install
 
-# Copy app source code
+# Copy rest of app source code
 COPY . .
 
-# Build the Next.js app
+# Build Next.js app
 RUN npm run build
 
 # Stage 2: Production image
-FROM node:20-alpine AS runner
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Install only production dependencies
-COPY package.json package-lock.json* ./
-RUN npm ci --only=production --legacy-peer-deps
+# Copy built app and node_modules from builder stage
+COPY --from=builder /app ./
 
-# Copy built Next.js files and public assets from builder
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.ts ./next.config.ts
-COPY --from=builder /app/node_modules ./node_modules
-
-# Expose port 3000
+# Expose port the app will run on
 EXPOSE 3000
+
+# Set environment variable (optional, you can also set in Render dashboard)
+ENV NODE_ENV=production
 
 # Start Next.js in production mode
 CMD ["npm", "start"]

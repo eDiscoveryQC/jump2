@@ -30,15 +30,20 @@ export default async function handler(
     let args = [];
 
     if (process.env.NODE_ENV === 'production') {
-      const chromium = await import('chrome-aws-lambda');
+      // Import the module and access .default for correct typing and usage
+      const chromiumModule = await import('chrome-aws-lambda');
       puppeteer = await import('puppeteer-core');
-      executablePath = await chromium.executablePath;
-      args = chromium.args;
+
+      // Access executablePath and args from default export of chrome-aws-lambda
+      executablePath = await chromiumModule.default.executablePath;
+      args = chromiumModule.default.args;
+
       console.log('[parse.ts] Using chrome-aws-lambda in production');
     } else {
       puppeteer = await import('puppeteer');
       executablePath = undefined;
       args = ['--no-sandbox', '--disable-setuid-sandbox'];
+
       console.log('[parse.ts] Using local puppeteer');
     }
 
@@ -54,8 +59,8 @@ export default async function handler(
 
     await page.setUserAgent(
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' +
-      'AppleWebKit/537.36 (KHTML, like Gecko) ' +
-      'Chrome/114.0.0.0 Safari/537.36'
+        'AppleWebKit/537.36 (KHTML, like Gecko) ' +
+        'Chrome/114.0.0.0 Safari/537.36'
     );
 
     console.log('[parse.ts] Navigating to URL...');
