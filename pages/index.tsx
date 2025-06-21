@@ -52,7 +52,7 @@ const PageContainer = styled.main`
   grid-template-columns: 1fr 2fr;
   gap: 3rem;
   background: radial-gradient(circle at top, #0f172a, #1e293b);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   color: #cbd5e1;
   user-select: none;
 
@@ -83,9 +83,7 @@ const LogoWrapper = styled.div`
   color: #60a5fa;
   -webkit-font-smoothing: antialiased;
   user-select: text;
-  filter:
-    drop-shadow(0 0 6px #60a5faa)
-    drop-shadow(0 0 10px #3b82f6aa);
+  filter: drop-shadow(0 0 6px #60a5faa) drop-shadow(0 0 10px #3b82f6aa);
   cursor: default;
 
   &:hover span:nth-child(2) {
@@ -97,9 +95,7 @@ const LogoWrapper = styled.div`
 
 const JumpText = styled.span`
   letter-spacing: -0.04em;
-  text-shadow:
-    1px 1px 2px #1e293b,
-    -1px -1px 2px #3b82f6;
+  text-shadow: 1px 1px 2px #1e293b, -1px -1px 2px #3b82f6;
 `;
 
 const TwoText = styled.span`
@@ -159,6 +155,23 @@ const Input = styled.input<{ disabled?: boolean }>`
   }
 
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "text")};
+`;
+
+const Textarea = styled.textarea`
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1.5px solid #334155;
+  background-color: #1e293b;
+  color: #f1f5f9;
+  padding: 0.75rem;
+  font-size: 1rem;
+  margin-top: 0.25rem;
+  margin-bottom: 1rem;
+  resize: vertical;
+
+  &:disabled {
+    background-color: #64748b;
+  }
 `;
 
 const Hint = styled.small`
@@ -506,6 +519,14 @@ const LightboxContent = styled.div`
   font-size: 1.125rem;
   line-height: 1.6;
   user-select: text;
+
+  h2 {
+    margin-top: 0;
+  }
+
+  p {
+    margin-bottom: 1rem;
+  }
 `;
 
 const ContactEmail = styled.a`
@@ -591,7 +612,11 @@ const YouTubePlayer = ({
         allowFullScreen
       />
       {startSeconds > 0 && (
-        <TimestampBadge aria-live="polite" aria-atomic="true" aria-relevant="additions">
+        <TimestampBadge
+          aria-live="polite"
+          aria-atomic="true"
+          aria-relevant="additions"
+        >
           ▶ {formatTimestamp(startSeconds)}
         </TimestampBadge>
       )}
@@ -860,7 +885,13 @@ export default function Home() {
         <ContactEmail href="mailto:contact@jump2.com">Contact: contact@jump2.com</ContactEmail>
       </MobileMenu>
 
-      <LightboxBackdrop open={showLightbox} role="dialog" aria-modal="true" aria-labelledby="welcomeTitle" aria-describedby="welcomeDesc">
+      <LightboxBackdrop
+        open={showLightbox}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="welcomeTitle"
+        aria-describedby="welcomeDesc"
+      >
         <LightboxContent>
           <h2 id="welcomeTitle">Welcome to Jump2!</h2>
           <p id="welcomeDesc">
@@ -878,43 +909,21 @@ export default function Home() {
             }}
           >
             <label htmlFor="feedbackMessage">Your Message</label>
-            <textarea
+            <Textarea
               id="feedbackMessage"
               value={feedbackMessage}
               onChange={(e) => setFeedbackMessage(e.target.value)}
               rows={4}
-              style={{
-                width: "100%",
-                borderRadius: "0.5rem",
-                border: "1.5px solid #334155",
-                backgroundColor: "#1e293b",
-                color: "#f1f5f9",
-                padding: "0.75rem",
-                marginTop: "0.25rem",
-                marginBottom: "1rem",
-                fontSize: "1rem",
-              }}
-              required
               disabled={feedbackSubmitting}
+              required
             />
             <label htmlFor="feedbackEmail">Your Email (optional)</label>
-            <input
+            <Input
               id="feedbackEmail"
               type="email"
               value={feedbackEmail}
               onChange={(e) => setFeedbackEmail(e.target.value)}
               placeholder="you@example.com"
-              style={{
-                width: "100%",
-                borderRadius: "0.5rem",
-                border: "1.5px solid #334155",
-                backgroundColor: "#1e293b",
-                color: "#f1f5f9",
-                padding: "0.75rem",
-                marginTop: "0.25rem",
-                marginBottom: "1rem",
-                fontSize: "1rem",
-              }}
               disabled={feedbackSubmitting}
             />
             <Button type="submit" disabled={feedbackSubmitting} aria-busy={feedbackSubmitting}>
