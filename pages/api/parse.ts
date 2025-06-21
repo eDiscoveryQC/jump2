@@ -13,7 +13,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let browser;
   try {
     browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--single-process',
+        '--no-zygote'
+      ],
       headless: true,
       executablePath: process.env.CHROME_EXECUTABLE_PATH || '/usr/bin/chromium',
     });
