@@ -16,8 +16,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
       headless: true,
       executablePath: process.env.CHROME_EXECUTABLE_PATH || '/usr/bin/chromium',
-      // Optional: userDataDir can help cache Chromium if needed
-      // userDataDir: '/tmp/puppeteer_cache',
     });
 
     const page = await browser.newPage();
