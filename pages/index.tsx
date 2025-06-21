@@ -580,7 +580,8 @@ export default function Home() {
         } else {
           setError('No preview available for this link.');
         }
-      } catch {
+      } catch (e) {
+        console.error('Fetch article error:', e);
         setError('Failed to load preview. You can still create the jump link.');
       }
       setLoadingPreview(false);
@@ -601,7 +602,15 @@ export default function Home() {
     }
 
     try {
-      const url = new URL(link);
+      let url: URL;
+      try {
+        url = new URL(link);
+      } catch (e) {
+        console.error('Invalid URL input:', e);
+        setError('Invalid URL format.');
+        setLoadingShort(false);
+        return;
+      }
 
       if (parsedSeconds > 0 && isYouTubeUrl(url)) {
         url.searchParams.set('t', parsedSeconds.toString());
@@ -618,18 +627,28 @@ export default function Home() {
         url.hash = `:~:text=${encodeURIComponent(jumpTo.trim())}`;
       }
 
+      console.log('Sending deepLink to API:', url.toString());
+
       const res = await fetch('/api/links', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullUrl: url.toString() }),
+        body: JSON.stringify({ deepLink: url.toString() }),
       });
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || 'Short URL generation failed');
+      if (!res.ok) {
+        console.error('API error response:', data);
+        throw new Error(data.error || 'Short URL generation failed');
+      }
 
-      setShortUrl(data.shortUrl);
+      // Construct full short URL for UI
+      const fullShortUrl = `${window.location.origin}/s/${data.shortCode || data.shortUrl}`;
+      setShortUrl(fullShortUrl);
+
+      console.log('Short URL generated:', fullShortUrl);
     } catch (e: any) {
+      console.error('Short URL generation error:', e);
       setError(e.message || 'Failed to generate short URL');
     }
     setLoadingShort(false);
@@ -799,7 +818,6 @@ export default function Home() {
             </Feedback>
           )}
 
-          {/* Moved ShareWrapper here for better visibility */}
           <ShareWrapper>
             {shortUrl && (
               <>
