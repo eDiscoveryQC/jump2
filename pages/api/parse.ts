@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { Browser, Page } from 'puppeteer-core';
 
 interface Article {
   content: string;
@@ -7,6 +8,64 @@ interface Article {
 interface ResponseData {
   article?: Article;
   error?: string;
+}
+
+let browser: Browser | null = null;
+
+// Helper to get or launch a browser instance
+async function getBrowser(): Promise<Browser> {
+  if (browser) return browser;
+
+  let puppeteer;
+  let executablePath: string | undefined;
+  let args: string[] = [];
+
+  if (process.env.NODE_ENV === 'production') {
+    const chromiumModule = await import('chrome-aws-lambda');
+    puppeteer = await import('puppeteer-core');
+    executablePath = await chromiumModule.default.executablePath;
+    args = chromiumModule.default.args;
+  } else {
+    puppeteer = await import('puppeteer');
+    executablePath = undefined;
+    args = ['--no-sandbox', '--disable-setuid-sandbox'];
+  }
+
+  browser = await puppeteer.launch({
+    args,
+    executablePath,
+    headless: true,
+    ignoreHTTPSErrors: true,
+    defaultViewport: { width: 1280, height: 800 },
+  });
+
+  return browser;
+}
+
+// Helper to create a new page with resource blocking enabled
+async function newPageWithBlock(browser: Browser): Promise<Page> {
+  const page = await browser.newPage();
+
+  // Block images, fonts, stylesheets, media, etc.
+  await page.setRequestInterception(true);
+  page.on('request', (req) => {
+    const resourceType = req.resourceType();
+    const blockedResources = ['image', 'stylesheet', 'font', 'media', 'manifest', 'other'];
+    if (blockedResources.includes(resourceType)) {
+      req.abort();
+    } else {
+      req.continue();
+    }
+  });
+
+  // Set consistent user agent to avoid bot detection
+  await page.setUserAgent(
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' +
+      'AppleWebKit/537.36 (KHTML, like Gecko) ' +
+      'Chrome/114.0.0.0 Safari/537.36'
+  );
+
+  return page;
 }
 
 export default async function handler(
@@ -22,62 +81,21 @@ export default async function handler(
 
   console.log(`[parse.ts] Starting parse for URL: ${url}`);
 
-  let browser = null;
+  let page: Page | null = null;
 
   try {
-    let puppeteer;
-    let executablePath: string | undefined;
-    let args: string[] = [];
+    const browserInstance = await getBrowser();
 
-    if (process.env.NODE_ENV === 'production') {
-      // Dynamic imports for production environment (serverless)
-      const chromiumModule = await import('chrome-aws-lambda');
-      puppeteer = await import('puppeteer-core');
+    page = await newPageWithBlock(browserInstance);
 
-      executablePath = await chromiumModule.default.executablePath;
-      args = chromiumModule.default.args;
-
-      console.log('[parse.ts] Using chrome-aws-lambda in production');
-    } else {
-      // Local development environment
-      puppeteer = await import('puppeteer');
-
-      executablePath = undefined;
-      args = ['--no-sandbox', '--disable-setuid-sandbox'];
-
-      console.log('[parse.ts] Using local puppeteer');
-    }
-
-    browser = await puppeteer.launch({
-      args,
-      executablePath,
-      headless: true,
-      ignoreHTTPSErrors: true,
-      defaultViewport: { width: 1280, height: 800 },
-    });
-
-    const page = await browser.newPage();
-
-    // Set consistent User-Agent to avoid bot detection
-    await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' +
-        'AppleWebKit/537.36 (KHTML, like Gecko) ' +
-        'Chrome/114.0.0.0 Safari/537.36'
-    );
-
-    console.log('[parse.ts] Navigating to URL...');
     const response = await page.goto(url, {
       waitUntil: 'networkidle2',
       timeout: 20000,
     });
 
-    if (!response) {
-      throw new Error('No response when navigating to URL');
-    }
+    if (!response) throw new Error('No response when navigating to URL');
 
-    if (!response.ok()) {
-      throw new Error(`Bad response status: ${response.status()}`);
-    }
+    if (!response.ok()) throw new Error(`Bad response status: ${response.status()}`);
 
     console.log('[parse.ts] Extracting article content...');
     const articleContent = await page.evaluate(() => {
@@ -118,11 +136,11 @@ export default async function handler(
     console.error('[parse.ts] Error:', error);
     res.status(500).json({ error: error.message || 'Internal Server Error' });
   } finally {
-    if (browser) {
+    if (page) {
       try {
-        await browser.close();
+        await page.close();
       } catch (closeError) {
-        console.error('[parse.ts] Error closing browser:', closeError);
+        console.error('[parse.ts] Error closing page:', closeError);
       }
     }
   }

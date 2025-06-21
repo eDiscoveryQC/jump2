@@ -38,7 +38,6 @@ const fadeInUpMixin = css`
 `;
 
 // === Styled Components ===
-
 const PageContainer = styled.main`
   min-height: 100vh;
   padding: 3rem 2rem 6rem;
@@ -524,6 +523,7 @@ export default function Home() {
   const debouncedLink = useDebounce(link, 600);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
+  // Validate and parse jumpTo timestamp/text
   useEffect(() => {
     if (jumpTo.trim() === '') {
       setParsedSeconds(0);
@@ -539,6 +539,7 @@ export default function Home() {
     }
   }, [jumpTo]);
 
+  // Fetch article preview if link changes (excluding YouTube)
   useEffect(() => {
     if (!debouncedLink) {
       setArticleContent('');
@@ -590,6 +591,7 @@ export default function Home() {
     fetchArticle();
   }, [debouncedLink]);
 
+  // Generate deep short URL for link + timestamp + highlights
   const generateShortUrl = useCallback(async () => {
     setShortUrl('');
     setLoadingShort(true);
@@ -612,10 +614,12 @@ export default function Home() {
         return;
       }
 
+      // If YouTube, add t= query param for start time
       if (parsedSeconds > 0 && isYouTubeUrl(url)) {
         url.searchParams.set('t', parsedSeconds.toString());
       }
 
+      // Compose highlight text hash param (no duplicates)
       let highlightParam = highlightList.join(',');
       if (jumpTo.trim() && !highlightList.includes(jumpTo.trim())) {
         highlightParam = highlightParam ? highlightParam + ',' + jumpTo.trim() : jumpTo.trim();
@@ -625,6 +629,8 @@ export default function Home() {
         url.hash = `:~:text=${encodeURIComponent(highlightParam)}`;
       } else if (jumpTo.trim()) {
         url.hash = `:~:text=${encodeURIComponent(jumpTo.trim())}`;
+      } else {
+        url.hash = '';
       }
 
       console.log('Sending deepLink to API:', url.toString());
@@ -642,7 +648,7 @@ export default function Home() {
         throw new Error(data.error || 'Short URL generation failed');
       }
 
-      // Construct full short URL for UI
+      // Compose full short URL for display (handles shortCode or shortUrl)
       const fullShortUrl = `${window.location.origin}/s/${data.shortCode || data.shortUrl}`;
       setShortUrl(fullShortUrl);
 
@@ -665,6 +671,7 @@ export default function Home() {
     });
   }, [shortUrl]);
 
+  // Handle text selection in preview for highlight addition
   const handleTextSelect = () => {
     if (!window.getSelection) return;
     const selection = window.getSelection();
@@ -686,6 +693,7 @@ export default function Home() {
     setHighlightList(prev => prev.filter(h => h !== text));
   }, []);
 
+  // Detect if link is a media file (video/audio) for placeholder text
   const isMediaFile = useMemo(() => {
     if (!link) return false;
     try {
@@ -701,20 +709,24 @@ export default function Home() {
     }
   }, [link]);
 
+  // Highlight search term in article preview
   useEffect(() => {
     if (!previewRef.current) return;
     const contentEl = previewRef.current;
     const search = debouncedSearchTerm.trim();
 
+    // Remove existing highlights
     const innerHTML = contentEl.innerHTML;
     const cleanedHTML = innerHTML.replace(/<mark class="highlight">([^<]*)<\/mark>/gi, '$1');
     contentEl.innerHTML = cleanedHTML;
 
-    if (search === '') return;
+    if (!search) return;
 
+    // Highlight all matches of search term (case-insensitive)
     const regex = new RegExp(`(${search.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
     contentEl.innerHTML = contentEl.innerHTML.replace(regex, '<mark class="highlight">$1</mark>');
 
+    // Scroll first highlight into view
     const firstMark = contentEl.querySelector('mark.highlight');
     if (firstMark) {
       firstMark.scrollIntoView({ behavior: 'smooth', block: 'center' });

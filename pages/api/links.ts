@@ -25,13 +25,14 @@ export default async function handler(
   try {
     console.log('Checking if deepLink already exists:', deepLink);
 
+    // Check if deepLink already has a short code
     const { data: existing, error: selectError } = await supabase
       .from('short_links')
       .select('short_code')
       .eq('deep_link', deepLink)
-      .single();
+      .maybeSingle(); // maybeSingle returns null if no row, no error
 
-    if (selectError && selectError.code !== 'PGRST116') {
+    if (selectError) {
       console.error('DB select error:', selectError);
       return res.status(500).json({ error: `DB error: ${selectError.message}` });
     }
@@ -53,9 +54,9 @@ export default async function handler(
         .from('short_links')
         .select('id')
         .eq('short_code', candidate)
-        .single();
+        .maybeSingle();
 
-      if (codeError && codeError.code !== 'PGRST116') {
+      if (codeError) {
         console.error('DB error checking short_code existence:', codeError);
         return res.status(500).json({ error: `DB error: ${codeError.message}` });
       }
@@ -64,6 +65,9 @@ export default async function handler(
         shortCode = candidate;
         break;
       }
+
+      // Optional: add a tiny delay here to reduce hammering if you want
+      // await new Promise(resolve => setTimeout(resolve, 100));
     }
 
     if (!shortCode) {
@@ -75,8 +79,7 @@ export default async function handler(
 
     const { data: insertedData, error: insertError } = await supabase
       .from('short_links')
-      .insert({ short_code: shortCode, deep_link: deepLink })
-      .select();
+      .insert({ short_code: shortCode, deep_link: deepLink });
 
     if (insertError) {
       console.error('Insert error:', insertError);
