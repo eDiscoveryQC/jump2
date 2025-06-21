@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
 import { Readability } from '@mozilla/readability';
 import { JSDOM } from 'jsdom';
 
@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     browser = await puppeteer.launch({
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
       headless: true,
-      executablePath: process.env.CHROME_EXECUTABLE_PATH || undefined,
+      executablePath: process.env.CHROME_EXECUTABLE_PATH || '/usr/bin/chromium',
       // Optional: userDataDir can help cache Chromium if needed
       // userDataDir: '/tmp/puppeteer_cache',
     });
