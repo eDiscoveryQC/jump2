@@ -2,7 +2,7 @@ import { GetServerSideProps } from 'next';
 import { supabase } from '../../lib/supabase';
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  const shortCode = context.params?.shortCode as string;
+  const shortCode = context.params?.id as string;
 
   if (!shortCode) {
     return { notFound: true };
