@@ -1,94 +1,118 @@
-import { useState, useEffect } from 'react';
-import styled, { keyframes } from 'styled-components';
-import { useRouter } from 'next/router';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import styled, { keyframes, css } from 'styled-components';
 
 // === Animations ===
-const jumpOffP = keyframes`
-  0%, 100% { transform: translate(0, 0) rotate(0); }
-  50% { transform: translate(12px, -18px) rotate(-10deg); }
+const glowPulse = keyframes`
+  0%, 100% {
+    text-shadow: 0 0 6px #3b82f6, 0 0 15px #60a5fa;
+  }
+  50% {
+    text-shadow: 0 0 10px #3b82f6, 0 0 25px #60a5fa;
+  }
 `;
 
-const pulse = keyframes`
-  0% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.7); }
-  70% { box-shadow: 0 0 0 15px rgba(96, 165, 250, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0); }
-`;
-
-const fadeIn = keyframes`
+const fadeInUp = keyframes`
   from { opacity: 0; transform: translateY(8px);}
   to { opacity: 1; transform: translateY(0);}
 `;
 
+const fadeInUpMixin = css`
+  animation: ${fadeInUp} 0.5s ease forwards;
+`;
+
 // === Styled Components ===
-const Container = styled.main`
+
+const PageContainer = styled.main`
   min-height: 100vh;
-  padding: 4rem 2rem 6rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  padding: 3rem 2rem 6rem;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 3rem;
   background: radial-gradient(circle at top, #0f172a, #1e293b);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #cbd5e1;
   user-select: none;
+
+  @media (max-width: 850px) {
+    grid-template-columns: 1fr;
+    padding: 2rem 1rem 4rem;
+  }
+`;
+
+const LeftColumn = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  max-width: 480px;
+  ${fadeInUpMixin};
+  @media (max-width: 850px) {
+    max-width: 100%;
+  }
 `;
 
 const LogoWrapper = styled.div`
-  position: relative;
-  font-size: clamp(3rem, 7vw, 4.5rem);
-  font-weight: 900;
-  color: #60a5fa;
-  margin-bottom: 0.75rem;
-  user-select: text;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 0.15em;
+  font-weight: 900;
+  font-size: clamp(3rem, 7vw, 4.5rem);
+  color: #60a5fa;
+  -webkit-font-smoothing: antialiased;
+  user-select: text;
+  filter:
+    drop-shadow(0 0 6px #60a5faa)
+    drop-shadow(0 0 10px #3b82f6aa);
+  cursor: default;
+
+  &:hover span:nth-child(2) {
+    animation: ${glowPulse} 3s infinite;
+    transform: scale(1.25);
+    filter: drop-shadow(0 0 15px #3b82f6);
+  }
 `;
 
 const JumpText = styled.span`
-  position: relative;
-  z-index: 2;
+  letter-spacing: -0.04em;
+  text-shadow:
+    1px 1px 2px #1e293b,
+    -1px -1px 2px #3b82f6;
 `;
 
 const TwoText = styled.span`
   color: #3b82f6;
-  font-weight: 900;
-  font-size: 1.1em;
-  position: absolute;
-  left: 2.35em;
-  top: 0.2em;
-  z-index: 1;
-  animation: ${jumpOffP} 2.5s ease-in-out infinite;
+  font-size: 1.2em;
   user-select: none;
-  pointer-events: none;
-  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+  transition: transform 0.3s ease, filter 0.3s ease;
+  transform-origin: left center;
+  text-shadow: 0 0 12px #3b82f6aa;
 `;
 
+// Headings & text
 const Subtitle = styled.p`
   font-size: clamp(1.25rem, 2.5vw, 1.75rem);
-  max-width: 640px;
-  text-align: center;
   color: #94a3b8;
-  margin: 0 0 3rem;
   font-weight: 600;
+  line-height: 1.4;
 `;
 
 const Description = styled.p`
-  max-width: 720px;
   font-size: 1.125rem;
-  line-height: 1.75;
-  color: #cbd5e1;
-  margin-bottom: 4rem;
-  text-align: center;
+  line-height: 1.7;
   font-weight: 400;
   user-select: text;
+  color: #cbd5e1;
+`;
+
+// Form and Inputs
+const FormWrapper = styled.div`
+  width: 100%;
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  max-width: 480px;
-  width: 100%;
 `;
 
 const Input = styled.input<{ disabled?: boolean }>`
@@ -100,6 +124,7 @@ const Input = styled.input<{ disabled?: boolean }>`
   font-weight: 500;
   color: #f1f5f9;
   transition: border-color 0.3s ease, background-color 0.3s ease;
+  caret-color: #3b82f6;
 
   &::placeholder {
     color: #64748b;
@@ -115,6 +140,7 @@ const Input = styled.input<{ disabled?: boolean }>`
   cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'text')};
 `;
 
+// Hint text below inputs
 const Hint = styled.small`
   color: #64748b;
   font-family: monospace;
@@ -122,8 +148,11 @@ const Hint = styled.small`
   margin-top: -1rem;
   margin-bottom: 1.5rem;
   user-select: none;
+  letter-spacing: 0.04em;
+  font-variant-ligatures: none;
 `;
 
+// Buttons
 const Button = styled.button<{ disabled?: boolean }>`
   padding: 1.15rem 2rem;
   border-radius: 9999px;
@@ -135,7 +164,7 @@ const Button = styled.button<{ disabled?: boolean }>`
   cursor: pointer;
   transition: transform 0.25s ease, background-color 0.25s ease;
   user-select: none;
-  animation: ${pulse} 2.5s infinite;
+  animation: ${glowPulse} 2.5s infinite;
 
   &:hover:not(:disabled) {
     transform: scale(1.07);
@@ -149,18 +178,18 @@ const Button = styled.button<{ disabled?: boolean }>`
   }
 `;
 
+// Feedback message
 const Feedback = styled.p`
   color: #f87171;
   font-weight: 600;
   margin-top: 0.75rem;
   text-align: center;
   user-select: text;
+  ${fadeInUpMixin};
 `;
 
-const PreviewContainer = styled.section`
-  margin-top: 3.5rem;
-  width: 100%;
-  max-width: 720px;
+// Preview + search + highlight
+const PreviewWrapper = styled.section`
   background: #1e293b;
   border-radius: 1rem;
   border: 1.5px solid #334155;
@@ -171,7 +200,9 @@ const PreviewContainer = styled.section`
   overflow-y: auto;
   box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3);
   user-select: text;
-  animation: ${fadeIn} 0.4s ease forwards;
+  min-height: 500px;
+  max-height: 80vh;
+  position: relative;
 
   h1, h2, h3, h4 {
     color: #60a5fa;
@@ -210,12 +241,51 @@ const PreviewContainer = styled.section`
   }
 `;
 
+// Search input inside preview
+const PreviewSearch = styled.input`
+  position: sticky;
+  top: 1rem;
+  z-index: 10;
+  width: 100%;
+  max-width: 480px;
+  margin-bottom: 1rem;
+  padding: 0.7rem 1rem;
+  border-radius: 0.7rem;
+  border: 1.5px solid #334155;
+  background: #1e293b;
+  color: #f1f5f9;
+  font-weight: 500;
+  font-size: 1rem;
+  user-select: text;
+  transition: border-color 0.3s ease;
+
+  &::placeholder {
+    color: #64748b;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 10px #3b82f6aa;
+  }
+`;
+
+const HighlightedSpan = styled.mark`
+  background-color: #2563ebaa;
+  color: #e0e7ff;
+  border-radius: 3px;
+  padding: 0 3px;
+  transition: background-color 0.3s ease;
+`;
+
+// Share controls
 const ShareWrapper = styled.div`
   margin-top: 2.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
+  ${fadeInUpMixin};
 `;
 
 const ShortUrlInput = styled.input`
@@ -263,6 +333,7 @@ const VideoWrapper = styled.div`
   overflow: hidden;
   box-shadow: 0 8px 20px rgba(0,0,0,0.3);
   position: relative;
+  will-change: transform;
 `;
 
 const TimestampBadge = styled.div`
@@ -278,25 +349,27 @@ const TimestampBadge = styled.div`
   font-size: 0.85rem;
   user-select: none;
   pointer-events: none;
+  text-shadow: 0 0 6px rgba(0,0,0,0.7);
 `;
 
-// === Helper Functions ===
-function useDebounce(value: string, delay: number) {
-  const [debouncedValue, setDebouncedValue] = useState(value);
+// ==== Helper Hooks & Utils ====
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState<T>(value);
   useEffect(() => {
-    const handler = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(handler);
+    const timeout = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timeout);
   }, [value, delay]);
-  return debouncedValue;
+  return debounced;
 }
 
-function isYouTubeUrl(url: URL) {
-  return ['www.youtube.com', 'youtube.com', 'youtu.be'].includes(url.hostname);
-}
+const isYouTubeUrl = (url: URL) =>
+  ['www.youtube.com', 'youtube.com', 'youtu.be'].includes(url.hostname);
 
-function parseTimestamp(input: string) {
+function parseTimestamp(input: string): number {
   if (!input) return 0;
   const parts = input.trim().split(':').map(Number);
+  if (parts.some(isNaN)) return NaN;
   if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
   if (parts.length === 2) return parts[0] * 60 + parts[1];
   if (parts.length === 1) return parts[0];
@@ -304,17 +377,19 @@ function parseTimestamp(input: string) {
 }
 
 function formatTimestamp(seconds: number) {
+  if (seconds < 0) return '';
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
-  return h > 0
-    ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
-    : `${m}:${s.toString().padStart(2, '0')}`;
+  if (h > 0) {
+    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
+  return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-// YouTube Player component
-function YouTubePlayer({ url, startSeconds }: { url: string; startSeconds: number }) {
-  const videoId = (() => {
+// === Component: YouTube Player embed ===
+const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: number }) => {
+  const videoId = useMemo(() => {
     try {
       const u = new URL(url);
       if (u.hostname === 'youtu.be') return u.pathname.slice(1);
@@ -322,14 +397,16 @@ function YouTubePlayer({ url, startSeconds }: { url: string; startSeconds: numbe
     } catch {
       return '';
     }
-  })();
+  }, [url]);
 
-  const formattedTimestamp = formatTimestamp(startSeconds);
-
-  const src = `https://www.youtube.com/embed/${videoId}?start=${startSeconds}&autoplay=0&modestbranding=1&rel=0`;
+  const src = useMemo(
+    () =>
+      `https://www.youtube.com/embed/${videoId}?start=${startSeconds}&autoplay=0&modestbranding=1&rel=0`,
+    [videoId, startSeconds]
+  );
 
   return (
-    <VideoWrapper>
+    <VideoWrapper role="region" aria-label="YouTube video player">
       <iframe
         width="100%"
         height="360"
@@ -339,29 +416,35 @@ function YouTubePlayer({ url, startSeconds }: { url: string; startSeconds: numbe
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
       />
-      {startSeconds > 0 && <TimestampBadge>▶ {formattedTimestamp}</TimestampBadge>}
+      {startSeconds > 0 && (
+        <TimestampBadge aria-live="polite" aria-atomic="true" aria-relevant="additions">
+          ▶ {formatTimestamp(startSeconds)}
+        </TimestampBadge>
+      )}
     </VideoWrapper>
   );
-}
+};
 
-// === Main Home Component ===
+// === Main Component ===
 export default function Home() {
-  const router = useRouter();
   const [link, setLink] = useState('');
   const [jumpTo, setJumpTo] = useState('');
   const [parsedSeconds, setParsedSeconds] = useState(0);
   const [articleContent, setArticleContent] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
   const [shortUrl, setShortUrl] = useState('');
   const [loadingShort, setLoadingShort] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
 
-  const debouncedLink = useDebounce(link, 500);
+  const debouncedLink = useDebounce(link, 600);
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Parse timestamp input & validate
   useEffect(() => {
     if (jumpTo.trim() === '') {
       setParsedSeconds(0);
+      setError('');
       return;
     }
     const secs = parseTimestamp(jumpTo);
@@ -373,17 +456,20 @@ export default function Home() {
     }
   }, [jumpTo]);
 
-  // Fetch article preview if not YouTube
   useEffect(() => {
     if (!debouncedLink) {
       setArticleContent('');
       setError('');
+      setShortUrl('');
       return;
     }
+    let url: URL;
     try {
-      const url = new URL(debouncedLink);
+      url = new URL(debouncedLink);
       if (isYouTubeUrl(url)) {
         setArticleContent('');
+        setError('');
+        setShortUrl('');
         return;
       }
     } catch {
@@ -397,8 +483,11 @@ export default function Home() {
       setArticleContent('');
       setShortUrl('');
       try {
-        const res = await fetch(`/api/parse?url=${encodeURIComponent(debouncedLink)}`);
-        if (!res.ok) throw new Error('Failed to fetch article.');
+        const res = await fetch(`/api/parse?url=${encodeURIComponent(debouncedLink)}`, {
+          headers: { Accept: 'application/json' },
+          method: 'GET',
+        });
+        if (!res.ok) throw new Error('Failed to fetch article preview.');
         const json = await res.json();
         if (json.article?.content) {
           setArticleContent(json.article.content);
@@ -410,11 +499,11 @@ export default function Home() {
       }
       setLoadingPreview(false);
     };
+
     fetchArticle();
   }, [debouncedLink]);
 
-  // Generate short URL
-  const generateShortUrl = async (fullUrl: string) => {
+  const generateShortUrl = useCallback(async (fullUrl: string) => {
     setShortUrl('');
     setLoadingShort(true);
     setError('');
@@ -425,26 +514,43 @@ export default function Home() {
         body: JSON.stringify({ fullUrl }),
       });
       const data = await res.json();
-      if (res.ok) {
-        setShortUrl(data.shortUrl);
-      } else {
-        setError(data.error || 'Failed to generate short URL');
-      }
-    } catch {
-      setError('Failed to generate short URL');
+      if (!res.ok) throw new Error(data.error || 'Short URL generation failed');
+      setShortUrl(data.shortUrl);
+    } catch (e: any) {
+      setError(e.message || 'Failed to generate short URL');
     }
     setLoadingShort(false);
-  };
+  }, []);
 
-  // Handle create Jump2 link
-  const handleCreate = () => {
+  useEffect(() => {
+    if (!previewRef.current) return;
+    const contentEl = previewRef.current;
+    const search = debouncedSearchTerm.trim();
+    // Remove old highlights
+    const innerHTML = contentEl.innerHTML;
+    const cleanedHTML = innerHTML.replace(/<mark class="highlight">([^<]*)<\/mark>/gi, '$1');
+    contentEl.innerHTML = cleanedHTML;
+
+    if (search === '') return;
+
+    // Highlight new matches (simple text match)
+    const regex = new RegExp(`(${search.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+    contentEl.innerHTML = contentEl.innerHTML.replace(regex, '<mark class="highlight">$1</mark>');
+
+    // Scroll to first match
+    const firstMark = contentEl.querySelector('mark.highlight');
+    if (firstMark) {
+      firstMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [debouncedSearchTerm, articleContent]);
+
+  const handleCreate = useCallback(() => {
     setError('');
     setShortUrl('');
     if (!link) {
       setError('Please paste a valid link.');
       return;
     }
-
     try {
       const url = new URL(link);
       if (parsedSeconds > 0 && isYouTubeUrl(url)) {
@@ -452,121 +558,173 @@ export default function Home() {
       } else if (jumpTo.trim() !== '') {
         url.hash = `:~:text=${encodeURIComponent(jumpTo.trim())}`;
       }
-
       generateShortUrl(url.toString());
     } catch {
       setError('Invalid URL format.');
     }
+  }, [link, jumpTo, parsedSeconds, generateShortUrl]);
+
+  const handleCopy = useCallback(() => {
+    if (!shortUrl) return;
+    navigator.clipboard.writeText(shortUrl).then(() => {
+      alert('Short URL copied to clipboard!');
+    });
+  }, [shortUrl]);
+
+  // Set jumpTo input from selected text in preview
+  const handleTextSelect = () => {
+    if (!window.getSelection) return;
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed) return;
+    const selectedText = selection.toString().trim();
+    if (selectedText.length > 2 && selectedText.length < 150) {
+      setJumpTo(selectedText);
+    }
   };
 
+  // Determine if link is a media file or streaming service
+  const isMediaFile = useMemo(() => {
+    if (!link) return false;
+    try {
+      const urlObj = new URL(link);
+      const mediaExts = ['mp3', 'wav', 'ogg', 'm4a', 'mp4', 'webm', 'mov', 'avi'];
+      const path = urlObj.pathname.toLowerCase();
+      if (mediaExts.some(ext => path.endsWith(`.${ext}`))) return true;
+      const mediaHosts = ['youtube.com', 'youtu.be', 'soundcloud.com', 'vimeo.com'];
+      if (mediaHosts.some(h => urlObj.hostname.includes(h))) return true;
+      return false;
+    } catch {
+      return false;
+    }
+  }, [link]);
+
   return (
-    <Container>
-      <LogoWrapper>
-        <JumpText>Jump</JumpText>
-        <TwoText>2</TwoText>
-      </LogoWrapper>
+    <PageContainer role="main" aria-label="Jump2 content sharer">
+      <LeftColumn>
+        <LogoWrapper aria-label="Jump2 logo" role="img" tabIndex={-1}>
+          <JumpText>Jump</JumpText>
+          <TwoText>2</TwoText>
+        </LogoWrapper>
 
-      <Subtitle>Skip the fluff. Jump2 the good part.</Subtitle>
+        <Subtitle>Skip the fluff. Jump2 the good part.</Subtitle>
 
-      <Description>
-        Paste a link (article or video) and highlight the best part — timestamp, quote, or keyword.
-      </Description>
+        <Description>
+          Paste a link (article or video) and highlight the best part — timestamp, quote, or keyword.
+        </Description>
 
-      <Form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleCreate();
-        }}
-        noValidate
-      >
-        <Input
-          type="url"
-          placeholder="Paste a link (article or video)..."
-          value={link}
-          onChange={(e) => setLink(e.target.value)}
-          spellCheck={false}
-          autoComplete="off"
-          required
-          aria-label="Content link"
-          aria-invalid={!!error}
-          disabled={loadingPreview || loadingShort}
-        />
-        <Input
-          type="text"
-          placeholder="Jump to... (timestamp or highlight)"
-          value={jumpTo}
-          onChange={(e) => setJumpTo(e.target.value)}
-          spellCheck={false}
-          autoComplete="off"
-          aria-label="Jump to position"
-          disabled={!link || loadingPreview || loadingShort}
-        />
-        <Hint>
-          For videos, enter timestamp like <code>1:23</code> or <code>0:02:15</code>
-        </Hint>
-
-        <Button
-          type="submit"
-          disabled={
-            loadingPreview ||
-            loadingShort ||
-            !link ||
-            (!!jumpTo && error !== '')
-          }
-          aria-disabled={
-            loadingPreview ||
-            loadingShort ||
-            !link ||
-            (!!jumpTo && error !== '')
-          }
-        >
-          {loadingShort ? 'Generating...' : 'Make it a Jump2'}
-        </Button>
-      </Form>
-
-      {error && <Feedback role="alert">{error}</Feedback>}
-
-      {loadingPreview && (
-        <PreviewContainer aria-live="polite" aria-busy="true">
-          <em>Loading preview...</em>
-        </PreviewContainer>
-      )}
-
-      {!loadingPreview && articleContent && (
-        <PreviewContainer dangerouslySetInnerHTML={{ __html: articleContent }} />
-      )}
-
-      {link && (() => {
-        try {
-          const urlObj = new URL(link);
-          return isYouTubeUrl(urlObj);
-        } catch {
-          return false;
-        }
-      })() && <YouTubePlayer url={link} startSeconds={parsedSeconds} />}
-
-      <ShareWrapper>
-        {shortUrl && (
-          <>
-            <ShortUrlInput
-              type="text"
-              readOnly
-              value={shortUrl}
-              onFocus={(e) => e.target.select()}
-              aria-label="Short URL"
+        <FormWrapper aria-live="polite" aria-atomic="true" aria-describedby="form-error">
+          <Form
+            onSubmit={e => {
+              e.preventDefault();
+              handleCreate();
+            }}
+            noValidate
+          >
+            <Input
+              type="url"
+              placeholder="Paste a link (article or video)..."
+              value={link}
+              onChange={e => setLink(e.target.value.trim())}
+              spellCheck={false}
+              autoComplete="off"
+              required
+              aria-label="Content link"
+              aria-invalid={!!error}
+              disabled={loadingPreview || loadingShort}
+              autoFocus
             />
-            <CopyButton
-              onClick={() => {
-                navigator.clipboard.writeText(shortUrl);
-                alert('Short URL copied to clipboard!');
-              }}
-              aria-label="Copy short URL"
+
+            <Input
+              type="text"
+              placeholder={
+                isMediaFile
+                  ? 'Jump to timestamp like 1:23 or 0:02:15'
+                  : 'Jump to highlight text or timestamp'
+              }
+              value={jumpTo}
+              onChange={e => setJumpTo(e.target.value)}
+              spellCheck={false}
+              autoComplete="off"
+              aria-label="Jump to position"
+              disabled={!link || loadingPreview || loadingShort}
+            />
+
+            <Hint>
+              {isMediaFile
+                ? 'For videos/audio, enter timestamp like 1:23 or 0:02:15'
+                : 'For articles, paste a quote or keyword to highlight'}
+            </Hint>
+
+            <Button
+              type="submit"
+              disabled={loadingPreview || loadingShort || !link || (!!jumpTo && error !== '')}
+              aria-disabled={loadingPreview || loadingShort || !link || (!!jumpTo && error !== '')}
+              aria-live="polite"
+              aria-busy={loadingShort}
             >
-              Copy Short URL
-            </CopyButton>
-          </>
+              {loadingShort ? 'Generating...' : 'Make it a Jump2'}
+            </Button>
+          </Form>
+
+          {error && (
+            <Feedback id="form-error" role="alert" aria-live="assertive" aria-atomic="true">
+              {error}
+            </Feedback>
+          )}
+        </FormWrapper>
+      </LeftColumn>
+
+      <PreviewWrapper
+        aria-live="polite"
+        aria-label="Article preview or video player"
+        tabIndex={0}
+        onMouseUp={handleTextSelect}
+      >
+        <PreviewSearch
+          type="search"
+          placeholder="Search preview text..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          aria-label="Search article preview"
+          disabled={loadingPreview}
+        />
+
+        {loadingPreview && <em>Loading preview...</em>}
+
+        {!loadingPreview && articleContent && (
+          <div ref={previewRef} dangerouslySetInnerHTML={{ __html: articleContent }} />
         )}
-      </ShareWrapper>
-    </Container>
+
+        {link && (() => {
+          try {
+            const urlObj = new URL(link);
+            return isYouTubeUrl(urlObj);
+          } catch {
+            return false;
+          }
+        })() && <YouTubePlayer url={link} startSeconds={parsedSeconds} />}
+
+        <ShareWrapper>
+          {shortUrl && (
+            <>
+              <ShortUrlInput
+                type="text"
+                readOnly
+                value={shortUrl}
+                onFocus={e => e.target.select()}
+                aria-label="Short URL"
+              />
+              <CopyButton
+                type="button"
+                onClick={handleCopy}
+                aria-label="Copy short URL to clipboard"
+              >
+                Copy Short URL
+              </CopyButton>
+            </>
+          )}
+        </ShareWrapper>
+      </PreviewWrapper>
+    </PageContainer>
   );
 }
