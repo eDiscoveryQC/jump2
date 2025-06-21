@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useRouter } from 'next/router';
 
@@ -505,7 +505,21 @@ export default function Home() {
           For videos, enter timestamp like <code>1:23</code> or <code>0:02:15</code>
         </Hint>
 
-        <Button type="submit" disabled={loadingPreview || loadingShort || !link || (jumpTo && error !== '')}>
+        <Button
+          type="submit"
+          disabled={
+            loadingPreview ||
+            loadingShort ||
+            !link ||
+            (!!jumpTo && error !== '')
+          }
+          aria-disabled={
+            loadingPreview ||
+            loadingShort ||
+            !link ||
+            (!!jumpTo && error !== '')
+          }
+        >
           {loadingShort ? 'Generating...' : 'Make it a Jump2'}
         </Button>
       </Form>
@@ -522,9 +536,14 @@ export default function Home() {
         <PreviewContainer dangerouslySetInnerHTML={{ __html: articleContent }} />
       )}
 
-      {link && isYouTubeUrl(new URL(link)) && (
-        <YouTubePlayer url={link} startSeconds={parsedSeconds} />
-      )}
+      {link && (() => {
+        try {
+          const urlObj = new URL(link);
+          return isYouTubeUrl(urlObj);
+        } catch {
+          return false;
+        }
+      })() && <YouTubePlayer url={link} startSeconds={parsedSeconds} />}
 
       <ShareWrapper>
         {shortUrl && (
