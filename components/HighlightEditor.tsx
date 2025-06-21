@@ -1,8 +1,11 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 
 const Container = styled.div`
   display: flex;
+  max-width: 900px;
+  margin: 2rem auto;
   gap: 2rem;
   user-select: text;
 `;
@@ -15,21 +18,22 @@ const ArticleArea = styled.div`
   padding: 1.5rem;
   border-radius: 8px;
   position: relative;
+  white-space: pre-wrap;
   overflow-wrap: break-word;
-  max-height: 600px;
-  overflow-y: auto;
 `;
 
 const HighlightedText = styled.mark`
   background-color: #ffe58a;
   cursor: pointer;
+  border-radius: 3px;
+  padding: 0 2px;
 `;
 
 const Sidebar = styled.div`
   flex: 1;
   border-left: 1px solid #ccc;
   padding-left: 1rem;
-  max-height: 600px;
+  max-height: 60vh;
   overflow-y: auto;
 `;
 
@@ -44,6 +48,7 @@ const HighlightItem = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  transition: background 0.2s, border-color 0.2s;
 
   &:hover {
     border-color: #1e4268;
@@ -54,24 +59,37 @@ const HighlightItem = styled.div`
 const RemoveButton = styled.button`
   background: none;
   border: none;
-  color: red;
+  color: #e55353;
   font-size: 1.2rem;
   cursor: pointer;
   padding: 0;
   line-height: 1;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #b22222;
+  }
 `;
 
 const Button = styled.button`
   background-color: #1e4268;
   color: white;
   border: none;
-  padding: 8px 12px;
+  padding: 10px 14px;
   margin-top: 1rem;
-  border-radius: 5px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
+  font-size: 1rem;
+  width: 100%;
+
   &:hover {
     background-color: #163559;
+  }
+
+  &:disabled {
+    background-color: #64748b;
+    cursor: not-allowed;
   }
 `;
 
@@ -84,27 +102,25 @@ interface Highlight {
 
 interface Props {
   htmlContent: string;
-  onShare?: (highlights: Highlight[]) => Promise<void>;
   initialHighlights?: Highlight[];
   readOnly?: boolean;
   sharing?: boolean;
+  onShare?: (highlights: Highlight[]) => Promise<void> | void;
 }
 
 export default function HighlightEditor({
   htmlContent,
-  onShare,
   initialHighlights = [],
   readOnly = false,
   sharing = false,
+  onShare,
 }: Props) {
   const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights);
 
-  // Sync initialHighlights
-  useEffect(() => {
+  React.useEffect(() => {
     setHighlights(initialHighlights);
   }, [initialHighlights]);
 
-  // Add highlight on text selection
   const addHighlight = useCallback(() => {
     if (readOnly) return;
 
@@ -114,55 +130,50 @@ export default function HighlightEditor({
     const selectedText = selection.toString().trim();
     if (selectedText.length < 3) return;
 
-    // Find start and end index in plain text version
-    const plainText = htmlContent.replace(/<[^>]+>/g, '');
-    const start = plainText.indexOf(selectedText);
+    const start = htmlContent.indexOf(selectedText);
     if (start === -1) return;
     const end = start + selectedText.length;
 
-    // Prevent duplicates
-    if (highlights.some((h) => h.text === selectedText)) return;
+    if (highlights.some(h => h.text === selectedText)) return;
 
     const newHighlight: Highlight = {
-      id: Math.random().toString(36).substring(2, 9),
+      id: Math.random().toString(36).slice(2, 11),
       text: selectedText,
       start,
       end,
     };
 
-    setHighlights((prev) => [...prev, newHighlight]);
+    setHighlights(prev => [...prev, newHighlight]);
     selection.removeAllRanges();
   }, [htmlContent, highlights, readOnly]);
 
   const removeHighlight = (id: string) => {
     if (readOnly) return;
-    setHighlights((prev) => prev.filter((h) => h.id !== id));
+    setHighlights(prev => prev.filter(h => h.id !== id));
   };
 
-  // Render HTML content with highlights applied
+  // Render the article text with highlights applied
   const renderHighlightedText = () => {
-    if (highlights.length === 0) return <span dangerouslySetInnerHTML={{ __html: htmlContent }} />;
+    if (highlights.length === 0) return htmlContent;
 
-    const plainText = htmlContent.replace(/<[^>]+>/g, '');
     const sorted = [...highlights].sort((a, b) => a.start - b.start);
-
-    const parts: React.ReactNode[] = [];
+    const parts: (string | React.ReactElement)[] = [];
     let lastIndex = 0;
 
     sorted.forEach(({ start, end, id, text }) => {
       if (start > lastIndex) {
-        parts.push(plainText.slice(lastIndex, start));
+        parts.push(htmlContent.slice(lastIndex, start));
       }
       parts.push(
         <HighlightedText key={id} title={text}>
-          {plainText.slice(start, end)}
+          {htmlContent.slice(start, end)}
         </HighlightedText>
       );
       lastIndex = end;
     });
 
-    if (lastIndex < plainText.length) {
-      parts.push(plainText.slice(lastIndex));
+    if (lastIndex < htmlContent.length) {
+      parts.push(htmlContent.slice(lastIndex));
     }
 
     return parts;
@@ -170,27 +181,37 @@ export default function HighlightEditor({
 
   return (
     <Container>
-      <ArticleArea onMouseUp={addHighlight} role="region" aria-label="Article content with highlights">
+      <ArticleArea onMouseUp={addHighlight} aria-label="Article content with highlights">
         {renderHighlightedText()}
       </ArticleArea>
-
-      <Sidebar>
+      <Sidebar aria-label="Highlight list">
         <h3>Highlights</h3>
         {highlights.length === 0 && <p>No highlights yet. Select text above to add.</p>}
-
-        {highlights.map((h) => (
-          <HighlightItem key={h.id} title={h.text}>
+        {highlights.map(h => (
+          <HighlightItem
+            key={h.id}
+            title={h.text}
+            onClick={() => {
+              const element = document.querySelector(`mark[title="${h.text}"]`);
+              element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }}
+          >
             <span>{h.text}</span>
             {!readOnly && (
-              <RemoveButton onClick={() => removeHighlight(h.id)} aria-label="Remove highlight">
+              <RemoveButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeHighlight(h.id);
+                }}
+                aria-label="Remove highlight"
+              >
                 &times;
               </RemoveButton>
             )}
           </HighlightItem>
         ))}
-
         {!readOnly && highlights.length > 0 && (
-          <Button onClick={() => onShare && onShare(highlights)} disabled={sharing} aria-busy={sharing}>
+          <Button onClick={() => onShare && onShare(highlights)} disabled={sharing}>
             {sharing ? 'Generating Link...' : 'Generate Share Link'}
           </Button>
         )}
