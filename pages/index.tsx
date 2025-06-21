@@ -11,9 +11,26 @@ const glowPulse = keyframes`
   }
 `;
 
+const pulse = keyframes`
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+`;
+
 const fadeInUp = keyframes`
   from { opacity: 0; transform: translateY(8px);}
   to { opacity: 1; transform: translateY(0);}
+`;
+
+const highlightFade = keyframes`
+  0% { background-color: #2563ebbb; }
+  100% { background-color: #2563ebaa; }
 `;
 
 const fadeInUpMixin = css`
@@ -88,7 +105,6 @@ const TwoText = styled.span`
   text-shadow: 0 0 12px #3b82f6aa;
 `;
 
-// Headings & text
 const Subtitle = styled.p`
   font-size: clamp(1.25rem, 2.5vw, 1.75rem);
   color: #94a3b8;
@@ -104,7 +120,6 @@ const Description = styled.p`
   color: #cbd5e1;
 `;
 
-// Form and Inputs
 const FormWrapper = styled.div`
   width: 100%;
 `;
@@ -140,7 +155,6 @@ const Input = styled.input<{ disabled?: boolean }>`
   cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'text')};
 `;
 
-// Hint text below inputs
 const Hint = styled.small`
   color: #64748b;
   font-family: monospace;
@@ -150,9 +164,40 @@ const Hint = styled.small`
   user-select: none;
   letter-spacing: 0.04em;
   font-variant-ligatures: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
-// Buttons
+const InfoIcon = styled.span`
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  color: #3b82f6;
+  cursor: help;
+  user-select: none;
+  font-weight: 700;
+  font-size: 1.3rem;
+  line-height: 1;
+  position: relative;
+
+  &:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: -2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2563eb;
+    color: white;
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.25rem;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    pointer-events: none;
+    z-index: 9999;
+  }
+`;
+
 const Button = styled.button<{ disabled?: boolean }>`
   padding: 1.15rem 2rem;
   border-radius: 9999px;
@@ -164,7 +209,7 @@ const Button = styled.button<{ disabled?: boolean }>`
   cursor: pointer;
   transition: transform 0.25s ease, background-color 0.25s ease;
   user-select: none;
-  animation: ${glowPulse} 2.5s infinite;
+  animation: ${pulse} 2.5s infinite;
 
   &:hover:not(:disabled) {
     transform: scale(1.07);
@@ -178,7 +223,6 @@ const Button = styled.button<{ disabled?: boolean }>`
   }
 `;
 
-// Feedback message
 const Feedback = styled.p`
   color: #f87171;
   font-weight: 600;
@@ -188,7 +232,6 @@ const Feedback = styled.p`
   ${fadeInUpMixin};
 `;
 
-// Preview + search + highlight
 const PreviewWrapper = styled.section`
   background: #1e293b;
   border-radius: 1rem;
@@ -204,7 +247,10 @@ const PreviewWrapper = styled.section`
   max-height: 80vh;
   position: relative;
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     color: #60a5fa;
     margin-top: 1.5rem;
     margin-bottom: 1rem;
@@ -229,7 +275,8 @@ const PreviewWrapper = styled.section`
     margin: 1rem 0;
   }
 
-  ul, ol {
+  ul,
+  ol {
     margin-left: 1.75rem;
     margin-bottom: 1.5rem;
   }
@@ -239,9 +286,12 @@ const PreviewWrapper = styled.section`
     border-radius: 0.5rem;
     margin: 1rem 0;
   }
+
+  mark.highlight {
+    animation: ${highlightFade} 0.8s ease forwards;
+  }
 `;
 
-// Search input inside preview
 const PreviewSearch = styled.input`
   position: sticky;
   top: 1rem;
@@ -270,15 +320,6 @@ const PreviewSearch = styled.input`
   }
 `;
 
-const HighlightedSpan = styled.mark`
-  background-color: #2563ebaa;
-  color: #e0e7ff;
-  border-radius: 3px;
-  padding: 0 3px;
-  transition: background-color 0.3s ease;
-`;
-
-// Share controls
 const ShareWrapper = styled.div`
   margin-top: 2.5rem;
   display: flex;
@@ -331,7 +372,7 @@ const VideoWrapper = styled.div`
   max-width: 640px;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
   position: relative;
   will-change: transform;
 `;
@@ -340,7 +381,7 @@ const TimestampBadge = styled.div`
   position: absolute;
   top: 8px;
   right: 12px;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.6);
   color: white;
   font-weight: 600;
   padding: 4px 10px;
@@ -349,7 +390,44 @@ const TimestampBadge = styled.div`
   font-size: 0.85rem;
   user-select: none;
   pointer-events: none;
-  text-shadow: 0 0 6px rgba(0,0,0,0.7);
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
+`;
+
+const HighlightChipsContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
+`;
+
+const HighlightChip = styled.span`
+  background: #2563ebaa;
+  color: #e0e7ff;
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: ${highlightFade} 0.8s ease forwards;
+`;
+
+const ChipRemoveButton = styled.button`
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  user-select: none;
+
+  &:hover {
+    color: #f87171;
+  }
 `;
 
 // ==== Helper Hooks & Utils ====
@@ -428,6 +506,7 @@ const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: numbe
 // === Main Component ===
 export default function Home() {
   const [link, setLink] = useState('');
+  // jumpTo input now only for timestamp or single highlight phrase (used for convenience)
   const [jumpTo, setJumpTo] = useState('');
   const [parsedSeconds, setParsedSeconds] = useState(0);
   const [articleContent, setArticleContent] = useState('');
@@ -438,9 +517,13 @@ export default function Home() {
   const [loadingPreview, setLoadingPreview] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
+  // New state: list of all highlights selected
+  const [highlightList, setHighlightList] = useState<string[]>([]);
+
   const debouncedLink = useDebounce(link, 600);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
+  // Timestamp validation (same as before)
   useEffect(() => {
     if (jumpTo.trim() === '') {
       setParsedSeconds(0);
@@ -456,11 +539,13 @@ export default function Home() {
     }
   }, [jumpTo]);
 
+  // Fetch article preview (unchanged)
   useEffect(() => {
     if (!debouncedLink) {
       setArticleContent('');
       setError('');
       setShortUrl('');
+      setHighlightList([]);
       return;
     }
     let url: URL;
@@ -470,6 +555,7 @@ export default function Home() {
         setArticleContent('');
         setError('');
         setShortUrl('');
+        setHighlightList([]);
         return;
       }
     } catch {
@@ -482,6 +568,7 @@ export default function Home() {
       setError('');
       setArticleContent('');
       setShortUrl('');
+      setHighlightList([]);
       try {
         const res = await fetch(`/api/parse?url=${encodeURIComponent(debouncedLink)}`, {
           headers: { Accept: 'application/json' },
@@ -503,29 +590,118 @@ export default function Home() {
     fetchArticle();
   }, [debouncedLink]);
 
-  const generateShortUrl = useCallback(async (fullUrl: string) => {
+  // Short URL generation: join highlights with commas, also append timestamp param if any
+  const generateShortUrl = useCallback(async () => {
     setShortUrl('');
     setLoadingShort(true);
     setError('');
+
+    if (!link) {
+      setError('Please paste a valid link.');
+      setLoadingShort(false);
+      return;
+    }
+
     try {
+      const url = new URL(link);
+
+      // Append YouTube timestamp param if present
+      if (parsedSeconds > 0 && isYouTubeUrl(url)) {
+        url.searchParams.set('t', parsedSeconds.toString());
+      }
+
+      // Compose highlight param string: comma-separated highlights + optional jumpTo if single phrase entered but not in list
+      let highlightParam = highlightList.join(',');
+      if (jumpTo.trim() && !highlightList.includes(jumpTo.trim())) {
+        highlightParam = highlightParam ? highlightParam + ',' + jumpTo.trim() : jumpTo.trim();
+      }
+
+      // Append hash with multiple highlights if any
+      if (highlightParam) {
+        url.hash = `:~:text=${encodeURIComponent(highlightParam)}`;
+      } else if (jumpTo.trim()) {
+        // fallback single jumpTo phrase in hash
+        url.hash = `:~:text=${encodeURIComponent(jumpTo.trim())}`;
+      }
+
       const res = await fetch('/api/shorten', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullUrl }),
+        body: JSON.stringify({ fullUrl: url.toString() }),
       });
+
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.error || 'Short URL generation failed');
+
       setShortUrl(data.shortUrl);
     } catch (e: any) {
       setError(e.message || 'Failed to generate short URL');
     }
     setLoadingShort(false);
+  }, [link, parsedSeconds, highlightList, jumpTo]);
+
+  // Handle create button click
+  const handleCreate = useCallback(() => {
+    generateShortUrl();
+  }, [generateShortUrl]);
+
+  // Copy short URL to clipboard
+  const handleCopy = useCallback(() => {
+    if (!shortUrl) return;
+    navigator.clipboard.writeText(shortUrl).then(() => {
+      alert('Short URL copied to clipboard!');
+    });
+  }, [shortUrl]);
+
+  // Handle text selection in preview pane to add multiple highlights
+  const handleTextSelect = () => {
+    if (!window.getSelection) return;
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed) return;
+    const selectedText = selection.toString().trim();
+
+    // Prevent duplicates & ignore if too short or too long
+    if (
+      selectedText.length > 2 &&
+      selectedText.length < 150 &&
+      !highlightList.includes(selectedText)
+    ) {
+      setHighlightList(prev => [...prev, selectedText]);
+      // Clear jumpTo input since highlights are managed as a list now
+      setJumpTo('');
+      // Clear selection for UX
+      selection.removeAllRanges();
+    }
+  };
+
+  // Remove highlight chip
+  const removeHighlight = useCallback((text: string) => {
+    setHighlightList(prev => prev.filter(h => h !== text));
   }, []);
 
+  // Detect media type (audio/video)
+  const isMediaFile = useMemo(() => {
+    if (!link) return false;
+    try {
+      const urlObj = new URL(link);
+      const mediaExts = ['mp3', 'wav', 'ogg', 'm4a', 'mp4', 'webm', 'mov', 'avi'];
+      const path = urlObj.pathname.toLowerCase();
+      if (mediaExts.some(ext => path.endsWith(`.${ext}`))) return true;
+      const mediaHosts = ['youtube.com', 'youtu.be', 'soundcloud.com', 'vimeo.com'];
+      if (mediaHosts.some(h => urlObj.hostname.includes(h))) return true;
+      return false;
+    } catch {
+      return false;
+    }
+  }, [link]);
+
+  // Highlight search inside preview with scroll to first match
   useEffect(() => {
     if (!previewRef.current) return;
     const contentEl = previewRef.current;
     const search = debouncedSearchTerm.trim();
+
     // Remove old highlights
     const innerHTML = contentEl.innerHTML;
     const cleanedHTML = innerHTML.replace(/<mark class="highlight">([^<]*)<\/mark>/gi, '$1');
@@ -543,60 +719,6 @@ export default function Home() {
       firstMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [debouncedSearchTerm, articleContent]);
-
-  const handleCreate = useCallback(() => {
-    setError('');
-    setShortUrl('');
-    if (!link) {
-      setError('Please paste a valid link.');
-      return;
-    }
-    try {
-      const url = new URL(link);
-      if (parsedSeconds > 0 && isYouTubeUrl(url)) {
-        url.searchParams.set('t', parsedSeconds.toString());
-      } else if (jumpTo.trim() !== '') {
-        url.hash = `:~:text=${encodeURIComponent(jumpTo.trim())}`;
-      }
-      generateShortUrl(url.toString());
-    } catch {
-      setError('Invalid URL format.');
-    }
-  }, [link, jumpTo, parsedSeconds, generateShortUrl]);
-
-  const handleCopy = useCallback(() => {
-    if (!shortUrl) return;
-    navigator.clipboard.writeText(shortUrl).then(() => {
-      alert('Short URL copied to clipboard!');
-    });
-  }, [shortUrl]);
-
-  // Set jumpTo input from selected text in preview
-  const handleTextSelect = () => {
-    if (!window.getSelection) return;
-    const selection = window.getSelection();
-    if (!selection || selection.isCollapsed) return;
-    const selectedText = selection.toString().trim();
-    if (selectedText.length > 2 && selectedText.length < 150) {
-      setJumpTo(selectedText);
-    }
-  };
-
-  // Determine if link is a media file or streaming service
-  const isMediaFile = useMemo(() => {
-    if (!link) return false;
-    try {
-      const urlObj = new URL(link);
-      const mediaExts = ['mp3', 'wav', 'ogg', 'm4a', 'mp4', 'webm', 'mov', 'avi'];
-      const path = urlObj.pathname.toLowerCase();
-      if (mediaExts.some(ext => path.endsWith(`.${ext}`))) return true;
-      const mediaHosts = ['youtube.com', 'youtu.be', 'soundcloud.com', 'vimeo.com'];
-      if (mediaHosts.some(h => urlObj.hostname.includes(h))) return true;
-      return false;
-    } catch {
-      return false;
-    }
-  }, [link]);
 
   return (
     <PageContainer role="main" aria-label="Jump2 content sharer">
@@ -649,10 +771,35 @@ export default function Home() {
               disabled={!link || loadingPreview || loadingShort}
             />
 
+            {/* Show chips for all highlights */}
+            {highlightList.length > 0 && (
+              <HighlightChipsContainer aria-label="Selected highlights">
+                {highlightList.map(text => (
+                  <HighlightChip key={text}>
+                    {text}
+                    <ChipRemoveButton
+                      onClick={() => removeHighlight(text)}
+                      aria-label={`Remove highlight: ${text}`}
+                      title="Remove highlight"
+                    >
+                      ×
+                    </ChipRemoveButton>
+                  </HighlightChip>
+                ))}
+              </HighlightChipsContainer>
+            )}
+
             <Hint>
-              {isMediaFile
-                ? 'For videos/audio, enter timestamp like 1:23 or 0:02:15'
-                : 'For articles, paste a quote or keyword to highlight'}
+              {isMediaFile ? (
+                <>
+                  For videos/audio, enter timestamp like 1:23 or 0:02:15
+                  <InfoIcon data-tooltip="Use MM:SS or HH:MM:SS formats for timestamps. Example: 1:23, 0:02:15">
+                    ?
+                  </InfoIcon>
+                </>
+              ) : (
+                'For articles, paste a quote or keyword to highlight'
+              )}
             </Hint>
 
             <Button
@@ -688,6 +835,16 @@ export default function Home() {
           aria-label="Search article preview"
           disabled={loadingPreview}
         />
+        {searchTerm && (
+          <CopyButton
+            type="button"
+            onClick={() => setSearchTerm('')}
+            aria-label="Clear preview search"
+            style={{ alignSelf: 'flex-end', marginBottom: '1rem' }}
+          >
+            Clear Search
+          </CopyButton>
+        )}
 
         {loadingPreview && <em>Loading preview...</em>}
 
@@ -695,14 +852,15 @@ export default function Home() {
           <div ref={previewRef} dangerouslySetInnerHTML={{ __html: articleContent }} />
         )}
 
-        {link && (() => {
-          try {
-            const urlObj = new URL(link);
-            return isYouTubeUrl(urlObj);
-          } catch {
-            return false;
-          }
-        })() && <YouTubePlayer url={link} startSeconds={parsedSeconds} />}
+        {link &&
+          (() => {
+            try {
+              const urlObj = new URL(link);
+              return isYouTubeUrl(urlObj);
+            } catch {
+              return false;
+            }
+          })() && <YouTubePlayer url={link} startSeconds={parsedSeconds} />}
 
         <ShareWrapper>
           {shortUrl && (
