@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import chromium from "chrome-aws-lambda";
-import type puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
+import puppeteer from "puppeteer-core";
 import { logParse, logApi } from "@/lib/log";
 
 interface Article {
@@ -17,14 +17,10 @@ let browser: puppeteer.Browser | null = null;
 async function getBrowser(): Promise<puppeteer.Browser> {
   if (!browser) {
     const executablePath = await chromium.executablePath;
-    if (!executablePath) {
-      throw new Error("chrome-aws-lambda failed to resolve executablePath.");
-    }
 
-    logParse("Launching new Puppeteer browser");
-    console.log("[parse.ts] Launching Puppeteer with path:", executablePath);
+    console.log("[parse.ts] Puppeteer launching with:", executablePath);
 
-    browser = await chromium.puppeteer.launch({
+    browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath,
@@ -32,11 +28,7 @@ async function getBrowser(): Promise<puppeteer.Browser> {
       ignoreHTTPSErrors: true,
     });
 
-    logParse("Browser launched successfully");
-    console.log("[parse.ts] Browser launched successfully");
-  } else {
-    logParse("Reusing existing Puppeteer browser");
-    console.log("[parse.ts] Reusing existing Puppeteer browser");
+    console.log("[parse.ts] Browser launched");
   }
   return browser;
 }
