@@ -10,9 +10,266 @@ import styled, { keyframes, css } from "styled-components";
 import ArticlePreviewFull from "../components/ArticlePreviewFull";
 
 // === Animations ===
-// ... [All your animation constants unchanged] ...
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
 
-// [All styled components unchanged]
+const bounce = keyframes`
+  0%, 100% { transform: translateY(0); }
+  10%, 30%, 50%, 70% { transform: translateY(-3px); }
+  20%, 40%, 60% { transform: translateY(3px); }
+  80% { transform: translateY(-2px); }
+  90% { transform: translateY(2px); }
+`;
+
+const lightboxAppear = keyframes`
+  from { opacity: 0; transform: scale(0.93);}
+  to { opacity: 1; transform: scale(1);}
+`;
+
+// === Styled Components ===
+const HamburgerButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 1.25em;
+  cursor: pointer;
+  padding: 0.5em 1em;
+  color: #1e293b;
+  border-radius: 6px;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  &:hover,
+  &:focus {
+    background: #f1f5f9;
+    outline: none;
+  }
+`;
+
+const MobileMenu = styled.nav<{ open: boolean }>`
+  position: fixed;
+  z-index: 10002;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 290px;
+  background: #f8fafc;
+  padding: 1.5em 1.8em;
+  box-shadow: 2px 0 22px #22334414;
+  border-right: 1.5px solid #e5e7eb;
+  transform: ${({ open }) => (open ? "translateX(0)" : "translateX(-110%)")};
+  transition: transform 0.29s cubic-bezier(.86,.01,.77,1.09);
+`;
+
+const MobileMenuClose = styled.button`
+  background: none;
+  border: none;
+  font-size: 1.8em;
+  color: #64748b;
+  position: absolute;
+  top: 1.0em;
+  right: 1.1em;
+  cursor: pointer;
+`;
+
+const PageContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  max-width: 1200px;
+  margin: 2.5rem auto 3rem;
+  padding: 0 1.2rem;
+  gap: 2.5rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  animation: ${fadeIn} 0.45s;
+  @media (max-width: 900px) {
+    flex-direction: column;
+    gap: 1em;
+  }
+`;
+
+const LeftColumn = styled.section`
+  flex: 0 0 370px;
+  min-width: 320px;
+  max-width: 410px;
+  margin: 0 0.8em 0 0;
+  @media (max-width: 900px) {
+    margin: 0;
+    max-width: unset;
+    min-width: unset;
+  }
+`;
+
+const Section = styled.section`
+  flex: 1 1 0%;
+  min-width: 0;
+`;
+
+const LogoWrapper = styled.h1`
+  display: flex;
+  align-items: center;
+  font-size: 2.5em;
+  font-weight: 800;
+  color: #14314d;
+  margin-bottom: .28em;
+  letter-spacing: -1.7px;
+  user-select: none;
+`;
+
+const AnimatedLogoText = styled.span`
+  color: #3578e5;
+  font-weight: 900;
+  margin-right: 0.11em;
+  animation: ${bounce} 2.4s infinite;
+`;
+
+const TwoText = styled.span`
+  color: #ffd100;
+  font-size: 1.15em;
+  font-weight: 900;
+  margin-left: -0.04em;
+  animation: ${bounce} 2.2s infinite 1s;
+`;
+
+const Subtitle = styled.h2`
+  font-size: 1.30em;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.6em;
+  letter-spacing: -0.6px;
+`;
+
+const Description = styled.p`
+  font-size: 1.08em;
+  color: #64748b;
+  margin-bottom: 1.1em;
+  font-weight: 400;
+`;
+
+const FormWrapper = styled.div`
+  background: #f8fafb;
+  border-radius: 0.9em;
+  padding: 1.6em 1.3em 2em;
+  box-shadow: 0 4px 24px #cbd5e115;
+  border: 1.5px solid #dbeafe;
+  margin-bottom: 1.7em;
+`;
+
+const Input = styled.input`
+  display: block;
+  width: 100%;
+  font-size: 1.13em;
+  padding: 0.68em 1.05em;
+  margin-bottom: 0.9em;
+  border-radius: 0.54em;
+  border: 1.5px solid #cbd5e1;
+  background: #fff;
+  color: #374151;
+  font-weight: 400;
+  outline: 0;
+  &:focus {
+    border-color: #3578e5;
+    background: #f1f5f9;
+  }
+`;
+
+const ColorInput = styled.input`
+  width: 1.65em;
+  height: 1.65em;
+  border-radius: 0.5em;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #dbeafe33;
+  outline: none;
+  margin-right: 0.13em;
+  &:focus {
+    box-shadow: 0 0 0 2px #3578e599;
+  }
+`;
+
+const Button = styled.button`
+  background: #3578e5;
+  color: #fff;
+  border: none;
+  padding: 0.65em 1.2em;
+  border-radius: 0.6em;
+  font-size: 1.09em;
+  font-weight: 600;
+  margin-left: 0.35em;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #dbeafe55;
+  transition: background 0.12s;
+  &:hover, &:focus {
+    background: #3659b7;
+    outline: 0;
+  }
+`;
+
+const ExampleLinks = styled.div`
+  margin: 0.1em 0 0.8em 0;
+  a {
+    color: #3578e5;
+    cursor: pointer;
+    text-decoration: underline dotted;
+    margin-right: 0.7em;
+    font-size: 1em;
+    &:hover { text-decoration: underline solid; }
+  }
+`;
+
+const SupportedSites = styled.p`
+  font-size: 0.95em;
+  color: #1e293b;
+  margin: 0.6em 0 0.5em 0;
+`;
+
+const HR = styled.hr`
+  border: none;
+  border-top: 1.5px solid #e5e7eb;
+  margin: 1.2em 0 1.2em 0;
+`;
+
+const HowItWorks = styled.div`
+  font-size: 0.99em;
+  color: #374151;
+  ul {
+    padding-left: 1.3em;
+    margin: 0.5em 0 0 0;
+    li { margin-bottom: 0.2em; }
+  }
+`;
+
+const Footer = styled.footer`
+  text-align: center;
+  color: #64748b;
+  font-size: 1.01em;
+  margin: 3em 0 1.2em 0;
+  padding: 1em;
+`;
+
+const LightboxBackdrop = styled.div<{ open: boolean }>`
+  display: ${({ open }) => (open ? "flex" : "none")};
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  z-index: 10001;
+  left: 0; top: 0; bottom: 0; right: 0;
+  background: #111827b8;
+  animation: ${fadeIn} 0.4s;
+`;
+
+const LightboxContent = styled.div`
+  background: #fff;
+  border-radius: 14px;
+  padding: 2.5em 2.5em 2.2em;
+  box-shadow: 0 8px 56px #1e293b50, 0 2px 6px #1e293b25;
+  min-width: 310px;
+  max-width: 90vw;
+  max-height: 90vh;
+  text-align: center;
+  animation: ${lightboxAppear} 0.34s;
+`;
 
 // --- Highlight Color Palette ---
 const HIGHLIGHT_COLORS = [
@@ -25,11 +282,24 @@ const HIGHLIGHT_COLORS = [
   "#fbcfe8"  // pink
 ];
 
-// === Helper hooks & utils ===
-// ... [All your helper hooks and utility functions unchanged] ...
+// --- Demo Links ---
+const EXAMPLES = [
+  {
+    url: "https://www.bbc.com/news/world-us-canada-66159295",
+    text: "democracy"
+  },
+  {
+    url: "https://www.nytimes.com/2024/06/20/technology/ai-future.html",
+    text: "artificial intelligence"
+  },
+  {
+    url: "https://www.theguardian.com/environment/2025/jun/08/renewable-energy-breakthrough",
+    text: "solar power"
+  }
+];
 
+// === Main Page ===
 export default function Home() {
-  // --- State ---
   const [link, setLink] = useState("");
   const [highlightText, setHighlightText] = useState("");
   const [highlightColor, setHighlightColor] = useState(HIGHLIGHT_COLORS[0]);
@@ -39,25 +309,8 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLightbox, setShowLightbox] = useState(true);
 
-  // For focus management
   const urlInputRef = useRef<HTMLInputElement>(null);
   const highlightInputRef = useRef<HTMLInputElement>(null);
-
-  // Example demo links for onboarding
-  const EXAMPLES = [
-    {
-      url: "https://www.bbc.com/news/world-us-canada-66159295",
-      text: "democracy"
-    },
-    {
-      url: "https://www.nytimes.com/2024/06/20/technology/ai-future.html",
-      text: "artificial intelligence"
-    },
-    {
-      url: "https://www.theguardian.com/environment/2025/jun/08/renewable-energy-breakthrough",
-      text: "solar power"
-    }
-  ];
 
   // --- Handle submit ---
   function handleSubmit(e: React.FormEvent) {
@@ -118,9 +371,15 @@ export default function Home() {
         <Description>
           Paste any link (articles, videos) to highlight and share the best parts.
         </Description>
-        <ContactEmail href="mailto:contact@jump2.com" tabIndex={mobileMenuOpen ? 0 : -1}>
+        <a
+          href="mailto:contact@jump2.com"
+          tabIndex={mobileMenuOpen ? 0 : -1}
+          style={{
+            display: "block", marginTop: "2em", color: "#3578e5", fontWeight: 600, fontSize: "1.1em"
+          }}
+        >
           Contact: contact@jump2.com
-        </ContactEmail>
+        </a>
       </MobileMenu>
 
       <LightboxBackdrop
@@ -252,4 +511,3 @@ export default function Home() {
     </>
   );
 }
-// [All styled components & helpers from your original file are preserved and used above]
