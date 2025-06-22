@@ -27,11 +27,15 @@ const ErrorMessage = styled.p`
   font-weight: 600;
 `;
 
-interface Highlight {
+interface LegacyHighlight {
   id: string;
   text: string;
   start: number;
   end: number;
+}
+
+interface Highlight extends LegacyHighlight {
+  color: string;
 }
 
 export default function SharePage() {
@@ -50,13 +54,16 @@ export default function SharePage() {
       setLoading(true);
       setError(null);
       try {
-        // Replace with your actual API endpoint to fetch shared highlights by id
         const res = await fetch(`/api/share/${id}`);
         if (!res.ok) throw new Error('Failed to fetch shared highlights');
         const data = await res.json();
 
         setArticleText(data.articleText || '');
-        setHighlights(data.highlights || []);
+        const safeHighlights: Highlight[] = (data.highlights || []).map((h: LegacyHighlight) => ({
+          ...h,
+          color: '#ffe58a', // default color
+        }));
+        setHighlights(safeHighlights);
       } catch (err) {
         setError('Failed to load shared highlights. Please check the link or try again later.');
       } finally {
