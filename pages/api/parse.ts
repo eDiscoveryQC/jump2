@@ -16,12 +16,16 @@ let browser: puppeteer.Browser | null = null;
 
 async function getBrowser(): Promise<puppeteer.Browser> {
   if (!browser) {
-    const executablePath = await chromium.executablePath || '/usr/bin/chromium-browser';
+    const executablePath = await chromium.executablePath;
+    if (!executablePath) {
+      throw new Error("chrome-aws-lambda failed to resolve executablePath.");
+    }
+
     logParse("Launching new Puppeteer browser");
-    console.log("[parse.ts] Launching Puppeteer with executable path:", executablePath);
+    console.log("[parse.ts] Launching Puppeteer with path:", executablePath);
 
     browser = await chromium.puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox', ...chromium.args],
+      args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath,
       headless: chromium.headless,
@@ -42,14 +46,12 @@ export default async function handler(
   res: NextApiResponse<ResponseData>
 ) {
   logApi("Received request with query: %o", req.query);
-  console.log("[parse.ts] Received request:", req.query);
+  console.log("[parse.ts] Request received:", req.query);
 
   const { url } = req.query;
   if (!url || typeof url !== "string") {
-    logApi("Invalid or missing URL");
-    console.log("[parse.ts] Invalid or missing URL");
-    res.status(400).json({ error: "Missing or invalid URL parameter" });
-    return;
+    console.log("[parse.ts] Invalid URL parameter");
+    return res.status(400).json({ error: "Missing or invalid URL parameter" });
   }
 
   let page: puppeteer.Page | null = null;
@@ -59,8 +61,6 @@ export default async function handler(
     page = await browser.newPage();
     console.log("[parse.ts] Created new page");
 
-    logParse("Setting up request interception for resource optimization");
-    console.log("[parse.ts] Setting up request interception");
     await page.setRequestInterception(true);
     page.on("request", (request) => {
       const type = request.resourceType();
@@ -75,8 +75,7 @@ export default async function handler(
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
     );
 
-    logParse("Navigating to URL: %s", url);
-    console.log(`[parse.ts] Navigating to URL: ${url}`);
+    console.log("[parse.ts] Navigating to URL:", url);
     const response = await page.goto(url, {
       waitUntil: "networkidle2",
       timeout: 20000,
@@ -84,12 +83,10 @@ export default async function handler(
 
     if (!response || !response.ok()) {
       const status = response?.status();
-      logParse("Failed to load URL. Status: %s", status);
       console.log(`[parse.ts] Failed to load URL. Status: ${status}`);
       throw new Error(`Failed to load URL, status: ${status}`);
     }
 
-    console.log("[parse.ts] Page loaded, extracting content");
     const content = await page.evaluate(() => {
       const selectors = [
         "article",
@@ -109,23 +106,18 @@ export default async function handler(
     });
 
     if (!content || content.length < 100) {
-      logParse("Content too short or empty");
       console.log("[parse.ts] Content too short or empty");
-      res.status(204).json({ article: { content: "" } });
-      return;
+      return res.status(204).json({ article: { content: "" } });
     }
 
-    logApi("Successfully extracted content");
     console.log("[parse.ts] Successfully extracted content");
-    res.status(200).json({ article: { content } });
+    return res.status(200).json({ article: { content } });
   } catch (error: any) {
-    logApi("Error occurred: %s", error.message);
     console.error("[parse.ts] Error:", error);
-    res.status(500).json({ error: error.message || "Internal server error" });
+    return res.status(500).json({ error: error.message || "Internal server error" });
   } finally {
     if (page) {
       await page.close();
-      logParse("Closed Puppeteer page");
       console.log("[parse.ts] Closed Puppeteer page");
     }
   }
