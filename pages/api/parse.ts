@@ -99,10 +99,11 @@ async function tryDirectFetchAndParse(url: string): Promise<{content: string, er
     if (mainContent && mainContent.innerHTML) {
       cleaned = mainContent.innerHTML.trim();
     } else {
-      const allP = Array.from(doc.querySelectorAll("p"))
-        .map(p => p.textContent?.replace(/\s+/g, " ").trim() || "")
+      const allP: HTMLParagraphElement[] = Array.from(doc.querySelectorAll("p"));
+      const pTexts = allP
+        .map(p => (p as Element).textContent?.replace(/\s+/g, " ").trim() || "")
         .filter(t => t.length > 0 && t.length > 25);
-      cleaned = allP.join("\n\n");
+      cleaned = pTexts.join("\n\n");
     }
 
     cleaned = cleanArticleText(cleaned);
@@ -122,16 +123,18 @@ async function tryDirectFetchAndParse(url: string): Promise<{content: string, er
 
     // --- 5. If still not enough, try joining all <li> and <span> tags (for chatty/bloggy sites) ---
     if (!cleaned || cleaned.length < 120) {
-      const allLi = Array.from(doc.querySelectorAll("li"))
-        .map(li => li.textContent?.replace(/\s+/g, " ").trim() || "")
+      const allLi: HTMLLIElement[] = Array.from(doc.querySelectorAll("li"));
+      const liTexts = allLi
+        .map(li => (li as Element).textContent?.replace(/\s+/g, " ").trim() || "")
         .filter(t => t.length > 0 && t.length > 15);
-      if (allLi.length) cleaned = allLi.join("\n\n");
+      if (liTexts.length) cleaned = liTexts.join("\n\n");
     }
     if (!cleaned || cleaned.length < 120) {
-      const allSpan = Array.from(doc.querySelectorAll("span"))
-        .map(span => span.textContent?.replace(/\s+/g, " ").trim() || "")
+      const allSpan: HTMLSpanElement[] = Array.from(doc.querySelectorAll("span"));
+      const spanTexts = allSpan
+        .map(span => (span as Element).textContent?.replace(/\s+/g, " ").trim() || "")
         .filter(t => t.length > 0 && t.length > 25);
-      if (allSpan.length) cleaned = allSpan.join("\n\n");
+      if (spanTexts.length) cleaned = spanTexts.join("\n\n");
     }
 
     // --- 6. Final fallback: just use the document body's plain text ---
