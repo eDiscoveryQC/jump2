@@ -39,11 +39,21 @@ const highlightFade = keyframes`
   100% { background-color: #2563ebaa; }
 `;
 
+const bounce = keyframes`
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+`;
+
 const fadeInUpMixin = css`
   animation: ${fadeInUp} 0.5s ease forwards;
 `;
 
 // === Styled Components ===
+
 const PageContainer = styled.main`
   min-height: 100vh;
   padding: 3rem 2rem 6rem;
@@ -97,13 +107,14 @@ const JumpText = styled.span`
   text-shadow: 1px 1px 2px #1e293b, -1px -1px 2px #3b82f6;
 `;
 
-const TwoText = styled.span`
+const TwoText = styled.span<{ animateBounce: boolean }>`
   color: #3b82f6;
   font-size: 1.2em;
   user-select: none;
   transition: transform 0.3s ease, filter 0.3s ease;
   transform-origin: left center;
   text-shadow: 0 0 12px #3b82f6aa;
+  animation: ${({ animateBounce }) => (animateBounce ? `${bounce} 1.5s ease-in-out infinite` : "none")};
 `;
 
 const Subtitle = styled.p`
@@ -120,6 +131,8 @@ const Description = styled.p`
   user-select: text;
   color: #cbd5e1;
 `;
+
+// Form & input styles...
 
 const FormWrapper = styled.div`
   width: 100%;
@@ -154,23 +167,6 @@ const Input = styled.input<{ disabled?: boolean }>`
   }
 
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "text")};
-`;
-
-const Textarea = styled.textarea`
-  width: 100%;
-  border-radius: 0.5rem;
-  border: 1.5px solid #334155;
-  background-color: #1e293b;
-  color: #f1f5f9;
-  padding: 0.75rem;
-  font-size: 1rem;
-  margin-top: 0.25rem;
-  margin-bottom: 1rem;
-  resize: vertical;
-
-  &:disabled {
-    background-color: #64748b;
-  }
 `;
 
 const Hint = styled.small`
@@ -512,19 +508,24 @@ const LightboxContent = styled.div`
   max-width: 480px;
   background: #1e293b;
   border-radius: 1rem;
-  padding: 2rem;
+  padding: 2.5rem 3rem;
   box-shadow: 0 0 30px #2563ebaa;
   color: #cbd5e1;
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   line-height: 1.6;
   user-select: text;
+  text-align: center;
 
   h2 {
     margin-top: 0;
+    font-weight: 900;
+    font-size: 2.75rem;
+    color: #3b82f6;
+    margin-bottom: 1rem;
   }
 
   p {
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
   }
 `;
 
@@ -637,9 +638,6 @@ export default function Home() {
   const [highlightList, setHighlightList] = useState<string[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLightbox, setShowLightbox] = useState(true);
-  const [feedbackMessage, setFeedbackMessage] = useState("");
-  const [feedbackEmail, setFeedbackEmail] = useState("");
-  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
 
   const previewRef = useRef<HTMLDivElement>(null);
   const debouncedLink = useDebounce(link, 600);
@@ -842,21 +840,6 @@ export default function Home() {
 
   const toggleMobileMenu = () => setMobileMenuOpen((o) => !o);
 
-  const submitFeedback = async () => {
-    if (!feedbackMessage.trim()) return alert("Please enter your message.");
-    setFeedbackSubmitting(true);
-    try {
-      await new Promise((res) => setTimeout(res, 1500));
-      alert("Thanks for your feedback!");
-      setFeedbackMessage("");
-      setFeedbackEmail("");
-      setShowLightbox(false);
-    } catch {
-      alert("Failed to send feedback.");
-    }
-    setFeedbackSubmitting(false);
-  };
-
   return (
     <>
       <HamburgerButton aria-label="Toggle menu" onClick={toggleMobileMenu}>
@@ -889,45 +872,14 @@ export default function Home() {
             Easily highlight the best parts of any article or video, generate a
             quick shareable link, and skip the fluff.
           </p>
-          <p>
-            Have feedback or questions? Drop us a note below or email us anytime at{" "}
-            <ContactEmail href="mailto:contact@jump2.com">contact@jump2.com</ContactEmail>.
-          </p>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              submitFeedback();
-            }}
+          <Button
+            type="button"
+            onClick={() => setShowLightbox(false)}
+            style={{ marginTop: "1.5rem", backgroundColor: "#64748b", animation: "none" }}
+            aria-label="Close welcome dialog"
           >
-            <label htmlFor="feedbackMessage">Your Message</label>
-            <Textarea
-              id="feedbackMessage"
-              value={feedbackMessage}
-              onChange={(e) => setFeedbackMessage(e.target.value)}
-              rows={4}
-              disabled={feedbackSubmitting}
-              required
-            />
-            <label htmlFor="feedbackEmail">Your Email (optional)</label>
-            <Input
-              id="feedbackEmail"
-              type="email"
-              value={feedbackEmail}
-              onChange={(e) => setFeedbackEmail(e.target.value)}
-              placeholder="you@example.com"
-              disabled={feedbackSubmitting}
-            />
-            <Button type="submit" disabled={feedbackSubmitting} aria-busy={feedbackSubmitting}>
-              {feedbackSubmitting ? "Sending..." : "Send Feedback"}
-            </Button>
-            <Button
-              type="button"
-              onClick={() => setShowLightbox(false)}
-              style={{ marginLeft: "1rem", backgroundColor: "#64748b", animation: "none" }}
-            >
-              Close
-            </Button>
-          </form>
+            Close
+          </Button>
         </LightboxContent>
       </LightboxBackdrop>
 
@@ -935,7 +887,7 @@ export default function Home() {
         <LeftColumn>
           <LogoWrapper aria-label="Jump2 logo" role="img" tabIndex={-1}>
             <JumpText>Jump</JumpText>
-            <TwoText>2</TwoText>
+            <TwoText animateBounce={showLightbox}>2</TwoText>
           </LogoWrapper>
 
           <Subtitle>Skip the fluff. Jump2 the good part.</Subtitle>
