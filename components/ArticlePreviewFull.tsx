@@ -1,11 +1,22 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import styled, { keyframes } from 'styled-components';
-import ArticleError from './ArticleError'; // Assume from above
-import HighlightEditor from './HighlightEditor'; // Needs to support color selection!
-import { FaCopy, FaRedo, FaCheckCircle } from "react-icons/fa";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import styled, { keyframes } from "styled-components";
+import ArticleError from "./ArticleError";
+import HighlightEditor from "./HighlightEditor";
+
+// Use emoji icons if react-icons isn't available
+const FaCopy = () => <span role="img" aria-label="Copy" style={{fontSize:"1.1em"}}>📋</span>;
+const FaRedo = () => <span role="img" aria-label="Redo" style={{fontSize:"1.1em"}}>🔄</span>;
+const FaCheckCircle = () => <span role="img" aria-label="Check" style={{fontSize:"1.1em", color:"#38a169"}}>✔️</span>;
 
 // --- Styles ---
 const fadeIn = keyframes`from { opacity: 0; } to { opacity: 1; }`;
+const highlightFlash = keyframes`
+    0%   { background: #ffe066; }
+    40%  { background: #ffb700; }
+    70%  { background: #ffe066; }
+    100% { background: #ffe066; }
+`;
+
 const PageContainer = styled.div`
   max-width: 980px;
   margin: 2.5rem auto 3rem;
@@ -75,13 +86,6 @@ const ShareLinkContainer = styled.div`
   }
 `;
 
-const highlightFlash = keyframes`
-    0%   { background: #ffe066; }
-    40%  { background: #ffb700; }
-    70%  { background: #ffe066; }
-    100% { background: #ffe066; }
-`;
-
 const PreviewContainer = styled.div`
   background: #f8fafc;
   border-radius: 0.8rem;
@@ -149,7 +153,6 @@ type ArticlePreviewFullProps = {
   initialHighlights?: string[];
   initialColors?: string[];
   onClose?: () => void;
-  // Optionally expose analytics hooks or callbacks
 };
 
 const KNOWN_SUPPORTED = [
@@ -273,9 +276,6 @@ export default function ArticlePreviewFull({
     if (highlights.length > 0) setShowHint(false);
   }, [highlights.length]);
 
-  // --- (Optional) Analytics hooks
-  // useEffect(() => { ... }, [event]);
-
   // --- Domain guidance
   const domain = url ? (new URL(url)).hostname.replace(/^www\./, '') : '';
   const isKnownSupported = KNOWN_SUPPORTED.some(d => domain.endsWith(d));
@@ -309,7 +309,7 @@ export default function ArticlePreviewFull({
       {error && <ArticleError error={error} url={url} />}
       {shareLink && (
         <ShareLinkContainer>
-          <FaCheckCircle color="#38a169" /> <strong>Share Link:</strong>
+          <FaCheckCircle /> <strong>Share Link:</strong>
           <a href={shareLink} target="_blank" rel="noopener noreferrer">{shareLink}</a>
           <button onClick={handleCopyLink}><FaCopy /> Copy</button>
         </ShareLinkContainer>
