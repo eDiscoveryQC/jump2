@@ -31,7 +31,7 @@ const ShareLinkContainer = styled.div`
 
 export default function ArticlePage() {
   const router = useRouter();
-  const { url } = router.query;
+  const { url, highlightId } = router.query;
 
   const [articleHtml, setArticleHtml] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -57,13 +57,23 @@ export default function ArticlePage() {
       .then((data) => {
         if (data.article?.content) {
           setArticleHtml(data.article.content);
+
+          // Scroll to highlightId after DOM update
+          setTimeout(() => {
+            if (highlightId && typeof highlightId === 'string') {
+              const target = document.querySelector(`mark[title="${highlightId}"]`);
+              if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }
+          }, 300);
         } else {
           setError('Failed to load article content.');
         }
       })
       .catch(() => setError('Failed to load article content.'))
       .finally(() => setLoading(false));
-  }, [url]);
+  }, [url, highlightId]);
 
   const handleShare = useCallback(
     async (highlights: any) => {
@@ -98,7 +108,7 @@ export default function ArticlePage() {
     <PageContainer>
       <Title>Article Highlights</Title>
 
-      {loading && <Message>Loading article...</Message>}
+      {loading && <Message>Loading article.</Message>}
       {error && <Message error>{error}</Message>}
 
       {shareLink && (
@@ -117,10 +127,13 @@ export default function ArticlePage() {
           htmlContent={articleHtml}
           onShare={handleShare}
           sharing={sharing}
+          highlightId={highlightId as string | undefined}
         />
       )}
 
-      {!loading && !error && !articleHtml && <Message>No preview available for this link.</Message>}
+      {!loading && !error && !articleHtml && (
+        <Message>No preview available for this link.</Message>
+      )}
     </PageContainer>
   );
 }

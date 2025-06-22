@@ -106,6 +106,7 @@ interface Props {
   readOnly?: boolean;
   sharing?: boolean;
   onShare?: (highlights: Highlight[]) => Promise<void> | void;
+  highlightId?: string;
 }
 
 export default function HighlightEditor({
@@ -114,19 +115,28 @@ export default function HighlightEditor({
   readOnly = false,
   sharing = false,
   onShare,
+  highlightId,
 }: Props) {
   const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setHighlights(initialHighlights);
   }, [initialHighlights]);
 
+  useEffect(() => {
+    if (!highlightId) return;
+    const el = document.querySelector(`mark[data-highlight-id="${highlightId}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('highlighted');
+      setTimeout(() => el.classList.remove('highlighted'), 2000);
+    }
+  }, [highlightId]);
+
   const addHighlight = useCallback(() => {
     if (readOnly) return;
-
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
-
     const selectedText = selection.toString().trim();
     if (selectedText.length < 3) return;
 
@@ -152,7 +162,6 @@ export default function HighlightEditor({
     setHighlights(prev => prev.filter(h => h.id !== id));
   };
 
-  // Render the article text with highlights applied
   const renderHighlightedText = () => {
     if (highlights.length === 0) return htmlContent;
 
@@ -165,7 +174,7 @@ export default function HighlightEditor({
         parts.push(htmlContent.slice(lastIndex, start));
       }
       parts.push(
-        <HighlightedText key={id} title={text}>
+        <HighlightedText key={id} data-highlight-id={id} title={text}>
           {htmlContent.slice(start, end)}
         </HighlightedText>
       );
@@ -192,7 +201,7 @@ export default function HighlightEditor({
             key={h.id}
             title={h.text}
             onClick={() => {
-              const element = document.querySelector(`mark[title="${h.text}"]`);
+              const element = document.querySelector(`mark[data-highlight-id="${h.id}"]`);
               element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }}
           >
