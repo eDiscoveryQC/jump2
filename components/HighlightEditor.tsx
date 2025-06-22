@@ -1,35 +1,90 @@
-import * as React from 'react';
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-} from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 
-const Container = styled.div`...`; // (same as before)
-const ArticleArea = styled.div`...`;
-const HighlightedText = styled.mark<{ $color: string }>`
-  background-color: ${({ $color }) => $color};
+const Container = styled.div`
+  display: flex;
+  max-width: 900px;
+  margin: 2rem auto;
+  gap: 2rem;
+  user-select: text;
+`;
+
+const ArticleArea = styled.div`
+  flex: 3;
+  line-height: 1.6;
+  font-size: 1.1rem;
+  border: 1px solid #ddd;
+  padding: 1.5rem;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+`;
+
+const HighlightedText = styled.mark<{ color: string }>`
+  background-color: ${({ color }) => color};
   cursor: pointer;
   border-radius: 3px;
   padding: 0 2px;
 `;
-const Sidebar = styled.div`...`;
-const HighlightItem = styled.div`...`;
-const RemoveButton = styled.button`...`;
-const Button = styled.button`...`;
-const ColorInput = styled.input`
-  margin: 0 8px 0 0;
-  cursor: pointer;
-  border: none;
-  padding: 0;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 3px;
+
+const Sidebar = styled.div`
+  flex: 1;
+  border-left: 1px solid #ccc;
+  padding-left: 1rem;
+  max-height: 60vh;
+  overflow-y: auto;
 `;
 
-interface Highlight {
+const HighlightItem = styled.div`
+  display: flex;
+  align-items: center;
+  background: #f9f9f9;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    background: #e6f0ff;
+  }
+`;
+
+const ColorInput = styled.input`
+  margin-right: 8px;
+  border: none;
+  padding: 0;
+  width: 1.5em;
+  height: 1.5em;
+  cursor: pointer;
+`;
+
+const RemoveButton = styled.button`
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: #e55353;
+  font-size: 1.2rem;
+  cursor: pointer;
+`;
+
+const Button = styled.button`
+  width: 100%;
+  padding: 12px;
+  background: #1e4268;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+
+  &:disabled {
+    background: #64748b;
+    cursor: not-allowed;
+  }
+`;
+
+export interface Highlight {
   id: string;
   text: string;
   start: number;
@@ -56,138 +111,107 @@ export default function HighlightEditor({
 }: Props) {
   const [highlights, setHighlights] = useState<Highlight[]>(() => {
     const saved = localStorage.getItem('jump2-highlights');
-    return initialHighlights.length > 0
+    return initialHighlights.length
       ? initialHighlights
       : saved
       ? JSON.parse(saved)
       : [];
   });
 
-  // Persist highlights locally
   useEffect(() => {
     localStorage.setItem('jump2-highlights', JSON.stringify(highlights));
   }, [highlights]);
 
-  // Scroll to highlightId on load
   useEffect(() => {
     if (!highlightId) return;
-    const el = document.querySelector<HTMLElement>(
+    const marker = document.querySelector<HTMLElement>(
       `mark[data-highlight-id="${highlightId}"]`
     );
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      el.classList.add('highlighted');
-      setTimeout(() => el.classList.remove('highlighted'), 2000);
+    if (marker) {
+      marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      marker.classList.add('highlighted');
+      setTimeout(() => marker.classList.remove('highlighted'), 2000);
     }
   }, [highlightId]);
 
   const addHighlight = useCallback(() => {
     if (readOnly) return;
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
-    const selectedText = selection.toString().trim();
-    if (selectedText.length < 3) return;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
 
-    const start = htmlContent.indexOf(selectedText);
+    const text = sel.toString().trim();
+    if (text.length < 3) return;
+
+    const start = htmlContent.indexOf(text);
     if (start === -1) return;
-    const end = start + selectedText.length;
+    const end = start + text.length;
 
-    if (highlights.some(h => h.text === selectedText && h.start === start)) {
-      return;
-    }
+    const existing = highlights.some(h => h.start === start && h.end === end);
+    if (existing) return;
 
-    const color = '#ffe58a';
     const newHighlight: Highlight = {
-      id: Math.random().toString(36).slice(2, 11),
-      text: selectedText,
+      id: Math.random().toString(36).slice(2, 10),
+      text,
       start,
       end,
-      color,
+      color: '#ffe58a',
     };
 
-    setHighlights(prev => [...prev, newHighlight]);
-    selection.removeAllRanges();
+    setHighlights([...highlights, newHighlight]);
+    sel.removeAllRanges();
   }, [htmlContent, highlights, readOnly]);
 
   const removeHighlight = (id: string) => {
     if (readOnly) return;
-    setHighlights(prev => prev.filter(h => h.id !== id));
+    setHighlights(highlights.filter(h => h.id !== id));
   };
 
-  const updateHighlightColor = (id: string, color: string) => {
-    setHighlights(prev =>
-      prev.map(h => (h.id === id ? { ...h, color } : h))
-    );
+  const updateColor = (id: string, color: string) => {
+    setHighlights(highlights.map(h => (h.id === id ? { ...h, color } : h)));
   };
 
-  const renderHighlightedText = useMemo(() => {
-    if (highlights.length === 0) return htmlContent;
+  const rendered = useMemo(() => {
+    if (!highlights.length) return htmlContent;
     const sorted = [...highlights].sort((a, b) => a.start - b.start);
-    const parts: (string | React.ReactElement)[] = [];
-    let lastIndex = 0;
+    const parts = [];
+    let pos = 0;
 
     sorted.forEach(({ start, end, id, text, color }) => {
-      if (start > lastIndex) parts.push(htmlContent.slice(lastIndex, start));
+      if (start > pos) parts.push(htmlContent.slice(pos, start));
       parts.push(
-        <HighlightedText
-          key={id}
-          data-highlight-id={id}
-          $color={color}
-          title={text}
-        >
+        <HighlightedText key={id} data-highlight-id={id} color={color} title={text}>
           {htmlContent.slice(start, end)}
         </HighlightedText>
       );
-      lastIndex = end;
+      pos = end;
     });
-    if (lastIndex < htmlContent.length)
-      parts.push(htmlContent.slice(lastIndex));
+
+    if (pos < htmlContent.length) parts.push(htmlContent.slice(pos));
     return parts;
   }, [htmlContent, highlights]);
 
   return (
     <Container>
-      <ArticleArea onMouseUp={addHighlight} aria-label="Article content with highlights">
-        {renderHighlightedText}
+      <ArticleArea onMouseUp={addHighlight} aria-label="Article content">
+        {rendered}
       </ArticleArea>
 
-      <Sidebar aria-label="Highlight list">
+      <Sidebar>
         <h3>Highlights</h3>
-        {highlights.length === 0 && <p>No highlights yet. Select text above to add.</p>}
-
+        {highlights.length === 0 && <p>Select text to highlight it.</p>}
         {highlights.map(h => (
-          <HighlightItem
-            key={h.id}
-            onClick={() => {
-              const el = document.querySelector<HTMLElement>(
-                `mark[data-highlight-id="${h.id}"]`
-              );
-              el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }}
-          >
-            <ColorInput
-              type="color"
-              value={h.color}
-              onChange={e => updateHighlightColor(h.id, e.target.value)}
-            />
+          <HighlightItem key={h.id} onClick={() => {
+              const m = document.querySelector<HTMLElement>(`mark[data-highlight-id="${h.id}"]`);
+              m?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }}>
+            <ColorInput type="color" value={h.color} onChange={e => updateColor(h.id, e.target.value)} />
             <span>{h.text}</span>
-            {!readOnly && (
-              <RemoveButton
-                onClick={e => {
-                  e.stopPropagation();
-                  removeHighlight(h.id);
-                }}
-                aria-label="Remove highlight"
-              >
-                &times;
-              </RemoveButton>
-            )}
+            {!readOnly && <RemoveButton onClick={e => { e.stopPropagation(); removeHighlight(h.id); }}>&times;</RemoveButton>}
           </HighlightItem>
         ))}
-
         {!readOnly && highlights.length > 0 && (
           <Button onClick={() => onShare?.(highlights)} disabled={sharing}>
-            {sharing ? 'Generating Link...' : 'Generate Share Link'}
+            {sharing ? 'Generating link...' : 'Generate Share Link'}
           </Button>
         )}
       </Sidebar>
