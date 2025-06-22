@@ -14,7 +14,6 @@ interface ResponseData {
 interface ChromiumModule {
   args: string[];
   defaultViewport: any;
-  executablePath: (() => Promise<string>) | Promise<string>;
   headless: boolean;
 }
 
@@ -24,21 +23,14 @@ async function getBrowser(): Promise<puppeteer.Browser> {
   if (!browser) {
     const chromium = (await import("@sparticuz/chromium")) as unknown as ChromiumModule;
 
-    const chromiumExecutablePath =
-      typeof chromium.executablePath === "function"
-        ? await chromium.executablePath()
-        : chromium.executablePath;
-
-    logParse("Resolved executablePath: %s", chromiumExecutablePath);
-
-    if (!chromiumExecutablePath) {
-      throw new Error("Executable path from @sparticuz/chromium is empty. Cannot launch browser.");
-    }
+    // Hardcoded fallback for Chromium on Render
+    const fallbackExecutablePath = "/opt/render/project/.render/chromium";
+    logParse("Using fallback executable path: %s", fallbackExecutablePath);
 
     browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: chromiumExecutablePath,
+      executablePath: fallbackExecutablePath,
       headless: chromium.headless,
       ignoreHTTPSErrors: true,
     });
