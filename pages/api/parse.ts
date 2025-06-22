@@ -75,7 +75,7 @@ export default async function handler(
     if (!response.ok) {
       let errorMessage = `ScrapingBee error: ${response.status}`;
       try {
-        const errJson = await response.json();
+        const errJson = await response.json() as { error?: string };
         errorMessage += " " + (errJson.error || JSON.stringify(errJson));
       } catch {}
       beeError = errorMessage;
