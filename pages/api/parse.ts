@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import chromium from "chrome-aws-lambda";
 import type puppeteer from "puppeteer-core";
-import { logParse, logApi, logRender } from "@/lib/log";
+import { logParse, logApi } from "@/lib/log";
 
 interface Article {
   content: string;
@@ -16,14 +16,18 @@ let browser: puppeteer.Browser | null = null;
 
 async function getBrowser(): Promise<puppeteer.Browser> {
   if (!browser) {
+    const executablePath = await chromium.executablePath || '/usr/bin/chromium-browser';
     logParse("Launching new Puppeteer browser");
-    console.log("[parse.ts] Launching new Puppeteer browser");
+    console.log("[parse.ts] Launching Puppeteer with executable path:", executablePath);
+
     browser = await chromium.puppeteer.launch({
-      args: chromium.args,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', ...chromium.args],
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath,
+      executablePath,
       headless: chromium.headless,
+      ignoreHTTPSErrors: true,
     });
+
     logParse("Browser launched successfully");
     console.log("[parse.ts] Browser launched successfully");
   } else {
@@ -59,12 +63,8 @@ export default async function handler(
     console.log("[parse.ts] Setting up request interception");
     await page.setRequestInterception(true);
     page.on("request", (request) => {
-      const resourceType = request.resourceType();
-      if (
-        ["image", "stylesheet", "font", "media", "manifest", "other"].includes(
-          resourceType
-        )
-      ) {
+      const type = request.resourceType();
+      if (["image", "stylesheet", "font", "media", "manifest", "other"].includes(type)) {
         request.abort();
       } else {
         request.continue();
