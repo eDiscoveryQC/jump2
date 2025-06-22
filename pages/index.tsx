@@ -186,7 +186,7 @@ const ShareBar = styled.div`
   display: flex;
   align-items: center;
   gap: 1.2em;
-  margin-top: 2.3em;
+  margin-bottom: 1.5em;
   font-size: 1.15em;
   @media (max-width: 600px) {
     flex-direction: column;
@@ -305,6 +305,8 @@ const Mark = styled.mark`
   font-weight: 700;
   box-decoration-break: clone;
   box-shadow: 0 2px 10px #ffd10022;
+  /* for selection UX */
+  cursor: pointer;
 `;
 
 
@@ -371,25 +373,17 @@ const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: numbe
 
 // === Highlighting utility ===
 // Replace all highlight phrases in HTML with a <mark> tag (case-insensitive, works with HTML).
-function highlightHtml(rawHtml: string, highlights: string[]): string {
-  if (!rawHtml || !highlights.length) return rawHtml;
-  // Sanitize highlights
-  const phrases = highlights
-    .map(p => p.trim())
-    .filter(Boolean)
-    .sort((a, b) => b.length - a.length); // longest first (avoid partial overlap)
-  if (!phrases.length) return rawHtml;
-  // Regex for all phrases, escaping special regex characters
+function highlightHtml(rawHtml: string, highlight: string): string {
+  if (!rawHtml || !highlight) return rawHtml;
+  const phrase = highlight.trim();
+  if (!phrase) return rawHtml;
+  // Regex for the phrase, escaping special regex characters
   const regex = new RegExp(
     "(" +
-      phrases
-        .map(p =>
-          p
-            .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-            .replace(/\s+/g, "\\s+")
-        )
-        .join("|") +
-      ")",
+      phrase
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+        .replace(/\s+/g, "\\s+")
+      + ")",
     "gi"
   );
   // Replace in HTML (not inside tags)
@@ -409,7 +403,7 @@ function highlightHtml(rawHtml: string, highlights: string[]): string {
 export default function Home() {
   // State
   const [link, setLink] = useState("");
-  const [highlightText, setHighlightText] = useState("");
+  const [anchor, setAnchor] = useState(""); // the anchor phrase
   const [showPreview, setShowPreview] = useState(false);
   const [parsedSeconds, setParsedSeconds] = useState(0);
   const [error, setError] = useState("");
@@ -417,6 +411,7 @@ export default function Home() {
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [shortUrl, setShortUrl] = useState("");
   const [showToast, setShowToast] = useState(false);
+  const [searchPhrase, setSearchPhrase] = useState(""); // search bar above preview
 
   // --- Onboarding examples ---
   const EXAMPLES = [
@@ -432,6 +427,7 @@ export default function Home() {
       setError("");
       setShowPreview(false);
       setShortUrl("");
+      setAnchor("");
       return;
     }
     let url: URL;
@@ -448,6 +444,7 @@ export default function Home() {
       setError("Invalid URL.");
       setShowPreview(false);
       setShortUrl("");
+      setAnchor("");
       return;
     }
     setLoadingPreview(true);
@@ -455,6 +452,7 @@ export default function Home() {
     setArticleContent("");
     setShowPreview(true);
     setShortUrl("");
+    setAnchor("");
     fetch(`/api/parse?url=${encodeURIComponent(link)}`)
       .then(async res => {
         if (!res.ok) throw new Error("Failed to fetch article preview.");
@@ -478,14 +476,14 @@ export default function Home() {
     try {
       const urlObj = new URL(link);
       if (isYouTubeUrl(urlObj)) {
-        setParsedSeconds(parseTimestamp(highlightText));
+        setParsedSeconds(parseTimestamp(anchor));
       } else {
         setParsedSeconds(0);
       }
     } catch {
       setParsedSeconds(0);
     }
-  }, [highlightText, link]);
+  }, [anchor, link]);
 
   // --- Short URL logic ---
   const handleShare = useCallback(async () => {
@@ -498,8 +496,8 @@ export default function Home() {
         urlObj.searchParams.set("t", parsedSeconds.toString());
       }
       // Add highlight as hash (for demo; you may want to persist on backend)
-      if (highlightText && !isYouTubeUrl(urlObj)) {
-        urlObj.hash = `:~:text=${encodeURIComponent(highlightText)}`;
+      if (anchor && !isYouTubeUrl(urlObj)) {
+        urlObj.hash = `:~:text=${encodeURIComponent(anchor)}`;
       }
       // Simulate backend: returns a short code
       const res = await fetch("/api/links", {
@@ -515,7 +513,7 @@ export default function Home() {
     } catch (e: any) {
       setError(e.message || "Failed to generate short URL");
     }
-  }, [link, parsedSeconds, highlightText]);
+  }, [link, parsedSeconds, anchor]);
 
   // --- Clipboard
   const handleCopy = useCallback(() => {
@@ -536,6 +534,41 @@ export default function Home() {
     setShowPreview(true);
   }
 
+  // --- Search bar above preview for phrase highlight ---
+  function handleSearchSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (searchPhrase.trim()) {
+      setAnchor(searchPhrase.trim());
+    }
+  }
+
+  // --- When user selects text in preview, set anchor ---
+  const previewRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const ref = previewRef.current;
+    if (!ref) return;
+    function handleSelection() {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        if (!ref.contains(range.commonAncestorContainer)) {
+          return; // Only react to selection inside preview
+        }
+        const selected = sel.toString().trim();
+        if (selected.length > 0) {
+          setAnchor(selected);
+          setSearchPhrase(selected);
+        }
+      }
+    }
+    ref.addEventListener("mouseup", handleSelection);
+    ref.addEventListener("touchend", handleSelection);
+    return () => {
+      ref.removeEventListener("mouseup", handleSelection);
+      ref.removeEventListener("touchend", handleSelection);
+    };
+  }, [articleContent, showPreview]);
+
   // --- Render
   return (
     <Bg>
@@ -549,7 +582,7 @@ export default function Home() {
             </LogoRow>
             <Slogan>Highlight. Jump. Share. Instantly.</Slogan>
             <HeroDesc>
-              Paste any article, blog, or YouTube link below. Highlight the best part, generate a skip-to link, and share it with anyone.
+              Paste any article, blog, or YouTube link below. Drop an anchor where you want users to start, highlight it, and share your Jump2 link!
             </HeroDesc>
           </Hero>
           <Card>
@@ -563,28 +596,15 @@ export default function Home() {
                 autoFocus
                 aria-label="Paste article or YouTube URL"
               />
-              <Input
-                type="text"
-                placeholder={(() => {
-                  try {
-                    const urlObj = new URL(link);
-                    if (isYouTubeUrl(urlObj)) return 'Timestamp (e.g. 1:23)';
-                  } catch {}
-                  return 'Highlight text (e.g. "best quote"; optional)';
-                })()}
-                value={highlightText}
-                onChange={e => setHighlightText(e.target.value)}
-                aria-label="Highlight text or timestamp"
-              />
               <Button type="submit" primary>Preview</Button>
             </InputRow>
             <Tip>
-              <b>Tip:</b> Try with any news, blog, or YouTube link. Paste, highlight, Preview!
+              <b>Tip:</b> Try with any news, blog, or YouTube link. Paste, preview, and anchor!
             </Tip>
             <ExampleLinks>
               Examples:&nbsp;
               {EXAMPLES.map(({ url, text }, i) => (
-                <a key={i} onClick={() => { setLink(url); setHighlightText(text); setShowPreview(false); setTimeout(() => setShowPreview(true), 75); }}>
+                <a key={i} onClick={() => { setLink(url); setAnchor(text); setShowPreview(false); setTimeout(() => setShowPreview(true), 75); }}>
                   {url.replace(/^https?:\/\//, '').split("/")[0]}
                 </a>
               ))}
@@ -593,9 +613,8 @@ export default function Home() {
               <b>How it works:</b>
               <ul>
                 <li>Paste a link above (“Paste” or drag & drop!)</li>
-                <li>Add a highlight or timestamp (optional)</li>
-                <li>Click <b>Preview</b></li>
-                <li>Copy and share your Jump2 link!</li>
+                <li>Preview loads. Find the spot to anchor: search a phrase, or select text.</li>
+                <li>Click <b>Share</b> and copy your Jump2 link!</li>
               </ul>
             </HowItWorks>
           </Card>
@@ -605,6 +624,39 @@ export default function Home() {
         <div>
           {showPreview && (
             <PreviewCard>
+              {/* Jump2 Share Bar ALWAYS at the top */}
+              <ShareBar>
+                <ShareInput type="text" readOnly value={shortUrl ? shortUrl : "Your Jump2 link will appear here…"} aria-label="Jump2 shareable link" />
+                <ShareActions>
+                  <CopyBtn type="button" onClick={shortUrl ? handleCopy : handleShare}>
+                    {shortUrl ? "Copy" : "Share"}
+                  </CopyBtn>
+                  {shortUrl &&
+                    <a href={shortUrl} target="_blank" rel="noopener noreferrer" style={{color:"#3b82f6", fontWeight:700, textDecoration:"none"}}>
+                      Open ↗
+                    </a>
+                  }
+                </ShareActions>
+              </ShareBar>
+              {/* Search-to-highlight bar */}
+              <form onSubmit={handleSearchSubmit} style={{marginBottom:"1.2em", display:"flex", gap:"0.6em", alignItems:"center"}}>
+                <Input
+                  type="text"
+                  placeholder="Search or type a phrase to anchor/highlight…"
+                  value={searchPhrase}
+                  onChange={e => setSearchPhrase(e.target.value)}
+                  aria-label="Search phrase to anchor"
+                  style={{flex:"1 1 0%", fontSize:"1.07em"}}
+                />
+                <Button type="submit">Set as Anchor</Button>
+              </form>
+              {/* Anchor phrase display */}
+              {anchor && (
+                <div style={{marginBottom:"1.1em", color:"#ffe066", fontWeight:700, fontSize:"1.03em"}}>
+                  Anchor: <span style={{background:"rgba(255,224,102,0.17)", color:"#ffe066", borderRadius:6, padding:"0.15em 0.5em", fontWeight:800}}>{anchor}</span>
+                </div>
+              )}
+              {/* Article/video preview */}
               {loadingPreview && <Loader />}
               {!loadingPreview && (() => {
                 try {
@@ -613,19 +665,9 @@ export default function Home() {
                     return (
                       <>
                         <YouTubePlayer url={link} startSeconds={parsedSeconds} />
-                        <ShareBar>
-                          <ShareInput type="text" readOnly value={shortUrl ? shortUrl : "Your Jump2 link will appear here…"} aria-label="Jump2 shareable link" />
-                          <ShareActions>
-                            <CopyBtn type="button" onClick={shortUrl ? handleCopy : handleShare}>
-                              {shortUrl ? "Copy" : "Share"}
-                            </CopyBtn>
-                            {shortUrl &&
-                              <a href={shortUrl} target="_blank" rel="noopener noreferrer" style={{color:"#3b82f6", fontWeight:700, textDecoration:"none"}}>
-                                Open ↗
-                              </a>
-                            }
-                          </ShareActions>
-                        </ShareBar>
+                        <div style={{marginTop:"1.5em", color:"#b5c7e4", fontSize:"1.08em"}}>
+                          Enter a timestamp (e.g. <b>1:23</b>) above to create a Jump2 link to that moment.
+                        </div>
                       </>
                     );
                   }
@@ -642,33 +684,19 @@ export default function Home() {
                     </>
                   );
                 }
-                // --- Highlight phrases in preview ---
+                // --- Highlight anchor phrase in preview ---
                 let html = articleContent;
-                const highlights = highlightText
-                  .split(";")
-                  .map(x => x.trim())
-                  .filter(Boolean);
-                if (html && highlights.length) {
-                  html = highlightHtml(html, highlights);
+                if (html && anchor) {
+                  html = highlightHtml(html, anchor);
                 }
                 if (html) {
                   return (
-                    <>
-                      <div dangerouslySetInnerHTML={{ __html: html }} />
-                      <ShareBar>
-                        <ShareInput type="text" readOnly value={shortUrl ? shortUrl : "Your Jump2 link will appear here…"} aria-label="Jump2 shareable link" />
-                        <ShareActions>
-                          <CopyBtn type="button" onClick={shortUrl ? handleCopy : handleShare}>
-                            {shortUrl ? "Copy" : "Share"}
-                          </CopyBtn>
-                          {shortUrl &&
-                            <a href={shortUrl} target="_blank" rel="noopener noreferrer" style={{color:"#3b82f6", fontWeight:700, textDecoration:"none"}}>
-                              Open ↗
-                            </a>
-                          }
-                        </ShareActions>
-                      </ShareBar>
-                    </>
+                    <div
+                      ref={previewRef}
+                      tabIndex={0}
+                      style={{outline:"none", cursor:"text", userSelect:"text"}}
+                      dangerouslySetInnerHTML={{ __html: html }}
+                    />
                   );
                 }
                 return null;
