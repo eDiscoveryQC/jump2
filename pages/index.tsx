@@ -45,13 +45,13 @@ const highlightFade = keyframes`
   100% { background-color: #2563ebaa; }
 `;
 
-const bounce = keyframes`
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+const jumpBounce = keyframes`
+  0%, 100% { transform: translateY(0); }
+  15%      { transform: translateY(-25%); }
+  30%      { transform: translateY(0); }
+  35%      { transform: translateY(-15%);}
+  40%      { transform: translateY(0);}
+  100%     { transform: translateY(0);}
 `;
 
 const chipIn = keyframes`
@@ -128,12 +128,6 @@ const LogoWrapper = styled.div`
   user-select: text;
   filter: drop-shadow(0 0 6px #60a5faa) drop-shadow(0 0 10px #3b82f6aa);
   cursor: default;
-
-  &:hover span:nth-child(2) {
-    animation: ${glowPulse} 3s infinite;
-    transform: scale(1.25);
-    filter: drop-shadow(0 0 15px #3b82f6);
-  }
 `;
 
 const JumpText = styled.span`
@@ -141,17 +135,14 @@ const JumpText = styled.span`
   text-shadow: 1px 1px 2px #1e293b, -1px -1px 2px #3b82f6;
 `;
 
-const TwoText = styled.span<{ animateBounce: boolean }>`
+const TwoText = styled.span`
   color: #3b82f6;
   font-size: 1.2em;
   user-select: none;
   transition: transform 0.3s ease, filter 0.3s ease;
   transform-origin: left center;
   text-shadow: 0 0 12px #3b82f6aa;
-  animation: ${({ animateBounce }) =>
-    animateBounce
-      ? css`${bounce} 1.5s ease-in-out infinite`
-      : "none"};
+  animation: ${jumpBounce} 2.5s cubic-bezier(0.3, 0.7, 0.4, 1.5) infinite;
 `;
 
 const Subtitle = styled.p`
@@ -247,7 +238,6 @@ const InfoIcon = styled.span`
   }
 `;
 
-// --- Loader spinner for button ---
 const Loader = styled.span`
   display: inline-block;
   border: 3px solid #60a5fa44;
@@ -1000,7 +990,7 @@ export default function Home() {
         <LeftColumn>
           <LogoWrapper aria-label="Jump2 logo" role="img" tabIndex={-1}>
             <AnimatedLogoText>Jump</AnimatedLogoText>
-            <TwoText animateBounce={showLightbox}>2</TwoText>
+            <TwoText>2</TwoText>
           </LogoWrapper>
 
           <Subtitle>Skip the fluff. Jump2 the good part.</Subtitle>
@@ -1009,116 +999,114 @@ export default function Home() {
             Paste a link (article or video) and highlight the best part — timestamp, quote, or keyword.
           </Description>
 
-          <GlassCard>
-            <FormWrapper aria-live="polite" aria-atomic="true" aria-describedby="form-error">
-              <Form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleCreate();
-                }}
-                noValidate
-              >
-                <Input
-                  type="url"
-                  placeholder="Paste a link (article or video)..."
-                  value={link}
-                  onChange={(e) => setLink(e.target.value.trim())}
-                  spellCheck={false}
-                  autoComplete="off"
-                  required
-                  aria-label="Content link"
-                  aria-invalid={!!error}
-                  disabled={loadingPreview || loadingShort}
-                  autoFocus
-                />
+          <FormWrapper aria-live="polite" aria-atomic="true" aria-describedby="form-error">
+            <Form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleCreate();
+              }}
+              noValidate
+            >
+              <Input
+                type="url"
+                placeholder="Paste a link (article or video)..."
+                value={link}
+                onChange={(e) => setLink(e.target.value.trim())}
+                spellCheck={false}
+                autoComplete="off"
+                required
+                aria-label="Content link"
+                aria-invalid={!!error}
+                disabled={loadingPreview || loadingShort}
+                autoFocus
+              />
 
-                <Input
-                  type="text"
-                  placeholder={
-                    isMediaFile
-                      ? "Jump to timestamp like 1:23 or 0:02:15"
-                      : "Jump to highlight text or timestamp"
-                  }
-                  value={jumpTo}
-                  onChange={(e) => setJumpTo(e.target.value)}
-                  spellCheck={false}
-                  autoComplete="off"
-                  aria-label="Jump to position"
-                  disabled={!link || loadingPreview || loadingShort}
-                />
+              <Input
+                type="text"
+                placeholder={
+                  isMediaFile
+                    ? "Jump to timestamp like 1:23 or 0:02:15"
+                    : "Jump to highlight text or timestamp"
+                }
+                value={jumpTo}
+                onChange={(e) => setJumpTo(e.target.value)}
+                spellCheck={false}
+                autoComplete="off"
+                aria-label="Jump to position"
+                disabled={!link || loadingPreview || loadingShort}
+              />
 
-                {highlightList.length > 0 && (
-                  <HighlightChipsContainer aria-label="Selected highlights">
-                    {highlightList.map((text) => (
-                      <HighlightChip
-                        key={text}
-                        leaving={chipLeaving === text}
+              {highlightList.length > 0 && (
+                <HighlightChipsContainer aria-label="Selected highlights">
+                  {highlightList.map((text) => (
+                    <HighlightChip
+                      key={text}
+                      leaving={chipLeaving === text}
+                    >
+                      {text}
+                      <ChipRemoveButton
+                        onClick={() => removeHighlight(text)}
+                        aria-label={`Remove highlight: ${text}`}
+                        title="Remove highlight"
                       >
-                        {text}
-                        <ChipRemoveButton
-                          onClick={() => removeHighlight(text)}
-                          aria-label={`Remove highlight: ${text}`}
-                          title="Remove highlight"
-                        >
-                          ×
-                        </ChipRemoveButton>
-                      </HighlightChip>
-                    ))}
-                  </HighlightChipsContainer>
-                )}
-
-                <Hint>
-                  {isMediaFile ? (
-                    <>
-                      For videos/audio, enter timestamp like 1:23 or 0:02:15
-                      <InfoIcon data-tooltip="Use MM:SS or HH:MM:SS formats for timestamps. Example: 1:23, 0:02:15">
-                        ?
-                      </InfoIcon>
-                    </>
-                  ) : (
-                    "For articles, paste a quote or keyword to highlight"
-                  )}
-                </Hint>
-
-                <Button
-                  type="submit"
-                  disabled={loadingPreview || loadingShort || !link || (!!jumpTo && error !== "")}
-                  aria-disabled={loadingPreview || loadingShort || !link || (!!jumpTo && error !== "")}
-                  aria-live="polite"
-                  aria-busy={loadingShort}
-                >
-                  {loadingShort ? <Loader /> : null}
-                  {loadingShort ? "Generating..." : "Make it a Jump2"}
-                </Button>
-              </Form>
-              {error && (
-                <Feedback id="form-error" role="alert" aria-live="assertive" aria-atomic="true">
-                  {error}
-                </Feedback>
+                        ×
+                      </ChipRemoveButton>
+                    </HighlightChip>
+                  ))}
+                </HighlightChipsContainer>
               )}
 
-              <ShareWrapper>
-                {shortUrl && (
+              <Hint>
+                {isMediaFile ? (
                   <>
-                    <ShortUrlInput
-                      type="text"
-                      readOnly
-                      value={shortUrl}
-                      onFocus={(e) => e.target.select()}
-                      aria-label="Short URL"
-                    />
-                    <CopyButton
-                      type="button"
-                      onClick={handleCopy}
-                      aria-label="Copy short URL to clipboard"
-                    >
-                      Copy Short URL
-                    </CopyButton>
+                    For videos/audio, enter timestamp like 1:23 or 0:02:15
+                    <InfoIcon data-tooltip="Use MM:SS or HH:MM:SS formats for timestamps. Example: 1:23, 0:02:15">
+                      ?
+                    </InfoIcon>
                   </>
+                ) : (
+                  "For articles, paste a quote or keyword to highlight"
                 )}
-              </ShareWrapper>
-            </FormWrapper>
-          </GlassCard>
+              </Hint>
+
+              <Button
+                type="submit"
+                disabled={loadingPreview || loadingShort || !link || (!!jumpTo && error !== "")}
+                aria-disabled={loadingPreview || loadingShort || !link || (!!jumpTo && error !== "")}
+                aria-live="polite"
+                aria-busy={loadingShort}
+              >
+                {loadingShort ? <Loader /> : null}
+                {loadingShort ? "Generating..." : "Make it a Jump2"}
+              </Button>
+            </Form>
+            {error && (
+              <Feedback id="form-error" role="alert" aria-live="assertive" aria-atomic="true">
+                {error}
+              </Feedback>
+            )}
+
+            <ShareWrapper>
+              {shortUrl && (
+                <>
+                  <ShortUrlInput
+                    type="text"
+                    readOnly
+                    value={shortUrl}
+                    onFocus={(e) => e.target.select()}
+                    aria-label="Short URL"
+                  />
+                  <CopyButton
+                    type="button"
+                    onClick={handleCopy}
+                    aria-label="Copy short URL to clipboard"
+                  >
+                    Copy Short URL
+                  </CopyButton>
+                </>
+              )}
+            </ShareWrapper>
+          </FormWrapper>
         </LeftColumn>
 
         <GlassCard>
