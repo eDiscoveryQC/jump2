@@ -1,4 +1,10 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import styled, { keyframes, css } from "styled-components";
 
 // === Animations ===
@@ -533,7 +539,92 @@ const ContactEmail = styled.a`
   }
 `;
 
-const Home = () => {
+// === Helper hooks & utils ===
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState<T>(value);
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timeout);
+  }, [value, delay]);
+  return debounced;
+}
+
+const isYouTubeUrl = (url: URL) =>
+  ["www.youtube.com", "youtube.com", "youtu.be"].includes(url.hostname);
+
+function parseTimestamp(input: string): number {
+  if (!input) return 0;
+  const parts = input.trim().split(":").map(Number);
+  if (parts.some(isNaN)) return NaN;
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  if (parts.length === 1) return parts[0];
+  return 0;
+}
+
+function formatTimestamp(seconds: number) {
+  if (seconds < 0) return "";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) {
+    return `${h}:${m.toString().padStart(2, "0")}:${s
+      .toString()
+      .padStart(2, "0")}`;
+  }
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+// === YouTube Player ===
+const YouTubePlayer = ({
+  url,
+  startSeconds,
+}: {
+  url: string;
+  startSeconds: number;
+}) => {
+  const videoId = useMemo(() => {
+    try {
+      const u = new URL(url);
+      if (u.hostname === "youtu.be") return u.pathname.slice(1);
+      return u.searchParams.get("v") || "";
+    } catch {
+      return "";
+    }
+  }, [url]);
+
+  const src = useMemo(
+    () =>
+      `https://www.youtube.com/embed/${videoId}?start=${startSeconds}&autoplay=0&modestbranding=1&rel=0`,
+    [videoId, startSeconds]
+  );
+
+  return (
+    <VideoWrapper role="region" aria-label="YouTube video player">
+      <iframe
+        width="100%"
+        height="360"
+        src={src}
+        title="YouTube video player"
+        frameBorder={0}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+      {startSeconds > 0 && (
+        <TimestampBadge
+          aria-live="polite"
+          aria-atomic="true"
+          aria-relevant="additions"
+        >
+          ▶ {formatTimestamp(startSeconds)}
+        </TimestampBadge>
+      )}
+    </VideoWrapper>
+  );
+};
+
+// === Main Component ===
+export default function Home() {
   const [link, setLink] = useState("");
   const [jumpTo, setJumpTo] = useState("");
   const [parsedSeconds, setParsedSeconds] = useState(0);
@@ -554,6 +645,7 @@ const Home = () => {
   const debouncedLink = useDebounce(link, 600);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
+  // Validate and parse jumpTo timestamp/text
   useEffect(() => {
     if (jumpTo.trim() === "") {
       setParsedSeconds(0);
@@ -569,6 +661,7 @@ const Home = () => {
     }
   }, [jumpTo]);
 
+  // Fetch article preview if link changes (excluding YouTube)
   useEffect(() => {
     if (!debouncedLink) {
       setArticleContent("");
@@ -620,6 +713,7 @@ const Home = () => {
     fetchArticle();
   }, [debouncedLink]);
 
+  // Generate deep short URL for link + timestamp + highlights
   const generateShortUrl = useCallback(async () => {
     setShortUrl("");
     setLoadingShort(true);
@@ -1000,4 +1094,4 @@ const Home = () => {
       </PageContainer>
     </>
   );
-};
+}
