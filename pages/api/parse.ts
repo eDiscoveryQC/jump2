@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import chromium from "chrome-aws-lambda";
 import type puppeteer from "puppeteer-core";
+import { logParse, logApi, logRender } from "@/lib/log";
 
 interface Article {
   content: string;
@@ -15,12 +16,16 @@ let browser: puppeteer.Browser | null = null;
 
 async function getBrowser(): Promise<puppeteer.Browser> {
   if (!browser) {
+    logParse("Launching new Puppeteer browser");
     browser = await chromium.puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath,
       headless: chromium.headless,
     });
+    logParse("Browser launched successfully");
+  } else {
+    logParse("Reusing existing Puppeteer browser");
   }
   return browser;
 }
@@ -29,8 +34,10 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ResponseData>
 ) {
+  logApi("Received request with query: %o", req.query);
   const { url } = req.query;
   if (!url || typeof url !== "string") {
+    logApi("Invalid or missing URL");
     res.status(400).json({ error: "Missing or invalid URL parameter" });
     return;
   }
@@ -41,6 +48,7 @@ export default async function handler(
     const browser = await getBrowser();
     page = await browser.newPage();
 
+    logParse("Setting up request interception for resource optimization");
     await page.setRequestInterception(true);
     page.on("request", (request) => {
       const resourceType = request.resourceType();
@@ -59,13 +67,16 @@ export default async function handler(
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
     );
 
+    logParse("Navigating to URL: %s", url);
     const response = await page.goto(url, {
       waitUntil: "networkidle2",
       timeout: 20000,
     });
 
     if (!response || !response.ok()) {
-      throw new Error(`Failed to load URL, status: ${response?.status()}`);
+      const status = response?.status();
+      logParse("Failed to load URL. Status: %s", status);
+      throw new Error(`Failed to load URL, status: ${status}`);
     }
 
     const content = await page.evaluate(() => {
@@ -87,15 +98,21 @@ export default async function handler(
     });
 
     if (!content || content.length < 100) {
+      logParse("Content too short or empty");
       res.status(204).json({ article: { content: "" } });
       return;
     }
 
+    logApi("Successfully extracted content");
     res.status(200).json({ article: { content } });
   } catch (error: any) {
+    logApi("Error occurred: %s", error.message);
     console.error("[parse.ts]", error);
     res.status(500).json({ error: error.message || "Internal server error" });
   } finally {
-    if (page) await page.close();
+    if (page) {
+      await page.close();
+      logParse("Closed Puppeteer page");
+    }
   }
 }
