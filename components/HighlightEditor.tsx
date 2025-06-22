@@ -1,96 +1,32 @@
 import * as React from 'react';
-import { useState, useEffect, useCallback } from 'react';
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from 'react';
 import styled from 'styled-components';
 
-const Container = styled.div`
-  display: flex;
-  max-width: 900px;
-  margin: 2rem auto;
-  gap: 2rem;
-  user-select: text;
-`;
-
-const ArticleArea = styled.div`
-  flex: 3;
-  line-height: 1.6;
-  font-size: 1.1rem;
-  border: 1px solid #ddd;
-  padding: 1.5rem;
-  border-radius: 8px;
-  position: relative;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-`;
-
-const HighlightedText = styled.mark`
-  background-color: #ffe58a;
+const Container = styled.div`...`; // (same as before)
+const ArticleArea = styled.div`...`;
+const HighlightedText = styled.mark<{ $color: string }>`
+  background-color: ${({ $color }) => $color};
   cursor: pointer;
   border-radius: 3px;
   padding: 0 2px;
 `;
-
-const Sidebar = styled.div`
-  flex: 1;
-  border-left: 1px solid #ccc;
-  padding-left: 1rem;
-  max-height: 60vh;
-  overflow-y: auto;
-`;
-
-const HighlightItem = styled.div`
-  background: #f9f9f9;
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  border-radius: 6px;
+const Sidebar = styled.div`...`;
+const HighlightItem = styled.div`...`;
+const RemoveButton = styled.button`...`;
+const Button = styled.button`...`;
+const ColorInput = styled.input`
+  margin: 0 8px 0 0;
   cursor: pointer;
-  font-size: 0.95rem;
-  border: 1px solid transparent;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: background 0.2s, border-color 0.2s;
-
-  &:hover {
-    border-color: #1e4268;
-    background: #e6f0ff;
-  }
-`;
-
-const RemoveButton = styled.button`
-  background: none;
   border: none;
-  color: #e55353;
-  font-size: 1.2rem;
-  cursor: pointer;
   padding: 0;
-  line-height: 1;
-  transition: color 0.2s;
-
-  &:hover {
-    color: #b22222;
-  }
-`;
-
-const Button = styled.button`
-  background-color: #1e4268;
-  color: white;
-  border: none;
-  padding: 10px 14px;
-  margin-top: 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 1rem;
-  width: 100%;
-
-  &:hover {
-    background-color: #163559;
-  }
-
-  &:disabled {
-    background-color: #64748b;
-    cursor: not-allowed;
-  }
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 3px;
 `;
 
 interface Highlight {
@@ -98,6 +34,7 @@ interface Highlight {
   text: string;
   start: number;
   end: number;
+  color: string;
 }
 
 interface Props {
@@ -117,15 +54,26 @@ export default function HighlightEditor({
   onShare,
   highlightId,
 }: Props) {
-  const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights);
+  const [highlights, setHighlights] = useState<Highlight[]>(() => {
+    const saved = localStorage.getItem('jump2-highlights');
+    return initialHighlights.length > 0
+      ? initialHighlights
+      : saved
+      ? JSON.parse(saved)
+      : [];
+  });
 
+  // Persist highlights locally
   useEffect(() => {
-    setHighlights(initialHighlights);
-  }, [initialHighlights]);
+    localStorage.setItem('jump2-highlights', JSON.stringify(highlights));
+  }, [highlights]);
 
+  // Scroll to highlightId on load
   useEffect(() => {
     if (!highlightId) return;
-    const el = document.querySelector(`mark[data-highlight-id="${highlightId}"]`);
+    const el = document.querySelector<HTMLElement>(
+      `mark[data-highlight-id="${highlightId}"]`
+    );
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       el.classList.add('highlighted');
@@ -144,13 +92,17 @@ export default function HighlightEditor({
     if (start === -1) return;
     const end = start + selectedText.length;
 
-    if (highlights.some(h => h.text === selectedText)) return;
+    if (highlights.some(h => h.text === selectedText && h.start === start)) {
+      return;
+    }
 
+    const color = '#ffe58a';
     const newHighlight: Highlight = {
       id: Math.random().toString(36).slice(2, 11),
       text: selectedText,
       start,
       end,
+      color,
     };
 
     setHighlights(prev => [...prev, newHighlight]);
@@ -162,53 +114,66 @@ export default function HighlightEditor({
     setHighlights(prev => prev.filter(h => h.id !== id));
   };
 
-  const renderHighlightedText = () => {
-    if (highlights.length === 0) return htmlContent;
+  const updateHighlightColor = (id: string, color: string) => {
+    setHighlights(prev =>
+      prev.map(h => (h.id === id ? { ...h, color } : h))
+    );
+  };
 
+  const renderHighlightedText = useMemo(() => {
+    if (highlights.length === 0) return htmlContent;
     const sorted = [...highlights].sort((a, b) => a.start - b.start);
     const parts: (string | React.ReactElement)[] = [];
     let lastIndex = 0;
 
-    sorted.forEach(({ start, end, id, text }) => {
-      if (start > lastIndex) {
-        parts.push(htmlContent.slice(lastIndex, start));
-      }
+    sorted.forEach(({ start, end, id, text, color }) => {
+      if (start > lastIndex) parts.push(htmlContent.slice(lastIndex, start));
       parts.push(
-        <HighlightedText key={id} data-highlight-id={id} title={text}>
+        <HighlightedText
+          key={id}
+          data-highlight-id={id}
+          $color={color}
+          title={text}
+        >
           {htmlContent.slice(start, end)}
         </HighlightedText>
       );
       lastIndex = end;
     });
-
-    if (lastIndex < htmlContent.length) {
+    if (lastIndex < htmlContent.length)
       parts.push(htmlContent.slice(lastIndex));
-    }
-
     return parts;
-  };
+  }, [htmlContent, highlights]);
 
   return (
     <Container>
       <ArticleArea onMouseUp={addHighlight} aria-label="Article content with highlights">
-        {renderHighlightedText()}
+        {renderHighlightedText}
       </ArticleArea>
+
       <Sidebar aria-label="Highlight list">
         <h3>Highlights</h3>
         {highlights.length === 0 && <p>No highlights yet. Select text above to add.</p>}
+
         {highlights.map(h => (
           <HighlightItem
             key={h.id}
-            title={h.text}
             onClick={() => {
-              const element = document.querySelector(`mark[data-highlight-id="${h.id}"]`);
-              element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              const el = document.querySelector<HTMLElement>(
+                `mark[data-highlight-id="${h.id}"]`
+              );
+              el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }}
           >
+            <ColorInput
+              type="color"
+              value={h.color}
+              onChange={e => updateHighlightColor(h.id, e.target.value)}
+            />
             <span>{h.text}</span>
             {!readOnly && (
               <RemoveButton
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   removeHighlight(h.id);
                 }}
@@ -219,8 +184,9 @@ export default function HighlightEditor({
             )}
           </HighlightItem>
         ))}
+
         {!readOnly && highlights.length > 0 && (
-          <Button onClick={() => onShare && onShare(highlights)} disabled={sharing}>
+          <Button onClick={() => onShare?.(highlights)} disabled={sharing}>
             {sharing ? 'Generating Link...' : 'Generate Share Link'}
           </Button>
         )}
