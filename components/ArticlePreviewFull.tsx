@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import ArticleError from "./ArticleError";
-import HighlightEditor from "./HighlightEditor";
+import HighlightEditor, { Highlight } from "./HighlightEditor";
 
-// Use emoji icons if react-icons isn't available
+// Emoji-based icons to avoid react-icons dependency
 const FaCopy = () => <span role="img" aria-label="Copy" style={{fontSize:"1.1em"}}>📋</span>;
 const FaRedo = () => <span role="img" aria-label="Redo" style={{fontSize:"1.1em"}}>🔄</span>;
 const FaCheckCircle = () => <span role="img" aria-label="Check" style={{fontSize:"1.1em", color:"#38a169"}}>✔️</span>;
@@ -123,35 +123,25 @@ const HIGHLIGHT_COLORS = [
   "#fbcfe8"  // pink
 ];
 
-// --- Utility ---
-function escapeRegExp(str: string) {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-function highlightArticleHtml(html: string, highlights: [string, string?][]) {
+// --- Utility for in-place highlighting (for visual preview only) ---
+function markHtmlWithHighlights(html: string, highlights: Highlight[]) {
   if (!highlights?.length) return html;
-  let result = html;
-  // Sort longest first, so we avoid nested replace
-  const sorted = [...highlights].sort((a, b) => (b[0].length - a[0].length));
-  sorted.forEach(([h, color], idx) => {
-    if (!h.trim()) return;
-    const pat = escapeRegExp(h.trim());
-    const regex = new RegExp(`(?<!<mark[^>]*?>)(${pat})(?![^<]*?</mark>)`, 'gi');
-    // Inject style for color
-    const colorStyle = color ? `style="--highlight-color:${color}"` : "";
-    result = result.replace(
-      regex,
-      `<mark class="jump2-highlight" tabindex="0" data-highlight-idx="${idx}" ${colorStyle}>$1</mark>`
-    );
+  // Sort highlights by start position ascending
+  const sorted = [...highlights].sort((a, b) => a.start - b.start);
+  let result = "";
+  let pos = 0;
+  sorted.forEach(({ start, end, color, id }) => {
+    if (start > pos) result += html.slice(pos, start);
+    result += `<mark class="jump2-highlight" tabindex="0" data-highlight-id="${id}" style="--highlight-color:${color};background:${color};">${html.slice(start, end)}</mark>`;
+    pos = end;
   });
+  if (pos < html.length) result += html.slice(pos);
   return result;
 }
 
-type HighlightTuple = [string, string?];
-
 type ArticlePreviewFullProps = {
   url: string;
-  initialHighlights?: string[];
-  initialColors?: string[];
+  initialHighlights?: Highlight[];
   onClose?: () => void;
 };
 
@@ -163,21 +153,18 @@ const KNOWN_SUPPORTED = [
 export default function ArticlePreviewFull({
   url,
   initialHighlights = [],
-  initialColors = [],
   onClose,
 }: ArticlePreviewFullProps) {
   // --- State ---
-  const [articleHtml, setArticleHtml] = useState<string>('');
+  const [articleHtml, setArticleHtml] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
 
-  // --- Highlight colors ---
-  const [highlights, setHighlights] = useState<HighlightTuple[]>(
-    initialHighlights.map((h, i) => [h, initialColors[i] || HIGHLIGHT_COLORS[i % HIGHLIGHT_COLORS.length]])
-  );
+  // --- Highlight state ---
+  const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights);
 
   // --- Onboarding/first run hint ---
   const [showHint, setShowHint] = useState(true);
@@ -189,23 +176,23 @@ export default function ArticlePreviewFull({
     if (!url) return;
     setLoading(true);
     setError(null);
-    setArticleHtml('');
+    setArticleHtml("");
     setShareLink(null);
     setShareError(null);
 
     fetch(`/api/parse?url=${encodeURIComponent(url)}`)
       .then((res) => {
-        if (!res.ok) throw new Error('Failed to fetch article');
+        if (!res.ok) throw new Error("Failed to fetch article");
         return res.json();
       })
       .then((data) => {
         if (data.article?.content) {
           setArticleHtml(data.article.content);
         } else {
-          setError(data.error || 'Failed to load article content.');
+          setError(data.error || "Failed to load article content.");
         }
       })
-      .catch(() => setError('Failed to load article content.'))
+      .catch(() => setError("Failed to load article content."))
       .finally(() => setLoading(false));
   }, [url]);
 
@@ -217,36 +204,40 @@ export default function ArticlePreviewFull({
       if (!container) return;
       const mark = container.querySelector('mark.jump2-highlight');
       if (mark) {
-        mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        mark.classList.add('jump2-highlight--flash');
-        setTimeout(() => mark.classList.remove('jump2-highlight--flash'), 1600);
+        mark.scrollIntoView({ behavior: "smooth", block: "center" });
+        mark.classList.add("jump2-highlight--flash");
+        setTimeout(() => mark.classList.remove("jump2-highlight--flash"), 1600);
       }
     }, 140);
   }, [articleHtml, highlights]);
 
   // --- Check for missing highlights ---
-  const missingHighlights = highlights.length && articleHtml
-    ? highlights.filter(
-        ([h]) => !articleHtml.toLowerCase().includes(h.trim().toLowerCase())
-      )
-    : [];
+  const missingHighlights =
+    highlights.length && articleHtml
+      ? highlights.filter(
+          (h) =>
+            !articleHtml
+              .toLowerCase()
+              .includes(h.text.trim().toLowerCase())
+        )
+      : [];
 
   // --- Share Handler ---
   const handleShare = useCallback(
-    async (highlightsArr: HighlightTuple[]) => {
+    async (highlightsArr: Highlight[]) => {
       if (!url) return;
       setSharing(true);
       setShareError(null);
       setShareLink(null);
 
       try {
-        const response = await fetch('/api/highlights', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/api/highlights", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             url,
-            highlights: highlightsArr.map(([h]) => h),
-            colors: highlightsArr.map(([_, c]) => c),
+            highlights: highlightsArr.map((h) => h.text),
+            colors: highlightsArr.map((h) => h.color),
           }),
         });
 
@@ -254,10 +245,10 @@ export default function ArticlePreviewFull({
         if (data.shareUrl) {
           setShareLink(data.shareUrl);
         } else {
-          setShareError('Failed to generate share link.');
+          setShareError("Failed to generate share link.");
         }
       } catch {
-        setShareError('Failed to generate share link.');
+        setShareError("Failed to generate share link.");
       } finally {
         setSharing(false);
       }
@@ -277,22 +268,29 @@ export default function ArticlePreviewFull({
   }, [highlights.length]);
 
   // --- Domain guidance
-  const domain = url ? (new URL(url)).hostname.replace(/^www\./, '') : '';
-  const isKnownSupported = KNOWN_SUPPORTED.some(d => domain.endsWith(d));
+  const domain = url ? new URL(url).hostname.replace(/^www\./, "") : "";
+  const isKnownSupported = KNOWN_SUPPORTED.some((d) => domain.endsWith(d));
 
   return (
     <PageContainer>
       <TitleRow>
         <Title>
-          <span role="img" aria-label="highlighter">🖍️</span> Highlight & Share
+          <span role="img" aria-label="highlighter">
+            🖍️
+          </span>{" "}
+          Highlight & Share
         </Title>
         {onClose && (
           <button
             onClick={onClose}
             aria-label="Close"
             style={{
-              border: 'none', background: 'transparent', fontSize: '1.3em',
-              color: '#888', cursor: 'pointer', marginLeft: 'auto'
+              border: "none",
+              background: "transparent",
+              fontSize: "1.3em",
+              color: "#888",
+              cursor: "pointer",
+              marginLeft: "auto",
             }}
           >
             ✕
@@ -310,29 +308,43 @@ export default function ArticlePreviewFull({
       {shareLink && (
         <ShareLinkContainer>
           <FaCheckCircle /> <strong>Share Link:</strong>
-          <a href={shareLink} target="_blank" rel="noopener noreferrer">{shareLink}</a>
-          <button onClick={handleCopyLink}><FaCopy /> Copy</button>
+          <a href={shareLink} target="_blank" rel="noopener noreferrer">
+            {shareLink}
+          </a>
+          <button onClick={handleCopyLink}>
+            <FaCopy /> Copy
+          </button>
         </ShareLinkContainer>
       )}
       {shareError && <Message error>{shareError}</Message>}
       {!loading && !error && articleHtml && (
         <>
-          {/* Sticky preview with color highlights */}
+          {/* Preview with color highlights */}
           <PreviewContainer ref={previewRef}>
             <div
               dangerouslySetInnerHTML={{
-                __html: highlightArticleHtml(articleHtml, highlights),
+                __html: markHtmlWithHighlights(articleHtml, highlights),
               }}
             />
             {missingHighlights.length > 0 && (
               <Message error>
                 <strong>Note:</strong> Could not find these highlight(s) in the article preview:
                 <ul>
-                  {missingHighlights.map(([h]) => (
-                    <li key={h}><code>{h}</code></li>
+                  {missingHighlights.map((h) => (
+                    <li key={h.id}><code>{h.text}</code></li>
                   ))}
                 </ul>
-                <button onClick={() => setHighlights([])} style={{marginLeft:'0.5em', fontWeight:600, color:'#3578e5', border:'none', background:'none', cursor:'pointer'}}>
+                <button
+                  onClick={() => setHighlights([])}
+                  style={{
+                    marginLeft: "0.5em",
+                    fontWeight: 600,
+                    color: "#3578e5",
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                  }}
+                >
                   <FaRedo /> Try again
                 </button>
               </Message>
@@ -340,26 +352,34 @@ export default function ArticlePreviewFull({
           </PreviewContainer>
           <HighlightEditor
             htmlContent={articleHtml}
+            initialHighlights={highlights}
             onShare={handleShare}
             sharing={sharing}
-            initialHighlights={highlights.map(([h]) => h)}
-            initialColors={highlights.map(([_, c]) => c)}
-            highlightColors={HIGHLIGHT_COLORS}
-            onChange={(newHighlights: string[], newColors: string[]) =>
-              setHighlights(newHighlights.map((h, i) => [h, newColors[i] || HIGHLIGHT_COLORS[i % HIGHLIGHT_COLORS.length]]))
-            }
+            readOnly={false}
+            // You may pass more props as needed
+            // highlightId={...}
           />
         </>
       )}
       {!loading && !error && !articleHtml && (
         <Message>No preview available for this link.</Message>
       )}
-      <footer style={{ marginTop: "2.2rem", textAlign: "center", color: "#a0aec0", fontSize: "0.99em" }}>
+      <footer
+        style={{
+          marginTop: "2.2rem",
+          textAlign: "center",
+          color: "#a0aec0",
+          fontSize: "0.99em",
+        }}
+      >
         <div>
           <b>Jump2 works best with:</b> News articles (NYT, BBC, Yahoo, blogs, Wikipedia, most public sites).
         </div>
         <div>
-          Trouble? <a href="mailto:support@jump2.link" style={{ color: "#3578e5" }}>Contact us</a>
+          Trouble?{" "}
+          <a href="mailto:support@jump2.link" style={{ color: "#3578e5" }}>
+            Contact us
+          </a>
         </div>
       </footer>
     </PageContainer>
