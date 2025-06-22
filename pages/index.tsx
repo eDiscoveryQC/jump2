@@ -1,183 +1,279 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import styled, { keyframes, css } from "styled-components";
 
-// === Animations ===
-const animatedGradient = keyframes`
-  0% { background-position: 0% 50%; }
-  100% { background-position: 100% 50%; }
+// Animations
+const gradient = keyframes`
+  0% { background-position: 0% 50%;}
+  100% { background-position: 100% 50%;}
 `;
-const funBounce = keyframes`
-  0%, 100% { transform: translateY(0); }
-  10% { transform: translateY(-18%); }
-  20% { transform: translateY(0); }
-  23% { transform: translateY(-10%);}
-  28% { transform: translateY(0);}
-  100% { transform: translateY(0);}
+const fadeIn = keyframes`
+  from { opacity: 0;}
+  to { opacity: 1;}
 `;
-const fadeInUp = keyframes`
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
-const scaleIn = keyframes`
-  from { opacity: 0; transform: scale(0.95);}
-  to { opacity: 1; transform: scale(1);}
+const pop = keyframes`
+  0% { transform: scale(0.9);}
+  70% { transform: scale(1.05);}
+  100% { transform: scale(1);}
 `;
 
-// === Styled Components ===
-const PageContainer = styled.main`
+// Layout
+const Bg = styled.div`
   min-height: 100vh;
-  padding: 3rem 2rem 6rem;
+  background: radial-gradient(circle at 60% 20%, #25406a 0%, #0d1423 100%);
+  padding: 0;
+`;
+const Grid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 3rem;
-  background: radial-gradient(circle at top, #0f172a, #1e293b);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #cbd5e1;
-
-  @media (max-width: 980px) {
+  grid-template-columns: 1fr 1.25fr;
+  gap: 3.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 2.5rem;
+  @media (max-width: 900px) {
     grid-template-columns: 1fr;
-    padding: 2rem 0.5rem 4rem;
-    gap: 1.5rem;
+    gap: 2.2rem;
+    padding: 1.2rem 0.2rem 2.8rem;
   }
 `;
-const LeftColumn = styled.section`
+
+// Hero & Branding
+const Hero = styled.section`
   display: flex;
   flex-direction: column;
-  max-width: 480px;
-  margin: 0 auto;
-  gap: 2.3rem;
-  @media (max-width: 980px) { max-width: unset; }
+  justify-content: center;
+  min-height: 250px;
+  margin-bottom: 2.5em;
 `;
-const GlassCard = styled.div`
-  background: rgba(30,41,59,0.87);
-  border-radius: 1.2rem;
-  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.2);
-  backdrop-filter: blur(10px);
-  border: 1.5px solid #3b82f6;
+const LogoRow = styled.h1`
+  display: flex;
+  align-items: center;
+  gap: 0.18em;
+  font-size: clamp(2.5rem, 7vw, 4.2rem);
+  font-weight: 900;
+  letter-spacing: -1.6px;
+  user-select: none;
+  margin: 0 0 0.13em;
+  background: none;
 `;
-const AnimatedLogoText = styled.span`
-  background: linear-gradient(90deg, #60a5fa, #3b82f6, #60a5fa);
+const LogoText = styled.span`
+  background: linear-gradient(90deg, #60a5fa 10%, #3b82f6 90%, #60a5fa 100%);
   background-size: 200% 200%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: ${animatedGradient} 2.8s linear infinite alternate;
-  display: inline-block;
-`;
-const LogoWrapper = styled.div`
-  display: flex;
-  align-items: center;
+  animation: ${gradient} 2.8s alternate infinite;
   font-weight: 900;
-  font-size: clamp(2.6rem, 7vw, 4.2rem);
-  color: #60a5fa;
-  user-select: text;
-  filter: drop-shadow(0 0 6px #60a5faa) drop-shadow(0 0 10px #3b82f6aa);
 `;
-const TwoText = styled.span`
+const LogoTwo = styled.span`
   color: #ffd100;
-  font-size: 1.15em;
-  margin-left: 0.05em;
-  text-shadow: 0 0 12px #3b82f6aa;
-  animation: ${funBounce} 3.5s cubic-bezier(0.32, 0.72, 0.52, 1.5) infinite;
+  font-size: 1.14em;
+  font-weight: 900;
+  margin-left: 0.08em;
+  text-shadow: 0 0 18px #3b82f6aa;
+  animation: ${pop} 2.8s cubic-bezier(.46,1.58,.47,.86) infinite alternate;
 `;
-const Subtitle = styled.div`
-  font-size: clamp(1.24rem, 2vw, 1.7rem);
-  color: #94a3b8;
-  font-weight: 600;
-  line-height: 1.4;
-  margin-bottom: 0.35em;
-`;
-const Description = styled.p`
-  font-size: 1.12rem;
-  line-height: 1.7;
-  font-weight: 400;
-  color: #cbd5e1;
-  margin-bottom: 1.2em;
-`;
-const FormWrapper = styled.div`
-  width: 100%;
-  background: #131c2b;
-  border-radius: 1.15em;
-  box-shadow: 0 4px 24px #1e293b22;
-  border: 1.5px solid #3b82f6;
-  padding: 2.1em 1.7em 2.2em;
-`;
-const Input = styled.input`
-  width: 100%;
-  font-size: 1.13em;
-  padding: 0.75em 1.1em;
-  margin-bottom: 0.9em;
-  border-radius: 0.58em;
-  border: 1.5px solid #334155;
-  background: #0f172a;
-  color: #f1f5f9;
+const Slogan = styled.div`
+  font-size: 1.25em;
+  color: #e6eaff;
   font-weight: 500;
-  outline: 0;
-  transition: border-color 0.2s;
-  &::placeholder { color: #64748b; }
-  &:focus { border-color: #3b82f6; background: #1e293b; }
+  margin-bottom: 0.7em;
+  text-shadow: 0 1px 10px #224, 0 0px 3px #2563eb33;
 `;
-const Button = styled.button`
-  background: linear-gradient(90deg, #3b82f6, #2563eb);
-  color: white;
-  border: none;
-  border-radius: 0.7em;
-  font-size: 1.1em;
+const HeroDesc = styled.div`
+  color: #b5c7e4;
+  font-size: 1.13em;
+  margin-bottom: 1.35em;
+  font-weight: 400;
+  max-width: 490px;
+`;
+
+// Card
+const Card = styled.div`
+  background: rgba(20,28,45,0.98);
+  border-radius: 1.25em;
+  box-shadow: 0 8px 32px 0 #1e293b33,0 0 0 1.5px #2563eb99;
+  padding: 2.3em 1.6em 2.1em;
+  animation: ${fadeIn} 0.5s;
+  position: relative;
+  margin-bottom: 2.1em;
+  @media (max-width: 900px) { padding: 1.2em 0.6em 1.7em; }
+`;
+
+const InputRow = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  margin-bottom: 1.5em;
+  position: relative;
+`;
+
+const Input = styled.input`
+  font-size: 1.15em;
+  border-radius: 0.8em;
+  padding: 0.8em 1.1em;
+  border: 1.7px solid #283755;
+  background: #0d1423;
+  color: #eaf0fa;
+  font-weight: 500;
+  transition: border-color 0.15s;
+  &:focus { border-color: #3b82f6; background: #18243a; outline: none; }
+  &::placeholder { color: #7b8ba9; }
+`;
+
+const Button = styled.button<{ primary?: boolean }>`
+  font-size: 1.09em;
+  border-radius: 0.6em;
+  padding: 0.78em 2.1em;
   font-weight: 700;
-  padding: 1em 2em;
-  margin-left: 0.3em;
+  border: none;
+  margin-top: 0.2em;
+  color: #fff;
+  background: ${({primary}) =>
+    primary
+      ? "linear-gradient(90deg, #3b82f6 10%, #2563eb 90%)"
+      : "#1e293b"};
+  box-shadow: ${({primary}) =>
+    primary
+      ? "0 3px 16px #2563eb66"
+      : "none"};
   cursor: pointer;
-  box-shadow: 0 2px 8px #2563eb55;
-  transition: background 0.13s, box-shadow 0.13s;
-  &:hover, &:focus { background: linear-gradient(90deg, #2563eb, #60a5fa); box-shadow: 0 4px 24px #60a5fa44; }
-  &:disabled { background: #64748b; cursor: not-allowed; }
+  transition: background 0.13s, box-shadow 0.13s, transform 0.12s;
+  &:hover, &:focus {
+    background: ${({primary}) =>
+      primary
+        ? "linear-gradient(90deg, #2563eb 10%, #3b82f6 90%)"
+        : "#334155"};
+    transform: scale(1.04);
+    outline: none;
+  }
 `;
+
 const ExampleLinks = styled.div`
-  margin: 0.8em 0 1.2em 0;
+  margin: 0.1em 0 1.1em 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8em;
   a {
     color: #3b82f6;
     cursor: pointer;
     text-decoration: underline dotted;
-    margin-right: 0.8em;
-    font-size: 1em;
+    font-size: 0.97em;
+    font-weight: 500;
     &:hover { text-decoration: underline solid; }
   }
 `;
-const SupportedSites = styled.p`
+
+const Tip = styled.div`
   font-size: 0.97em;
-  color: #a0aec0;
-  margin-bottom: 0.5em;
-`;
-const HowItWorks = styled.div`
-  font-size: 0.99em;
-  color: #cbd5e1;
-  ul { padding-left: 1.3em; margin: 0.5em 0 0 0; }
-  li { margin-bottom: 0.15em; }
-`;
-const HR = styled.hr`
-  border: none;
-  border-top: 1.5px solid #233046;
-  margin: 1.1em 0 1.2em 0;
+  color: #8ba8d8;
+  margin-bottom: 0.6em;
+  margin-top: -0.4em;
 `;
 
-const PreviewWrapper = styled.section`
-  background: rgba(23, 31, 47, 0.90);
-  border-radius: 1rem;
-  border: 1.5px solid #334155;
-  padding: 2.2rem 2.5rem 2.5rem;
-  color: #f1f5f9;
-  font-size: 1rem;
-  line-height: 1.7;
-  box-shadow: 0 12px 20px #131c2b88;
-  user-select: text;
-  min-height: 440px;
-  max-height: 82vh;
-  overflow-y: auto;
-  position: relative;
-  @media (max-width: 980px) {
-    margin-top: 2rem;
-    padding: 1.2rem 0.6rem 2rem;
+const HowItWorks = styled.div`
+  margin-top: 1.5em;
+  color: #b9d3ff;
+  font-size: 1.01em;
+  ul {
+    margin: 0.7em 0 0 1.4em;
+    padding: 0;
+    li {margin-bottom: 0.2em;}
   }
 `;
+
+const ShareBar = styled.div`
+  background: linear-gradient(90deg, #1b2336 70%, #25406a 100%);
+  border-radius: 1em;
+  box-shadow: 0 4px 18px #3b82f633;
+  padding: 1.3em 2em 1.2em;
+  display: flex;
+  align-items: center;
+  gap: 1.2em;
+  margin-top: 2.3em;
+  font-size: 1.15em;
+  @media (max-width: 600px) {
+    flex-direction: column;
+    gap: 0.7em;
+    padding: 1em 0.6em 1.2em;
+  }
+`;
+
+const ShareInput = styled.input`
+  font-size: 1.11em;
+  border-radius: 0.6em;
+  border: 1.5px solid #334155;
+  background: #0d1423;
+  color: #eaf0fa;
+  font-weight: 600;
+  padding: 0.68em 1.2em;
+  flex: 1 1 0%;
+  outline: none;
+  min-width: 0;
+`;
+
+const CopyBtn = styled(Button)`
+  font-size: 1em;
+  font-weight: 700;
+  padding: 0.7em 1.5em;
+  margin: 0;
+  background: #2563eb;
+  border-radius: 0.5em;
+  &:hover {background: #3b82f6;}
+`;
+
+const ShareActions = styled.div`
+  display: flex;
+  gap: 0.7em;
+  align-items: center;
+`;
+
+const ShareToast = styled.div`
+  position: fixed;
+  bottom: 2.6em;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2563eb;
+  color: #fff;
+  font-size: 1.1em;
+  font-weight: 700;
+  border-radius: 0.6em;
+  padding: 0.7em 2em;
+  box-shadow: 0 4px 18px #2563eb44;
+  z-index: 2000;
+  animation: ${pop} 0.5s;
+`;
+
+// Loader & Skeletons
+const Loader = styled.div`
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 4px solid #3b82f688;
+  border-top: 4px solid #3b82f6;
+  animation: spin 0.85s linear infinite;
+  margin: 3em auto 2em auto;
+  @keyframes spin {to {transform: rotate(360deg);}}
+`;
+const Skeleton = styled.div`
+  height: 18px;
+  width: 80%;
+  margin: 0.5em 0;
+  background: linear-gradient(90deg, #24304a 40%, #334155 60%, #24304a 100%);
+  background-size: 200% 100%;
+  border-radius: 0.5em;
+  animation: ${gradient} 1.3s linear infinite;
+`;
+
+// Preview
+const PreviewCard = styled(Card)`
+  min-height: 420px;
+  max-height: 79vh;
+  overflow-y: auto;
+  font-size: 1rem;
+  color: #eaf0fa;
+  padding: 2.1em 2.3em 2em;
+  position: relative;
+  @media (max-width: 900px) { padding: 1.1em 0.6em 1.7em; }
+`;
+
 const VideoWrapper = styled.div`
   margin: 2rem auto 3rem;
   max-width: 640px;
@@ -186,88 +282,29 @@ const VideoWrapper = styled.div`
   box-shadow: 0 8px 20px #131c2b55;
   position: relative;
 `;
+
 const TimestampBadge = styled.div`
   position: absolute;
   top: 8px;
   right: 12px;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
   font-weight: 600;
   padding: 4px 10px;
   border-radius: 9999px;
   font-family: monospace;
-  font-size: 0.85rem;
+  font-size: 0.95em;
   user-select: none;
   pointer-events: none;
-  text-shadow: 0 0 6px #000b;
+  text-shadow: 0 0 8px #000c;
 `;
 
-// === Lightbox ===
-const LightboxBackdrop = styled.div<{ open: boolean }>`
-  display: ${({ open }) => (open ? "flex" : "none")};
-  position: fixed;
-  inset: 0;
-  background: rgba(13, 19, 31, 0.96);
-  z-index: 1200;
-  align-items: center;
-  justify-content: center;
-  animation: ${fadeInUp} 0.33s;
-  padding: 2rem;
-  backdrop-filter: blur(4px);
-`;
-
-const LightboxContent = styled.div`
-  max-width: 420px;
-  width: 100%;
-  background: linear-gradient(120deg, rgba(30,41,59,0.97) 60%, rgba(37,56,99,0.88) 100%);
-  border-radius: 1.3rem;
-  padding: 2.7rem 2.5rem 2.2rem;
-  box-shadow: 0 0 60px #14314dbb, 0 2px 8px #1e293b44;
-  color: #e8edfa;
-  font-size: 1.15rem;
-  line-height: 1.65;
-  user-select: text;
+const Footer = styled.footer`
+  margin: 3.5em auto 1.2em auto;
+  color: #b5c7e4;
   text-align: center;
-  animation: ${scaleIn} 0.34s;
-  border: 2px solid #2563eb;
-  position: relative;
-
-  h2 {
-    margin-top: 0;
-    font-weight: 900;
-    font-size: 2.4rem;
-    color: #60a5fa;
-    margin-bottom: 0.95rem;
-    text-shadow: 0 2px 12px #1e2c51aa;
-    letter-spacing: -1.5px;
-  }
-  p {
-    margin-bottom: 1.15rem;
-    color: #a7b9d8;
-    font-size: 1.09em;
-    font-weight: 500;
-  }
-  button, .close-btn {
-    margin-top: 1.8rem;
-    background: linear-gradient(90deg, #2563eb, #3b82f6 90%);
-    color: #fff;
-    border: none;
-    border-radius: 0.6em;
-    font-size: 1.15em;
-    font-weight: 600;
-    padding: 0.95em 2.1em;
-    cursor: pointer;
-    box-shadow: 0 3px 16px #2563eb55;
-    transition: background 0.14s, box-shadow 0.13s;
-    &:hover, &:focus {
-      background: linear-gradient(90deg, #3b82f6, #2563eb 90%);
-      box-shadow: 0 6px 24px #60a5fa44;
-    }
-  }
-  @media (max-width: 600px) {
-    padding: 1.2rem 0.5rem 1.3rem;
-    font-size: 1rem;
-  }
+  font-size: 1em;
+  opacity: 0.95;
 `;
 
 // --- YouTube helpers ---
@@ -291,7 +328,7 @@ function formatTimestamp(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: number }) => {
-  const videoId = useMemo(() => {
+  const videoId = React.useMemo(() => {
     try {
       const u = new URL(url);
       if (u.hostname === "youtu.be") return u.pathname.slice(1);
@@ -300,13 +337,13 @@ const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: numbe
       return "";
     }
   }, [url]);
-  const src = useMemo(
+  const src = React.useMemo(
     () =>
       `https://www.youtube.com/embed/${videoId}?start=${startSeconds}&autoplay=0&modestbranding=1&rel=0`,
     [videoId, startSeconds]
   );
   return (
-    <VideoWrapper role="region" aria-label="YouTube video player">
+    <VideoWrapper>
       <iframe
         width="100%"
         height="360"
@@ -333,7 +370,59 @@ export default function Home() {
   const [error, setError] = useState("");
   const [articleContent, setArticleContent] = useState("");
   const [loadingPreview, setLoadingPreview] = useState(false);
-  const [showLightbox, setShowLightbox] = useState(true);
+  const [shortUrl, setShortUrl] = useState("");
+  const [showToast, setShowToast] = useState(false);
+
+  // --- Onboarding examples ---
+  const EXAMPLES = [
+    { url: "https://www.bbc.com/news/world-us-canada-66159295", text: "democracy" },
+    { url: "https://www.nytimes.com/2024/06/20/technology/ai-future.html", text: "artificial intelligence" },
+    { url: "https://www.theguardian.com/environment/2025/jun/08/renewable-energy-breakthrough", text: "solar power" }
+  ];
+
+  // --- Form/Preview Logic ---
+  useEffect(() => {
+    if (!link) {
+      setArticleContent("");
+      setError("");
+      setShowPreview(false);
+      setShortUrl("");
+      return;
+    }
+    let url: URL;
+    try {
+      url = new URL(link);
+      if (isYouTubeUrl(url)) {
+        setArticleContent("");
+        setError("");
+        setShortUrl("");
+        setShowPreview(true);
+        return;
+      }
+    } catch {
+      setError("Invalid URL.");
+      setShowPreview(false);
+      setShortUrl("");
+      return;
+    }
+    setLoadingPreview(true);
+    setError("");
+    setArticleContent("");
+    setShowPreview(true);
+    setShortUrl("");
+    fetch(`/api/parse?url=${encodeURIComponent(link)}`)
+      .then(async res => {
+        if (!res.ok) throw new Error("Failed to fetch article preview.");
+        const json = await res.json();
+        if (json.article?.content) {
+          setArticleContent(json.article.content);
+        } else {
+          setError("No preview available for this link.");
+        }
+      })
+      .catch(() => setError("Failed to load preview. You can still create the jump link."))
+      .finally(() => setLoadingPreview(false));
+  }, [link, showPreview]);
 
   // For YouTube timestamp input
   useEffect(() => {
@@ -353,43 +442,46 @@ export default function Home() {
     }
   }, [highlightText, link]);
 
-  // Article preview fetcher (not for YouTube)
-  useEffect(() => {
-    if (!link) {
-      setArticleContent("");
-      setError("");
-      return;
-    }
-    let url: URL;
+  // --- Short URL logic ---
+  const handleShare = useCallback(async () => {
+    setShortUrl("");
+    setShowToast(false);
     try {
-      url = new URL(link);
-      if (isYouTubeUrl(url)) {
-        setArticleContent("");
-        setError("");
-        return;
+      let urlObj = new URL(link);
+      // Add timestamp for YT
+      if (isYouTubeUrl(urlObj) && parsedSeconds > 0) {
+        urlObj.searchParams.set("t", parsedSeconds.toString());
       }
-    } catch {
-      setError("Invalid URL.");
-      return;
+      // Add highlight as hash (for demo; you may want to persist on backend)
+      if (highlightText && !isYouTubeUrl(urlObj)) {
+        urlObj.hash = `:~:text=${encodeURIComponent(highlightText)}`;
+      }
+      // Simulate backend: returns a short code
+      const res = await fetch("/api/links", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deepLink: urlObj.toString() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Short URL generation failed");
+      setShortUrl(`${window.location.origin}/s/${data.shortCode || data.shortUrl || "demo"}`);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 1800);
+    } catch (e: any) {
+      setError(e.message || "Failed to generate short URL");
     }
-    setLoadingPreview(true);
-    setError("");
-    setArticleContent("");
-    fetch(`/api/parse?url=${encodeURIComponent(link)}`)
-      .then(async res => {
-        if (!res.ok) throw new Error("Failed to fetch article preview.");
-        const json = await res.json();
-        if (json.article?.content) {
-          setArticleContent(json.article.content);
-        } else {
-          setError("No preview available for this link.");
-        }
-      })
-      .catch(() => setError("Failed to load preview. You can still create the jump link."))
-      .finally(() => setLoadingPreview(false));
-  }, [link, showPreview]);
+  }, [link, parsedSeconds, highlightText]);
 
-  // Form actions
+  // --- Clipboard
+  const handleCopy = useCallback(() => {
+    if (!shortUrl) return;
+    navigator.clipboard.writeText(shortUrl).then(() => {
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 1400);
+    });
+  }, [shortUrl]);
+
+  // --- Form
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!link.trim()) {
@@ -399,128 +491,152 @@ export default function Home() {
     setShowPreview(true);
   }
 
-  // --- Demo links for onboarding
-  const EXAMPLES = [
-    { url: "https://www.bbc.com/news/world-us-canada-66159295", text: "democracy" },
-    { url: "https://www.nytimes.com/2024/06/20/technology/ai-future.html", text: "artificial intelligence" },
-    { url: "https://www.theguardian.com/environment/2025/jun/08/renewable-energy-breakthrough", text: "solar power" }
-  ];
-
+  // --- Render
   return (
-    <>
-      <LightboxBackdrop
-        open={showLightbox}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="welcomeTitle"
-        aria-describedby="welcomeDesc"
-      >
-        <LightboxContent>
-          <h2 id="welcomeTitle">Welcome to Jump2!</h2>
-          <p id="welcomeDesc">
-            Easily highlight the best parts of any article or video, generate a
-            quick shareable link, and skip the fluff.<br /><br />
-            Get started by pasting a link below!
-          </p>
-          <button
-            type="button"
-            onClick={() => setShowLightbox(false)}
-            aria-label="Close welcome dialog"
-          >
-            Close
-          </button>
-        </LightboxContent>
-      </LightboxBackdrop>
-
-      <PageContainer>
-        <LeftColumn>
-          <LogoWrapper>
-            <AnimatedLogoText>Jump</AnimatedLogoText>
-            <TwoText>2</TwoText>
-          </LogoWrapper>
-          <Subtitle>Skip the fluff. Jump2 the good part.</Subtitle>
-          <Description>
-            Paste a link (article or video) and highlight the best part — timestamp, quote, or keyword.
-          </Description>
-          <FormWrapper>
-            <form onSubmit={handleSubmit} autoComplete="off" spellCheck={false}>
+    <Bg>
+      <Grid>
+        {/* Left: Hero + Form */}
+        <div>
+          <Hero>
+            <LogoRow>
+              <LogoText>Jump</LogoText>
+              <LogoTwo>2</LogoTwo>
+            </LogoRow>
+            <Slogan>Highlight. Jump. Share. Instantly.</Slogan>
+            <HeroDesc>
+              Paste any article, blog, or YouTube link below. Highlight the best part, generate a skip-to link, and share it with anyone.
+            </HeroDesc>
+          </Hero>
+          <Card>
+            <InputRow onSubmit={handleSubmit}>
               <Input
                 type="url"
                 required
-                placeholder="Paste article or video URL..."
+                placeholder="Paste article or YouTube URL…"
                 value={link}
                 onChange={e => setLink(e.target.value)}
                 autoFocus
-                aria-label="Paste article URL"
+                aria-label="Paste article or YouTube URL"
               />
               <Input
                 type="text"
                 placeholder={(() => {
                   try {
                     const urlObj = new URL(link);
-                    if (isYouTubeUrl(urlObj)) return 'Jump to timestamp (e.g. 1:23)';
+                    if (isYouTubeUrl(urlObj)) return 'Timestamp (e.g. 1:23)';
                   } catch {}
-                  return 'Highlight (e.g. "key finding"; separate multiple with ;)';
+                  return 'Highlight text (e.g. "best quote"; optional)';
                 })()}
                 value={highlightText}
                 onChange={e => setHighlightText(e.target.value)}
                 aria-label="Highlight text or timestamp"
               />
-              <Button type="submit">Preview</Button>
-            </form>
-            <div style={{ fontSize: "0.99em", margin: "0.5em 0 1.2em 0", color: "#64748b" }}>
-              <b>Tip:</b> Paste your link &amp; highlight, pick a color, then Preview!
-            </div>
+              <Button type="submit" primary>Preview</Button>
+            </InputRow>
+            <Tip>
+              <b>Tip:</b> Try with any news, blog, or YouTube link. Paste, highlight, Preview!
+            </Tip>
             <ExampleLinks>
-              Try:&nbsp;
+              Examples:&nbsp;
               {EXAMPLES.map(({ url, text }, i) => (
                 <a key={i} onClick={() => { setLink(url); setHighlightText(text); setShowPreview(false); setTimeout(() => setShowPreview(true), 75); }}>
                   {url.replace(/^https?:\/\//, '').split("/")[0]}
                 </a>
               ))}
             </ExampleLinks>
-            <SupportedSites>
-              <b>Works best with:</b> NYT, BBC, CNN, Yahoo, Wikipedia, Substack, most public news/blogs.
-            </SupportedSites>
-            <HR />
             <HowItWorks>
               <b>How it works:</b>
               <ul>
-                <li>Paste a news/article/blog link above.</li>
-                <li>Add a highlight (optionally use <b>;</b> to highlight multiple phrases).</li>
-                <li>Pick a color (optional).</li>
-                <li>Click <b>Preview</b> to see a live preview, highlight, and share instantly.</li>
-                <li>Copy your unique share link and send it to anyone!</li>
+                <li>Paste a link above (“Paste” or drag & drop!)</li>
+                <li>Add a highlight or timestamp (optional)</li>
+                <li>Click <b>Preview</b></li>
+                <li>Copy and share your Jump2 link!</li>
               </ul>
             </HowItWorks>
-          </FormWrapper>
-        </LeftColumn>
+          </Card>
+        </div>
 
-        {/* --- Main Preview --- */}
-        <PreviewWrapper as={GlassCard}>
-          {loadingPreview && <div style={{ textAlign: "center", margin: "3em 0" }}>Loading preview...</div>}
-          {!loadingPreview && (() => {
-            try {
-              const urlObj = new URL(link);
-              if (isYouTubeUrl(urlObj)) {
-                return (
-                  <YouTubePlayer url={link} startSeconds={parsedSeconds} />
-                );
-              }
-            } catch { /* not a URL or not YouTube */ }
-            if (!articleContent && !error) {
-              return <div style={{ color: "#64748b", textAlign: "center", marginTop: "2.5em" }}>No preview available for this link.</div>;
-            }
-            if (error) {
-              return <div style={{ color: "#f87171", fontWeight: 600, marginTop: "2.1em" }}>{error}</div>;
-            }
-            if (articleContent) {
-              return <div dangerouslySetInnerHTML={{ __html: articleContent }} />;
-            }
-            return null;
-          })()}
-        </PreviewWrapper>
-      </PageContainer>
-    </>
+        {/* Right: Live Preview + Share */}
+        <div>
+          {showPreview && (
+            <PreviewCard>
+              {loadingPreview && <Loader />}
+              {!loadingPreview && (() => {
+                try {
+                  const urlObj = new URL(link);
+                  if (isYouTubeUrl(urlObj)) {
+                    return (
+                      <>
+                        <YouTubePlayer url={link} startSeconds={parsedSeconds} />
+                        <ShareBar>
+                          <ShareInput type="text" readOnly value={shortUrl ? shortUrl : "Your Jump2 link will appear here…"} aria-label="Jump2 shareable link" />
+                          <ShareActions>
+                            <CopyBtn type="button" onClick={shortUrl ? handleCopy : handleShare}>
+                              {shortUrl ? "Copy" : "Share"}
+                            </CopyBtn>
+                            {shortUrl &&
+                              <a href={shortUrl} target="_blank" rel="noopener noreferrer" style={{color:"#3b82f6", fontWeight:700, textDecoration:"none"}}>
+                                Open ↗
+                              </a>
+                            }
+                          </ShareActions>
+                        </ShareBar>
+                      </>
+                    );
+                  }
+                } catch {}
+                if (error) {
+                  return <div style={{ color: "#f87171", fontWeight: 600, marginTop: "2.1em" }}>{error}</div>;
+                }
+                if (!articleContent && !error) {
+                  return (
+                    <>
+                      <Skeleton style={{width:"95%"}} />
+                      <Skeleton style={{width:"85%"}} />
+                      <Skeleton style={{width:"65%"}} />
+                    </>
+                  );
+                }
+                if (articleContent) {
+                  return (
+                    <>
+                      <div dangerouslySetInnerHTML={{ __html: articleContent }} />
+                      <ShareBar>
+                        <ShareInput type="text" readOnly value={shortUrl ? shortUrl : "Your Jump2 link will appear here…"} aria-label="Jump2 shareable link" />
+                        <ShareActions>
+                          <CopyBtn type="button" onClick={shortUrl ? handleCopy : handleShare}>
+                            {shortUrl ? "Copy" : "Share"}
+                          </CopyBtn>
+                          {shortUrl &&
+                            <a href={shortUrl} target="_blank" rel="noopener noreferrer" style={{color:"#3b82f6", fontWeight:700, textDecoration:"none"}}>
+                              Open ↗
+                            </a>
+                          }
+                        </ShareActions>
+                      </ShareBar>
+                    </>
+                  );
+                }
+                return null;
+              })()}
+            </PreviewCard>
+          )}
+        </div>
+      </Grid>
+      {showToast && (
+        <ShareToast>
+          Link copied!
+        </ShareToast>
+      )}
+      <Footer>
+        <div>
+          <b>Jump2</b> — Share the best, skip the rest.<br />
+          Built for you. <span style={{color:"#3b82f6"}}>Open source. Privacy-first.</span>
+        </div>
+        <div style={{marginTop:"0.5em"}}>
+          Questions or feedback? <a style={{color:"#3b82f6"}} href="mailto:support@jump2.link">Contact us</a>
+        </div>
+      </Footer>
+    </Bg>
   );
 }
