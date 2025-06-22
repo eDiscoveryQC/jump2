@@ -6,23 +6,13 @@ import DOMPurify from "dompurify";
 
 // Emoji-based icons to avoid react-icons dependency
 const FaCopy = () => (
-  <span role="img" aria-label="Copy" style={{ fontSize: "1.1em" }}>
-    📋
-  </span>
+  <span role="img" aria-label="Copy" style={{ fontSize: "1.1em" }}>📋</span>
 );
 const FaRedo = () => (
-  <span role="img" aria-label="Redo" style={{ fontSize: "1.1em" }}>
-    🔄
-  </span>
+  <span role="img" aria-label="Redo" style={{ fontSize: "1.1em" }}>🔄</span>
 );
 const FaCheckCircle = () => (
-  <span
-    role="img"
-    aria-label="Check"
-    style={{ fontSize: "1.1em", color: "#38a169" }}
-  >
-    ✔️
-  </span>
+  <span role="img" aria-label="Check" style={{ fontSize: "1.1em", color: "#38a169" }}>✔️</span>
 );
 
 // --- Styles ---
@@ -131,17 +121,6 @@ const PreviewContainer = styled.div`
     outline: 0;
   }
 `;
-
-// --- Highlight Color Palette ---
-const HIGHLIGHT_COLORS = [
-  "#ffe066", // yellow
-  "#a7f3d0", // green
-  "#bae6fd", // blue
-  "#fcd34d", // orange
-  "#fca5a5", // red
-  "#d8b4fe", // purple
-  "#fbcfe8", // pink
-];
 
 // --- Utility for in-place highlighting (for visual preview only) ---
 function markHtmlWithHighlightsSafe(html: string, highlights: Highlight[]) {
