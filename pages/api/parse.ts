@@ -3,55 +3,40 @@ import fetch from "node-fetch";
 import { JSDOM } from "jsdom";
 import { logParse, logApi } from "@/lib/log";
 
-// --- Utility: Clean up main content from gibberish, ads, CSS, boilerplate ---
 function cleanArticleText(html: string): string {
-  // Remove style/script/noscript tags and their content
   let cleaned = html.replace(/<(style|script|noscript)[^>]*>[\s\S]*?<\/\1>/gi, "");
-  // Remove CSS gibberish: selectors and rules
   cleaned = cleaned.replace(/[#.@\w\s\-]+{[^}]+}/g, "");
   cleaned = cleaned.replace(/@media[^{]+{[^}]+}/g, "");
-  // Remove lines containing "Advertisement", "Sponsored", "Ad:", etc.
   cleaned = cleaned.replace(/.*advertisement.*\n?/gi, "");
   cleaned = cleaned.replace(/.*sponsored.*\n?/gi, "");
   cleaned = cleaned.replace(/.*Ad:.*\n?/gi, "");
-  // Remove "Return to Homepage", "Top Stories" and common headers
   cleaned = cleaned.replace(/Return to Homepage.*/gi, "");
   cleaned = cleaned.replace(/Top Stories.*/gi, "");
-  // Remove empty lines and excessive whitespace
   cleaned = cleaned.replace(/^\s*[\r\n]/gm, "");
   cleaned = cleaned.replace(/\n{3,}/g, "\n\n");
-  // Remove leading/trailing whitespace
   return cleaned.trim();
 }
 
-interface Article {
-  content: string;
-}
-interface ResponseData {
-  article: Article;
-  error?: string;
-}
-interface ScrapingBeeResponse {
-  article?: string;
-  [key: string]: any;
-}
-
-// --- Fallback: Try direct fetch and parse with JSDOM ---
 async function tryDirectFetchAndParse(url: string): Promise<{content: string, error?: string}> {
   try {
-    const resp = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Jump2Bot/1.0)' } });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const resp = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Jump2Bot/1.0)' },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
     if (!resp.ok) return { content: "", error: `Direct fetch failed: ${resp.status}` };
     const html = await resp.text();
     const dom = new JSDOM(html);
     const doc = dom.window.document;
     let mainContent = doc.querySelector("article, main, .content");
+    if (!mainContent) mainContent = doc.querySelector("section");
     if (!mainContent) {
-      // fallback: body, but strip scripts/styles
       doc.querySelectorAll("style, script, noscript").forEach(el => el.remove());
       mainContent = doc.body;
     }
     let cleaned = mainContent?.innerHTML?.trim() || "";
-    // Remove ad/noise divs
     doc.querySelectorAll("div").forEach(div => {
       const id = div.id || "";
       if (/^R[35]b8/.test(id) || /ad/i.test(id)) div.remove();
@@ -66,10 +51,9 @@ async function tryDirectFetchAndParse(url: string): Promise<{content: string, er
   }
 }
 
-// --- Main Handler ---
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<ResponseData>
+  res: NextApiResponse<{ article: { content: string }; error?: string }>
 ) {
   logApi("Received request", req.query);
   const { url } = req.query;
@@ -88,9 +72,7 @@ export default async function handler(
     const extractRules = JSON.stringify({ article: "article, main, .content" });
     const apiUrl = `https://app.scrapingbee.com/api/v1?api_key=${API_KEY}&url=${encodeURIComponent(
       url
-    )}&extract_rules=${encodeURIComponent(
-      extractRules
-    )}&render_js=true`;
+    )}&extract_rules=${encodeURIComponent(extractRules)}&render_js=true`;
 
     logParse("Fetching from ScrapingBee:", apiUrl);
     const response = await fetch(apiUrl);
@@ -105,10 +87,10 @@ export default async function handler(
       beeError = errorMessage;
     }
 
-    let data: ScrapingBeeResponse = {};
+    let data: { article?: string } = {};
     if (response.ok) {
       try {
-        data = (await response.json()) as ScrapingBeeResponse;
+        data = (await response.json()) as { article?: string };
       } catch (err) {
         beeError = "Invalid response from ScrapingBee";
       }
@@ -135,7 +117,6 @@ export default async function handler(
       }
     }
 
-    // If ScrapingBee returned good content, use it
     if (scrapingBeeWorked) {
       logParse("Cleaned content length (bee):", cleaned.length);
       return res.status(200).json({ article: { content: cleaned } });
@@ -150,12 +131,12 @@ export default async function handler(
       return res.status(200).json({ article: { content: fallbackResult.content } });
     }
 
+    logParse("Fallback direct fetch failed", fallbackResult);
+
     // Both failed, return error
     return res.status(200).json({
       article: { content: "" },
-      error: fallbackResult.error
-        ? `Preview failed: ${beeError ? beeError + " / " : ""}${fallbackResult.error}`
-        : `Preview failed: ${beeError || "Could not fetch preview"}`
+      error: `Both ScrapingBee and direct fetch failed: ${beeError} / ${fallbackResult.error || "No content found or site blocks scraping."}`
     });
   } catch (err: any) {
     console.error("[parse.ts] Error:", err);
