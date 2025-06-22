@@ -3,12 +3,20 @@ import styled, { keyframes, css } from "styled-components";
 
 // Animations
 const gradient = keyframes`
-  0% { background-position: 0% 50%;}
-  100% { background-position: 100% 50%;}
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
 `;
 const fadeIn = keyframes`
   from { opacity: 0;}
   to { opacity: 1;}
+`;
+const bounce = keyframes`
+  0%, 100% { transform: translateY(0);}
+  13% { transform: translateY(-18%);}
+  20% { transform: translateY(0);}
+  23% { transform: translateY(-11%);}
+  28% { transform: translateY(0);}
+  100% { transform: translateY(0);}
 `;
 const pop = keyframes`
   0% { transform: scale(0.9);}
@@ -60,8 +68,9 @@ const LogoText = styled.span`
   background-size: 200% 200%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: ${gradient} 2.8s alternate infinite;
+  animation: ${gradient} 2.8s alternate infinite, ${bounce} 3.5s cubic-bezier(0.32, 0.72, 0.52, 1.5) infinite;
   font-weight: 900;
+  display: inline-block;
 `;
 const LogoTwo = styled.span`
   color: #ffd100;
@@ -69,7 +78,8 @@ const LogoTwo = styled.span`
   font-weight: 900;
   margin-left: 0.08em;
   text-shadow: 0 0 18px #3b82f6aa;
-  animation: ${pop} 2.8s cubic-bezier(.46,1.58,.47,.86) infinite alternate;
+  animation: ${bounce} 3.5s cubic-bezier(.46,1.58,.47,.86) infinite;
+  display: inline-block;
 `;
 const Slogan = styled.div`
   font-size: 1.25em;
@@ -97,7 +107,6 @@ const Card = styled.div`
   margin-bottom: 2.1em;
   @media (max-width: 900px) { padding: 1.2em 0.6em 1.7em; }
 `;
-
 const InputRow = styled.form`
   display: flex;
   flex-direction: column;
@@ -105,7 +114,6 @@ const InputRow = styled.form`
   margin-bottom: 1.5em;
   position: relative;
 `;
-
 const Input = styled.input`
   font-size: 1.15em;
   border-radius: 0.8em;
@@ -118,7 +126,6 @@ const Input = styled.input`
   &:focus { border-color: #3b82f6; background: #18243a; outline: none; }
   &::placeholder { color: #7b8ba9; }
 `;
-
 const Button = styled.button<{ primary?: boolean }>`
   font-size: 1.09em;
   border-radius: 0.6em;
@@ -128,25 +135,18 @@ const Button = styled.button<{ primary?: boolean }>`
   margin-top: 0.2em;
   color: #fff;
   background: ${({primary}) =>
-    primary
-      ? "linear-gradient(90deg, #3b82f6 10%, #2563eb 90%)"
-      : "#1e293b"};
+    primary ? "linear-gradient(90deg, #3b82f6 10%, #2563eb 90%)" : "#1e293b"};
   box-shadow: ${({primary}) =>
-    primary
-      ? "0 3px 16px #2563eb66"
-      : "none"};
+    primary ? "0 3px 16px #2563eb66" : "none"};
   cursor: pointer;
   transition: background 0.13s, box-shadow 0.13s, transform 0.12s;
   &:hover, &:focus {
     background: ${({primary}) =>
-      primary
-        ? "linear-gradient(90deg, #2563eb 10%, #3b82f6 90%)"
-        : "#334155"};
+      primary ? "linear-gradient(90deg, #2563eb 10%, #3b82f6 90%)" : "#334155"};
     transform: scale(1.04);
     outline: none;
   }
 `;
-
 const ExampleLinks = styled.div`
   margin: 0.1em 0 1.1em 0;
   display: flex;
@@ -161,14 +161,12 @@ const ExampleLinks = styled.div`
     &:hover { text-decoration: underline solid; }
   }
 `;
-
 const Tip = styled.div`
   font-size: 0.97em;
   color: #8ba8d8;
   margin-bottom: 0.6em;
   margin-top: -0.4em;
 `;
-
 const HowItWorks = styled.div`
   margin-top: 1.5em;
   color: #b9d3ff;
@@ -299,6 +297,17 @@ const TimestampBadge = styled.div`
   text-shadow: 0 0 8px #000c;
 `;
 
+const Mark = styled.mark`
+  background: linear-gradient(90deg, #ffe066 70%, #ffd100 100%);
+  color: #334155;
+  padding: 0 0.15em;
+  border-radius: 0.33em;
+  font-weight: 700;
+  box-decoration-break: clone;
+  box-shadow: 0 2px 10px #ffd10022;
+`;
+
+
 const Footer = styled.footer`
   margin: 3.5em auto 1.2em auto;
   color: #b5c7e4;
@@ -359,6 +368,42 @@ const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: numbe
     </VideoWrapper>
   );
 };
+
+// === Highlighting utility ===
+// Replace all highlight phrases in HTML with a <mark> tag (case-insensitive, works with HTML).
+function highlightHtml(rawHtml: string, highlights: string[]): string {
+  if (!rawHtml || !highlights.length) return rawHtml;
+  // Sanitize highlights
+  const phrases = highlights
+    .map(p => p.trim())
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length); // longest first (avoid partial overlap)
+  if (!phrases.length) return rawHtml;
+  // Regex for all phrases, escaping special regex characters
+  const regex = new RegExp(
+    "(" +
+      phrases
+        .map(p =>
+          p
+            .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+            .replace(/\s+/g, "\\s+")
+        )
+        .join("|") +
+      ")",
+    "gi"
+  );
+  // Replace in HTML (not inside tags)
+  // Split by tags, only replace in text nodes
+  return rawHtml.replace(/(<[^>]+>)|([^<]+)/g, (m, tag, text) => {
+    if (tag) return tag;
+    if (text) {
+      return text.replace(regex, matched =>
+        `<mark style="background: linear-gradient(90deg, #ffe066 70%, #ffd100 100%); color: #334155; padding: 0 0.15em; border-radius: 0.33em; font-weight: 700; box-decoration-break: clone;">${matched}</mark>`
+      );
+    }
+    return m;
+  });
+}
 
 // --- Main ---
 export default function Home() {
@@ -597,10 +642,19 @@ export default function Home() {
                     </>
                   );
                 }
-                if (articleContent) {
+                // --- Highlight phrases in preview ---
+                let html = articleContent;
+                const highlights = highlightText
+                  .split(";")
+                  .map(x => x.trim())
+                  .filter(Boolean);
+                if (html && highlights.length) {
+                  html = highlightHtml(html, highlights);
+                }
+                if (html) {
                   return (
                     <>
-                      <div dangerouslySetInnerHTML={{ __html: articleContent }} />
+                      <div dangerouslySetInnerHTML={{ __html: html }} />
                       <ShareBar>
                         <ShareInput type="text" readOnly value={shortUrl ? shortUrl : "Your Jump2 link will appear here…"} aria-label="Jump2 shareable link" />
                         <ShareActions>
