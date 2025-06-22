@@ -1,49 +1,59 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter } from 'next/router';
 import styled, { keyframes } from 'styled-components';
-import HighlightEditor from '../components/HighlightEditor';
-import ArticleError from '../components/ArticleError'; // See previous answer
+import ArticleError from './ArticleError'; // Assume from above
+import HighlightEditor from './HighlightEditor'; // Needs to support color selection!
+import { FaCopy, FaRedo, FaCheckCircle } from "react-icons/fa";
 
-// --- Styled Components ---
+// --- Styles ---
+const fadeIn = keyframes`from { opacity: 0; } to { opacity: 1; }`;
 const PageContainer = styled.div`
   max-width: 980px;
   margin: 2.5rem auto 3rem;
   padding: 0 1.2rem;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  animation: ${fadeIn} 0.45s;
 `;
 
 const TitleRow = styled.div`
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
+  margin-bottom: 0.7rem;
 `;
 
-const Title = styled.h1`
-  margin-bottom: 0.8rem;
+const Title = styled.h2`
   color: #14314d;
-  font-size: 2.15rem;
+  font-size: 2rem;
   font-weight: 700;
-  letter-spacing: -1.5px;
+  letter-spacing: -1.1px;
+  margin-right: 1rem;
 `;
 
-const Subtitle = styled.span`
-  font-size: 1.1rem;
-  color: #3578e5;
+const OnboardingHint = styled.div`
+  background: #f3faff;
+  color: #2274a5;
+  border: 1.5px solid #bee3f8;
+  border-radius: 0.6em;
+  font-size: 1.06em;
+  padding: 0.6em 1.1em;
+  margin-bottom: 1.1em;
   font-weight: 500;
+  box-shadow: 0 2px 12px #dbeafe44;
+  display: inline-block;
 `;
 
 const Message = styled.p<{ error?: boolean }>`
   color: ${({ error }) => (error ? '#e53e3e' : '#555')};
-  font-size: 1.12rem;
+  font-size: 1.13rem;
   margin: 1.2rem 0;
 `;
 
 const ShareLinkContainer = styled.div`
-  margin-bottom: 1.35rem;
+  margin-bottom: 1.25rem;
   display: flex;
   align-items: center;
-  gap: 0.8em;
+  gap: 0.7em;
   a {
     color: #3578e5;
     word-break: break-all;
@@ -109,12 +119,10 @@ const HIGHLIGHT_COLORS = [
   "#fbcfe8"  // pink
 ];
 
-// --- Utility Functions ---
+// --- Utility ---
 function escapeRegExp(str: string) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
-
-// Supports per-highlight color & "sticky" class for scrolling
 function highlightArticleHtml(html: string, highlights: [string, string?][]) {
   if (!highlights?.length) return html;
   let result = html;
@@ -134,10 +142,27 @@ function highlightArticleHtml(html: string, highlights: [string, string?][]) {
   return result;
 }
 
-export default function ArticlePage() {
-  const router = useRouter();
-  const { url, highlight, color } = router.query;
+type HighlightTuple = [string, string?];
 
+type ArticlePreviewFullProps = {
+  url: string;
+  initialHighlights?: string[];
+  initialColors?: string[];
+  onClose?: () => void;
+  // Optionally expose analytics hooks or callbacks
+};
+
+const KNOWN_SUPPORTED = [
+  "nytimes.com", "bbc.co", "cnn.com", "yahoo.com", "npr.org",
+  "reuters.com", "theguardian.com", "wikipedia.org", "substack.com", "medium.com"
+];
+
+export default function ArticlePreviewFull({
+  url,
+  initialHighlights = [],
+  initialColors = [],
+  onClose,
+}: ArticlePreviewFullProps) {
   // --- State ---
   const [articleHtml, setArticleHtml] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -147,25 +172,18 @@ export default function ArticlePage() {
   const [shareError, setShareError] = useState<string | null>(null);
 
   // --- Highlight colors ---
-  // highlight=[text, text], color=[color, color]
-  let highlights: [string, string?][] = [];
-  if (Array.isArray(highlight)) {
-    if (Array.isArray(color)) {
-      highlights = highlight.map((h, i) => [h, color[i] || HIGHLIGHT_COLORS[i % HIGHLIGHT_COLORS.length]]);
-    } else if (typeof color === 'string') {
-      highlights = highlight.map((h) => [h, color]);
-    } else {
-      highlights = highlight.map((h, i) => [h, HIGHLIGHT_COLORS[i % HIGHLIGHT_COLORS.length]]);
-    }
-  } else if (typeof highlight === 'string') {
-    highlights = [[highlight, typeof color === 'string' ? color : HIGHLIGHT_COLORS[0]]];
-  }
+  const [highlights, setHighlights] = useState<HighlightTuple[]>(
+    initialHighlights.map((h, i) => [h, initialColors[i] || HIGHLIGHT_COLORS[i % HIGHLIGHT_COLORS.length]])
+  );
+
+  // --- Onboarding/first run hint ---
+  const [showHint, setShowHint] = useState(true);
 
   const previewRef = useRef<HTMLDivElement>(null);
 
   // --- Fetch Article ---
   useEffect(() => {
-    if (!url || typeof url !== 'string') return;
+    if (!url) return;
     setLoading(true);
     setError(null);
     setArticleHtml('');
@@ -212,7 +230,7 @@ export default function ArticlePage() {
 
   // --- Share Handler ---
   const handleShare = useCallback(
-    async (highlightsArr: [string, string?][]) => {
+    async (highlightsArr: HighlightTuple[]) => {
       if (!url) return;
       setSharing(true);
       setShareError(null);
@@ -250,36 +268,53 @@ export default function ArticlePage() {
     navigator.clipboard.writeText(shareLink);
   };
 
-  // --- Highlight Color UI (for adding new highlights) ---
-  // (Assumes HighlightEditor supports color selection via props or can be extended)
-  // If not, you can add a color picker here or in the editor.
+  // --- Onboarding: Hide hint after 1st highlight or scroll
+  useEffect(() => {
+    if (highlights.length > 0) setShowHint(false);
+  }, [highlights.length]);
+
+  // --- (Optional) Analytics hooks
+  // useEffect(() => { ... }, [event]);
+
+  // --- Domain guidance
+  const domain = url ? (new URL(url)).hostname.replace(/^www\./, '') : '';
+  const isKnownSupported = KNOWN_SUPPORTED.some(d => domain.endsWith(d));
 
   return (
     <PageContainer>
       <TitleRow>
-        <Title>Jump2 Article Highlights</Title>
-        <Subtitle>
-          <span role="img" aria-label="sparkle">✨</span>
-          &nbsp;Share the good part&nbsp;
-          <span role="img" aria-label="sparkle">✨</span>
-        </Subtitle>
+        <Title>
+          <span role="img" aria-label="highlighter">🖍️</span> Highlight & Share
+        </Title>
+        {onClose && (
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            style={{
+              border: 'none', background: 'transparent', fontSize: '1.3em',
+              color: '#888', cursor: 'pointer', marginLeft: 'auto'
+            }}
+          >
+            ✕
+          </button>
+        )}
       </TitleRow>
-
+      {showHint && (
+        <OnboardingHint>
+          Paste an article link above, highlight any part below, pick a color, and click <b>Share</b>.<br />
+          Works best for news, blogs, and Wikipedia.
+        </OnboardingHint>
+      )}
       {loading && <Message>Loading article...</Message>}
-      {error && <ArticleError error={error} url={typeof url === 'string' ? url : undefined} />}
-
+      {error && <ArticleError error={error} url={url} />}
       {shareLink && (
         <ShareLinkContainer>
-          <strong>Share Link:</strong>
-          <a href={shareLink} target="_blank" rel="noopener noreferrer">
-            {shareLink}
-          </a>
-          <button onClick={handleCopyLink}>Copy</button>
+          <FaCheckCircle color="#38a169" /> <strong>Share Link:</strong>
+          <a href={shareLink} target="_blank" rel="noopener noreferrer">{shareLink}</a>
+          <button onClick={handleCopyLink}><FaCopy /> Copy</button>
         </ShareLinkContainer>
       )}
-
       {shareError && <Message error>{shareError}</Message>}
-
       {!loading && !error && articleHtml && (
         <>
           {/* Sticky preview with color highlights */}
@@ -297,6 +332,9 @@ export default function ArticlePage() {
                     <li key={h}><code>{h}</code></li>
                   ))}
                 </ul>
+                <button onClick={() => setHighlights([])} style={{marginLeft:'0.5em', fontWeight:600, color:'#3578e5', border:'none', background:'none', cursor:'pointer'}}>
+                  <FaRedo /> Try again
+                </button>
               </Message>
             )}
           </PreviewContainer>
@@ -307,14 +345,15 @@ export default function ArticlePage() {
             initialHighlights={highlights.map(([h]) => h)}
             initialColors={highlights.map(([_, c]) => c)}
             highlightColors={HIGHLIGHT_COLORS}
+            onChange={(newHighlights: string[], newColors: string[]) =>
+              setHighlights(newHighlights.map((h, i) => [h, newColors[i] || HIGHLIGHT_COLORS[i % HIGHLIGHT_COLORS.length]]))
+            }
           />
         </>
       )}
-
       {!loading && !error && !articleHtml && (
         <Message>No preview available for this link.</Message>
       )}
-
       <footer style={{ marginTop: "2.2rem", textAlign: "center", color: "#a0aec0", fontSize: "0.99em" }}>
         <div>
           <b>Jump2 works best with:</b> News articles (NYT, BBC, Yahoo, blogs, Wikipedia, most public sites).
