@@ -1,6 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-// @ts-ignore: CommonJS import for sparticuz/chromium
-const chromium = require("@sparticuz/chromium");
 import puppeteer from "puppeteer-core";
 import { logParse, logApi } from "@/lib/log";
 
@@ -17,8 +15,8 @@ let browser: puppeteer.Browser | null = null;
 
 async function getBrowser(): Promise<puppeteer.Browser> {
   if (!browser) {
+    const chromium = await import("@sparticuz/chromium");
     const executablePath = await chromium.executablePath;
-
     console.log("[parse.ts] Puppeteer launching with:", executablePath);
 
     browser = await puppeteer.launch({
@@ -39,11 +37,9 @@ export default async function handler(
   res: NextApiResponse<ResponseData>
 ) {
   logApi("Received request with query: %o", req.query);
-  console.log("[parse.ts] Request received:", req.query);
-
   const { url } = req.query;
   if (!url || typeof url !== "string") {
-    console.log("[parse.ts] Invalid URL parameter");
+    logApi("Missing or invalid URL");
     return res.status(400).json({ error: "Missing or invalid URL parameter" });
   }
 
@@ -65,10 +61,12 @@ export default async function handler(
     });
 
     await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" +
+        " AppleWebKit/537.36 (KHTML, like Gecko)" +
+        " Chrome/114.0.0.0 Safari/537.36"
     );
 
-    console.log("[parse.ts] Navigating to URL:", url);
+    logParse("Navigating to URL: %s", url);
     const response = await page.goto(url, {
       waitUntil: "networkidle2",
       timeout: 20000,
@@ -76,7 +74,6 @@ export default async function handler(
 
     if (!response || !response.ok()) {
       const status = response?.status();
-      console.log(`[parse.ts] Failed to load URL. Status: ${status}`);
       throw new Error(`Failed to load URL, status: ${status}`);
     }
 
@@ -99,11 +96,9 @@ export default async function handler(
     });
 
     if (!content || content.length < 100) {
-      console.log("[parse.ts] Content too short or empty");
       return res.status(204).json({ article: { content: "" } });
     }
 
-    console.log("[parse.ts] Successfully extracted content");
     return res.status(200).json({ article: { content } });
   } catch (error: any) {
     console.error("[parse.ts] Error:", error);
@@ -111,7 +106,7 @@ export default async function handler(
   } finally {
     if (page) {
       await page.close();
-      console.log("[parse.ts] Closed Puppeteer page");
+      logParse("Closed Puppeteer page");
     }
   }
 }
