@@ -1,402 +1,413 @@
-import React, {
-  useState,
-  useCallback,
-  useRef,
-} from "react";
-import styled, { keyframes } from "styled-components";
-import ArticlePreviewFull from "../components/ArticlePreviewFull";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import styled, { keyframes, css } from "styled-components";
 
 // === Animations ===
-const fadeIn = keyframes`
-  from { opacity: 0; }
-  to { opacity: 1; }
+const animatedGradient = keyframes`
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
 `;
-
-const bounce = keyframes`
+const funBounce = keyframes`
   0%, 100% { transform: translateY(0); }
-  10%, 30%, 50%, 70% { transform: translateY(-3px); }
-  20%, 40%, 60% { transform: translateY(3px); }
-  80% { transform: translateY(-2px); }
-  90% { transform: translateY(2px); }
+  10% { transform: translateY(-18%); }
+  20% { transform: translateY(0); }
+  23% { transform: translateY(-10%);}
+  28% { transform: translateY(0);}
+  100% { transform: translateY(0);}
 `;
-
-const lightboxAppear = keyframes`
-  from { opacity: 0; transform: scale(0.93);}
+const fadeInUp = keyframes`
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+const scaleIn = keyframes`
+  from { opacity: 0; transform: scale(0.95);}
   to { opacity: 1; transform: scale(1);}
 `;
 
 // === Styled Components ===
-const HamburgerButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 1.25em;
-  cursor: pointer;
-  padding: 0.5em 1em;
-  color: #1e293b;
-  border-radius: 6px;
-  transition: background 0.15s;
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-  &:hover,
-  &:focus {
-    background: #f1f5f9;
-    outline: none;
-  }
-`;
-
-const MobileMenu = styled.nav<{ open: boolean }>`
-  position: fixed;
-  z-index: 10002;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 290px;
-  background: #f8fafc;
-  padding: 1.5em 1.8em;
-  box-shadow: 2px 0 22px #22334414;
-  border-right: 1.5px solid #e5e7eb;
-  transform: ${({ open }) => (open ? "translateX(0)" : "translateX(-110%)")};
-  transition: transform 0.29s cubic-bezier(.86,.01,.77,1.09);
-`;
-
-const MobileMenuClose = styled.button`
-  background: none;
-  border: none;
-  font-size: 1.8em;
-  color: #64748b;
-  position: absolute;
-  top: 1.0em;
-  right: 1.1em;
-  cursor: pointer;
-`;
-
-const PageContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-  max-width: 1200px;
-  margin: 2.5rem auto 3rem;
-  padding: 0 1.2rem;
-  gap: 2.5rem;
+const PageContainer = styled.main`
+  min-height: 100vh;
+  padding: 3rem 2rem 6rem;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 3rem;
+  background: radial-gradient(circle at top, #0f172a, #1e293b);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  animation: ${fadeIn} 0.45s;
-  @media (max-width: 900px) {
-    flex-direction: column;
-    gap: 1em;
+  color: #cbd5e1;
+
+  @media (max-width: 980px) {
+    grid-template-columns: 1fr;
+    padding: 2rem 0.5rem 4rem;
+    gap: 1.5rem;
   }
 `;
-
 const LeftColumn = styled.section`
-  flex: 0 0 370px;
-  min-width: 320px;
-  max-width: 410px;
-  margin: 0 0.8em 0 0;
-  @media (max-width: 900px) {
-    margin: 0;
-    max-width: unset;
-    min-width: unset;
-  }
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+  gap: 2.3rem;
+  @media (max-width: 980px) { max-width: unset; }
 `;
-
-const Section = styled.section`
-  flex: 1 1 0%;
-  min-width: 0;
+const GlassCard = styled.div`
+  background: rgba(30,41,59,0.87);
+  border-radius: 1.2rem;
+  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.2);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid #3b82f6;
 `;
-
-const LogoWrapper = styled.h1`
+const AnimatedLogoText = styled.span`
+  background: linear-gradient(90deg, #60a5fa, #3b82f6, #60a5fa);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: ${animatedGradient} 2.8s linear infinite alternate;
+  display: inline-block;
+`;
+const LogoWrapper = styled.div`
   display: flex;
   align-items: center;
-  font-size: 2.5em;
-  font-weight: 800;
-  color: #14314d;
-  margin-bottom: .28em;
-  letter-spacing: -1.7px;
-  user-select: none;
-`;
-
-const AnimatedLogoText = styled.span`
-  color: #3578e5;
   font-weight: 900;
-  margin-right: 0.11em;
-  animation: ${bounce} 2.4s infinite;
+  font-size: clamp(2.6rem, 7vw, 4.2rem);
+  color: #60a5fa;
+  user-select: text;
+  filter: drop-shadow(0 0 6px #60a5faa) drop-shadow(0 0 10px #3b82f6aa);
 `;
-
 const TwoText = styled.span`
   color: #ffd100;
   font-size: 1.15em;
-  font-weight: 900;
-  margin-left: -0.04em;
-  animation: ${bounce} 2.2s infinite 1s;
+  margin-left: 0.05em;
+  text-shadow: 0 0 12px #3b82f6aa;
+  animation: ${funBounce} 3.5s cubic-bezier(0.32, 0.72, 0.52, 1.5) infinite;
 `;
-
-const Subtitle = styled.h2`
-  font-size: 1.30em;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 0.6em;
-  letter-spacing: -0.6px;
+const Subtitle = styled.div`
+  font-size: clamp(1.24rem, 2vw, 1.7rem);
+  color: #94a3b8;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 0.35em;
 `;
-
 const Description = styled.p`
-  font-size: 1.08em;
-  color: #64748b;
-  margin-bottom: 1.1em;
+  font-size: 1.12rem;
+  line-height: 1.7;
   font-weight: 400;
+  color: #cbd5e1;
+  margin-bottom: 1.2em;
 `;
-
 const FormWrapper = styled.div`
-  background: #f8fafb;
-  border-radius: 0.9em;
-  padding: 1.6em 1.3em 2em;
-  box-shadow: 0 4px 24px #cbd5e115;
-  border: 1.5px solid #dbeafe;
-  margin-bottom: 1.7em;
+  width: 100%;
+  background: #131c2b;
+  border-radius: 1.15em;
+  box-shadow: 0 4px 24px #1e293b22;
+  border: 1.5px solid #3b82f6;
+  padding: 2.1em 1.7em 2.2em;
 `;
-
 const Input = styled.input`
-  display: block;
   width: 100%;
   font-size: 1.13em;
-  padding: 0.68em 1.05em;
+  padding: 0.75em 1.1em;
   margin-bottom: 0.9em;
-  border-radius: 0.54em;
-  border: 1.5px solid #cbd5e1;
-  background: #fff;
-  color: #374151;
-  font-weight: 400;
+  border-radius: 0.58em;
+  border: 1.5px solid #334155;
+  background: #0f172a;
+  color: #f1f5f9;
+  font-weight: 500;
   outline: 0;
-  &:focus {
-    border-color: #3578e5;
-    background: #f1f5f9;
-  }
+  transition: border-color 0.2s;
+  &::placeholder { color: #64748b; }
+  &:focus { border-color: #3b82f6; background: #1e293b; }
 `;
-
-const ColorInput = styled.input`
-  width: 1.65em;
-  height: 1.65em;
-  border-radius: 0.5em;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 2px 8px #dbeafe33;
-  outline: none;
-  margin-right: 0.13em;
-  &:focus {
-    box-shadow: 0 0 0 2px #3578e599;
-  }
-`;
-
 const Button = styled.button`
-  background: #3578e5;
-  color: #fff;
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+  color: white;
   border: none;
-  padding: 0.65em 1.2em;
-  border-radius: 0.6em;
-  font-size: 1.09em;
-  font-weight: 600;
-  margin-left: 0.35em;
+  border-radius: 0.7em;
+  font-size: 1.1em;
+  font-weight: 700;
+  padding: 1em 2em;
+  margin-left: 0.3em;
   cursor: pointer;
-  box-shadow: 0 2px 8px #dbeafe55;
-  transition: background 0.12s;
-  &:hover, &:focus {
-    background: #3659b7;
-    outline: 0;
-  }
+  box-shadow: 0 2px 8px #2563eb55;
+  transition: background 0.13s, box-shadow 0.13s;
+  &:hover, &:focus { background: linear-gradient(90deg, #2563eb, #60a5fa); box-shadow: 0 4px 24px #60a5fa44; }
+  &:disabled { background: #64748b; cursor: not-allowed; }
 `;
-
 const ExampleLinks = styled.div`
-  margin: 0.1em 0 0.8em 0;
+  margin: 0.8em 0 1.2em 0;
   a {
-    color: #3578e5;
+    color: #3b82f6;
     cursor: pointer;
     text-decoration: underline dotted;
-    margin-right: 0.7em;
+    margin-right: 0.8em;
     font-size: 1em;
     &:hover { text-decoration: underline solid; }
   }
 `;
-
 const SupportedSites = styled.p`
-  font-size: 0.95em;
-  color: #1e293b;
-  margin: 0.6em 0 0.5em 0;
+  font-size: 0.97em;
+  color: #a0aec0;
+  margin-bottom: 0.5em;
 `;
-
-const HR = styled.hr`
-  border: none;
-  border-top: 1.5px solid #e5e7eb;
-  margin: 1.2em 0 1.2em 0;
-`;
-
 const HowItWorks = styled.div`
   font-size: 0.99em;
-  color: #374151;
-  ul {
-    padding-left: 1.3em;
-    margin: 0.5em 0 0 0;
-    li { margin-bottom: 0.2em; }
+  color: #cbd5e1;
+  ul { padding-left: 1.3em; margin: 0.5em 0 0 0; }
+  li { margin-bottom: 0.15em; }
+`;
+const HR = styled.hr`
+  border: none;
+  border-top: 1.5px solid #233046;
+  margin: 1.1em 0 1.2em 0;
+`;
+
+const PreviewWrapper = styled.section`
+  background: rgba(23, 31, 47, 0.90);
+  border-radius: 1rem;
+  border: 1.5px solid #334155;
+  padding: 2.2rem 2.5rem 2.5rem;
+  color: #f1f5f9;
+  font-size: 1rem;
+  line-height: 1.7;
+  box-shadow: 0 12px 20px #131c2b88;
+  user-select: text;
+  min-height: 440px;
+  max-height: 82vh;
+  overflow-y: auto;
+  position: relative;
+  @media (max-width: 980px) {
+    margin-top: 2rem;
+    padding: 1.2rem 0.6rem 2rem;
   }
 `;
-
-const Footer = styled.footer`
-  text-align: center;
-  color: #64748b;
-  font-size: 1.01em;
-  margin: 3em 0 1.2em 0;
-  padding: 1em;
+const VideoWrapper = styled.div`
+  margin: 2rem auto 3rem;
+  max-width: 640px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px #131c2b55;
+  position: relative;
+`;
+const TimestampBadge = styled.div`
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  user-select: none;
+  pointer-events: none;
+  text-shadow: 0 0 6px #000b;
 `;
 
+// === Lightbox ===
 const LightboxBackdrop = styled.div<{ open: boolean }>`
   display: ${({ open }) => (open ? "flex" : "none")};
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 19, 31, 0.96);
+  z-index: 1200;
   align-items: center;
   justify-content: center;
-  position: fixed;
-  z-index: 10001;
-  left: 0; top: 0; bottom: 0; right: 0;
-  background: #111827b8;
-  animation: ${fadeIn} 0.4s;
+  animation: ${fadeInUp} 0.33s;
+  padding: 2rem;
+  backdrop-filter: blur(4px);
 `;
 
 const LightboxContent = styled.div`
-  background: #fff;
-  border-radius: 14px;
-  padding: 2.5em 2.5em 2.2em;
-  box-shadow: 0 8px 56px #1e293b50, 0 2px 6px #1e293b25;
-  min-width: 310px;
-  max-width: 90vw;
-  max-height: 90vh;
+  max-width: 420px;
+  width: 100%;
+  background: linear-gradient(120deg, rgba(30,41,59,0.97) 60%, rgba(37,56,99,0.88) 100%);
+  border-radius: 1.3rem;
+  padding: 2.7rem 2.5rem 2.2rem;
+  box-shadow: 0 0 60px #14314dbb, 0 2px 8px #1e293b44;
+  color: #e8edfa;
+  font-size: 1.15rem;
+  line-height: 1.65;
+  user-select: text;
   text-align: center;
-  animation: ${lightboxAppear} 0.34s;
+  animation: ${scaleIn} 0.34s;
+  border: 2px solid #2563eb;
+  position: relative;
+
+  h2 {
+    margin-top: 0;
+    font-weight: 900;
+    font-size: 2.4rem;
+    color: #60a5fa;
+    margin-bottom: 0.95rem;
+    text-shadow: 0 2px 12px #1e2c51aa;
+    letter-spacing: -1.5px;
+  }
+  p {
+    margin-bottom: 1.15rem;
+    color: #a7b9d8;
+    font-size: 1.09em;
+    font-weight: 500;
+  }
+  button, .close-btn {
+    margin-top: 1.8rem;
+    background: linear-gradient(90deg, #2563eb, #3b82f6 90%);
+    color: #fff;
+    border: none;
+    border-radius: 0.6em;
+    font-size: 1.15em;
+    font-weight: 600;
+    padding: 0.95em 2.1em;
+    cursor: pointer;
+    box-shadow: 0 3px 16px #2563eb55;
+    transition: background 0.14s, box-shadow 0.13s;
+    &:hover, &:focus {
+      background: linear-gradient(90deg, #3b82f6, #2563eb 90%);
+      box-shadow: 0 6px 24px #60a5fa44;
+    }
+  }
+  @media (max-width: 600px) {
+    padding: 1.2rem 0.5rem 1.3rem;
+    font-size: 1rem;
+  }
 `;
 
-// --- Highlight Color Palette ---
-const HIGHLIGHT_COLORS = [
-  "#ffe066", // yellow
-  "#a7f3d0", // green
-  "#bae6fd", // blue
-  "#fcd34d", // orange
-  "#fca5a5", // red
-  "#d8b4fe", // purple
-  "#fbcfe8"  // pink
-];
-
-// --- Demo Links ---
-const EXAMPLES = [
-  {
-    url: "https://www.bbc.com/news/world-us-canada-66159295",
-    text: "democracy"
-  },
-  {
-    url: "https://www.nytimes.com/2024/06/20/technology/ai-future.html",
-    text: "artificial intelligence"
-  },
-  {
-    url: "https://www.theguardian.com/environment/2025/jun/08/renewable-energy-breakthrough",
-    text: "solar power"
-  }
-];
-
-// --- Highlight Type ---
-type Highlight = {
-  id: string;
-  text: string;
-  start: number;
-  end: number;
-  color: string;
+// --- YouTube helpers ---
+const isYouTubeUrl = (url: URL) =>
+  ["www.youtube.com", "youtube.com", "youtu.be"].includes(url.hostname);
+function parseTimestamp(input: string): number {
+  if (!input) return 0;
+  const parts = input.trim().split(":").map(Number);
+  if (parts.some(isNaN)) return NaN;
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  if (parts.length === 1) return parts[0];
+  return 0;
+}
+function formatTimestamp(seconds: number) {
+  if (seconds < 0) return "";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: number }) => {
+  const videoId = useMemo(() => {
+    try {
+      const u = new URL(url);
+      if (u.hostname === "youtu.be") return u.pathname.slice(1);
+      return u.searchParams.get("v") || "";
+    } catch {
+      return "";
+    }
+  }, [url]);
+  const src = useMemo(
+    () =>
+      `https://www.youtube.com/embed/${videoId}?start=${startSeconds}&autoplay=0&modestbranding=1&rel=0`,
+    [videoId, startSeconds]
+  );
+  return (
+    <VideoWrapper role="region" aria-label="YouTube video player">
+      <iframe
+        width="100%"
+        height="360"
+        src={src}
+        title="YouTube video player"
+        frameBorder={0}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+      {startSeconds > 0 && (
+        <TimestampBadge>▶ {formatTimestamp(startSeconds)}</TimestampBadge>
+      )}
+    </VideoWrapper>
+  );
 };
 
-// === Main Page ===
+// --- Main ---
 export default function Home() {
+  // State
   const [link, setLink] = useState("");
   const [highlightText, setHighlightText] = useState("");
-  const [highlightColor, setHighlightColor] = useState(HIGHLIGHT_COLORS[0]);
-  const [highlightArray, setHighlightArray] = useState<string[]>([]);
-  const [colorsArray, setColorsArray] = useState<string[]>([]);
   const [showPreview, setShowPreview] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [parsedSeconds, setParsedSeconds] = useState(0);
+  const [error, setError] = useState("");
+  const [articleContent, setArticleContent] = useState("");
+  const [loadingPreview, setLoadingPreview] = useState(false);
   const [showLightbox, setShowLightbox] = useState(true);
 
-  const urlInputRef = useRef<HTMLInputElement>(null);
-  const highlightInputRef = useRef<HTMLInputElement>(null);
+  // For YouTube timestamp input
+  useEffect(() => {
+    if (!link) {
+      setParsedSeconds(0);
+      return;
+    }
+    try {
+      const urlObj = new URL(link);
+      if (isYouTubeUrl(urlObj)) {
+        setParsedSeconds(parseTimestamp(highlightText));
+      } else {
+        setParsedSeconds(0);
+      }
+    } catch {
+      setParsedSeconds(0);
+    }
+  }, [highlightText, link]);
 
-  // --- Convert highlights to Highlight[] for ArticlePreviewFull ---
-  const highlightObjects: Highlight[] = highlightArray.map((text, i) => ({
-    id: String(i),
-    text,
-    start: 0,
-    end: text.length,
-    color: colorsArray[i] || "#ffe066"
-  }));
+  // Article preview fetcher (not for YouTube)
+  useEffect(() => {
+    if (!link) {
+      setArticleContent("");
+      setError("");
+      return;
+    }
+    let url: URL;
+    try {
+      url = new URL(link);
+      if (isYouTubeUrl(url)) {
+        setArticleContent("");
+        setError("");
+        return;
+      }
+    } catch {
+      setError("Invalid URL.");
+      return;
+    }
+    setLoadingPreview(true);
+    setError("");
+    setArticleContent("");
+    fetch(`/api/parse?url=${encodeURIComponent(link)}`)
+      .then(async res => {
+        if (!res.ok) throw new Error("Failed to fetch article preview.");
+        const json = await res.json();
+        if (json.article?.content) {
+          setArticleContent(json.article.content);
+        } else {
+          setError("No preview available for this link.");
+        }
+      })
+      .catch(() => setError("Failed to load preview. You can still create the jump link."))
+      .finally(() => setLoadingPreview(false));
+  }, [link, showPreview]);
 
-  // --- Handle submit ---
+  // Form actions
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!link.trim()) {
-      urlInputRef.current?.focus();
+      setError("Paste a valid link.");
       return;
     }
-    // Build arrays: allow multiple highlights split by ";"
-    const highlights = highlightText.split(";").map(h => h.trim()).filter(Boolean);
-    setHighlightArray(highlights);
-    setColorsArray(highlights.map(() => highlightColor));
     setShowPreview(true);
   }
 
-  // --- Handle "Try Example" click ---
-  function handleExample(url: string, text: string) {
-    setLink(url);
-    setHighlightText(text);
-    setHighlightColor(HIGHLIGHT_COLORS[0]);
-    setShowPreview(false);
-    setTimeout(() => {
-      setShowPreview(true);
-    }, 75);
-  }
-
-  // --- Handle color palette click ---
-  function handleColorPick(color: string) {
-    setHighlightColor(color);
-    highlightInputRef.current?.focus();
-  }
-
-  // --- Handle closing preview ---
-  function handleClosePreview() {
-    setShowPreview(false);
-    setTimeout(() => {
-      urlInputRef.current?.focus();
-    }, 100);
-  }
-
-  // --- Mobile menu ---
-  const toggleMobileMenu = useCallback(() => setMobileMenuOpen((o) => !o), []);
+  // --- Demo links for onboarding
+  const EXAMPLES = [
+    { url: "https://www.bbc.com/news/world-us-canada-66159295", text: "democracy" },
+    { url: "https://www.nytimes.com/2024/06/20/technology/ai-future.html", text: "artificial intelligence" },
+    { url: "https://www.theguardian.com/environment/2025/jun/08/renewable-energy-breakthrough", text: "solar power" }
+  ];
 
   return (
     <>
-      <HamburgerButton aria-label="Toggle menu" onClick={toggleMobileMenu}>
-        ☰ Menu
-      </HamburgerButton>
-
-      <MobileMenu open={mobileMenuOpen} aria-hidden={!mobileMenuOpen} aria-label="Mobile navigation menu">
-        <MobileMenuClose
-          aria-label="Close menu"
-          onClick={() => setMobileMenuOpen(false)}
-        >
-          ×
-        </MobileMenuClose>
-        <Subtitle>Jump2 — Content Sharer</Subtitle>
-        <Description>
-          Paste any link (articles, videos) to highlight and share the best parts.
-        </Description>
-        <a
-          href="mailto:contact@jump2.com"
-          tabIndex={mobileMenuOpen ? 0 : -1}
-          style={{
-            display: "block", marginTop: "2em", color: "#3578e5", fontWeight: 600, fontSize: "1.1em"
-          }}
-        >
-          Contact: contact@jump2.com
-        </a>
-      </MobileMenu>
-
       <LightboxBackdrop
         open={showLightbox}
         role="dialog"
@@ -408,36 +419,32 @@ export default function Home() {
           <h2 id="welcomeTitle">Welcome to Jump2!</h2>
           <p id="welcomeDesc">
             Easily highlight the best parts of any article or video, generate a
-            quick shareable link, and skip the fluff.
+            quick shareable link, and skip the fluff.<br /><br />
+            Get started by pasting a link below!
           </p>
-          <Button
+          <button
             type="button"
             onClick={() => setShowLightbox(false)}
-            style={{ marginTop: "1.5rem", backgroundColor: "#64748b", animation: "none" }}
             aria-label="Close welcome dialog"
           >
             Close
-          </Button>
+          </button>
         </LightboxContent>
       </LightboxBackdrop>
 
-      <PageContainer role="main" aria-label="Jump2 content sharer">
+      <PageContainer>
         <LeftColumn>
-          <LogoWrapper aria-label="Jump2 logo" role="img" tabIndex={-1}>
+          <LogoWrapper>
             <AnimatedLogoText>Jump</AnimatedLogoText>
             <TwoText>2</TwoText>
           </LogoWrapper>
-
           <Subtitle>Skip the fluff. Jump2 the good part.</Subtitle>
-
           <Description>
             Paste a link (article or video) and highlight the best part — timestamp, quote, or keyword.
           </Description>
-
-          <FormWrapper aria-live="polite" aria-atomic="true" aria-describedby="form-error">
+          <FormWrapper>
             <form onSubmit={handleSubmit} autoComplete="off" spellCheck={false}>
               <Input
-                ref={urlInputRef}
                 type="url"
                 required
                 placeholder="Paste article or video URL..."
@@ -445,36 +452,21 @@ export default function Home() {
                 onChange={e => setLink(e.target.value)}
                 autoFocus
                 aria-label="Paste article URL"
-                data-testid="url-input"
               />
               <Input
-                ref={highlightInputRef}
                 type="text"
-                placeholder='Highlight (e.g. "key finding"; separate multiple with ;)'
+                placeholder={(() => {
+                  try {
+                    const urlObj = new URL(link);
+                    if (isYouTubeUrl(urlObj)) return 'Jump to timestamp (e.g. 1:23)';
+                  } catch {}
+                  return 'Highlight (e.g. "key finding"; separate multiple with ;)';
+                })()}
                 value={highlightText}
                 onChange={e => setHighlightText(e.target.value)}
-                aria-label="Highlight text"
-                data-testid="highlight-input"
+                aria-label="Highlight text or timestamp"
               />
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5em" }}>
-                {HIGHLIGHT_COLORS.map(color => (
-                  <ColorInput
-                    key={color}
-                    as="input"
-                    type="color"
-                    value={color}
-                    checked={highlightColor === color}
-                    onClick={() => handleColorPick(color)}
-                    title="Highlight color"
-                    aria-label={`Highlight color ${color}`}
-                    style={{
-                      border: highlightColor === color ? "2.5px solid #3578e5" : undefined,
-                      outline: highlightColor === color ? "2px solid #60a5fa" : undefined
-                    }}
-                  />
-                ))}
-                <Button type="submit">Preview</Button>
-              </div>
+              <Button type="submit">Preview</Button>
             </form>
             <div style={{ fontSize: "0.99em", margin: "0.5em 0 1.2em 0", color: "#64748b" }}>
               <b>Tip:</b> Paste your link &amp; highlight, pick a color, then Preview!
@@ -482,7 +474,7 @@ export default function Home() {
             <ExampleLinks>
               Try:&nbsp;
               {EXAMPLES.map(({ url, text }, i) => (
-                <a key={i} onClick={() => handleExample(url, text)}>
+                <a key={i} onClick={() => { setLink(url); setHighlightText(text); setShowPreview(false); setTimeout(() => setShowPreview(true), 75); }}>
                   {url.replace(/^https?:\/\//, '').split("/")[0]}
                 </a>
               ))}
@@ -503,25 +495,32 @@ export default function Home() {
             </HowItWorks>
           </FormWrapper>
         </LeftColumn>
-        <Section>
-          {showPreview && link && (
-            <ArticlePreviewFull
-              url={link}
-              initialHighlights={highlightObjects}
-              onClose={handleClosePreview}
-            />
-          )}
-        </Section>
+
+        {/* --- Main Preview --- */}
+        <PreviewWrapper as={GlassCard}>
+          {loadingPreview && <div style={{ textAlign: "center", margin: "3em 0" }}>Loading preview...</div>}
+          {!loadingPreview && (() => {
+            try {
+              const urlObj = new URL(link);
+              if (isYouTubeUrl(urlObj)) {
+                return (
+                  <YouTubePlayer url={link} startSeconds={parsedSeconds} />
+                );
+              }
+            } catch { /* not a URL or not YouTube */ }
+            if (!articleContent && !error) {
+              return <div style={{ color: "#64748b", textAlign: "center", marginTop: "2.5em" }}>No preview available for this link.</div>;
+            }
+            if (error) {
+              return <div style={{ color: "#f87171", fontWeight: 600, marginTop: "2.1em" }}>{error}</div>;
+            }
+            if (articleContent) {
+              return <div dangerouslySetInnerHTML={{ __html: articleContent }} />;
+            }
+            return null;
+          })()}
+        </PreviewWrapper>
       </PageContainer>
-      <Footer>
-        <div>
-          <b>Jump2</b> — Competition-level article highlighting for the web. <br />
-          <span style={{ color: "#3578e5" }}>Open source, privacy-first, built for you.</span>
-        </div>
-        <div>
-          Need help? <a href="mailto:support@jump2.link" style={{ color: "#3578e5" }}>Contact us</a>
-        </div>
-      </Footer>
     </>
   );
 }
