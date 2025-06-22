@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { Browser, Page } from 'puppeteer-core';
+import puppeteer, { Browser, Page } from 'puppeteer';
 
 interface Article {
   content: string;
@@ -12,28 +12,12 @@ interface ResponseData {
 
 let browser: Browser | null = null;
 
-// Helper to get or launch a browser instance
+// Helper to get or launch Puppeteer browser instance
 async function getBrowser(): Promise<Browser> {
   if (browser) return browser;
 
-  let puppeteer;
-  let executablePath: string | undefined;
-  let args: string[] = [];
-
-  if (process.env.NODE_ENV === 'production') {
-    const chromiumModule = await import('chrome-aws-lambda');
-    puppeteer = await import('puppeteer-core');
-    executablePath = await chromiumModule.default.executablePath;
-    args = chromiumModule.default.args;
-  } else {
-    puppeteer = await import('puppeteer');
-    executablePath = undefined;
-    args = ['--no-sandbox', '--disable-setuid-sandbox'];
-  }
-
   browser = await puppeteer.launch({
-    args,
-    executablePath,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
     headless: true,
     ignoreHTTPSErrors: true,
     defaultViewport: { width: 1280, height: 800 },
@@ -42,11 +26,10 @@ async function getBrowser(): Promise<Browser> {
   return browser;
 }
 
-// Helper to create a new page with resource blocking enabled
+// Helper to create a new page with resource blocking for performance
 async function newPageWithBlock(browser: Browser): Promise<Page> {
   const page = await browser.newPage();
 
-  // Block images, fonts, stylesheets, media, etc.
   await page.setRequestInterception(true);
   page.on('request', (req) => {
     const resourceType = req.resourceType();
@@ -58,7 +41,7 @@ async function newPageWithBlock(browser: Browser): Promise<Page> {
     }
   });
 
-  // Set consistent user agent to avoid bot detection
+  // Set user agent to avoid bot detection
   await page.setUserAgent(
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' +
       'AppleWebKit/537.36 (KHTML, like Gecko) ' +
@@ -85,7 +68,6 @@ export default async function handler(
 
   try {
     const browserInstance = await getBrowser();
-
     page = await newPageWithBlock(browserInstance);
 
     const response = await page.goto(url, {
