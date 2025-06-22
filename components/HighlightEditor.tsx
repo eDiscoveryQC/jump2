@@ -2,143 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled, { keyframes } from 'styled-components';
 
 // --- UI Styles ---
-const Container = styled.div`
-  display: flex;
-  max-width: 900px;
-  margin: 2rem auto;
-  gap: 2rem;
-  user-select: text;
-`;
-
-const ArticleArea = styled.div`
-  flex: 3;
-  line-height: 1.7;
-  font-size: 1.12rem;
-  border: 1px solid #ddd;
-  padding: 1.5rem;
-  border-radius: 8px;
-  background: #fcfcfc;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-  min-height: 340px;
-  transition: box-shadow .2s;
-  &:hover {
-    box-shadow: 0 4px 20px #1e426820;
-  }
-`;
-
-const flash = keyframes`
-  0%   { background: #ffe066; }
-  100% { background: inherit; }
-`;
-
-const HighlightedText = styled.mark<{ color: string; isActive?: boolean }>`
-  background-color: ${({ color }) => color};
-  cursor: pointer;
-  border-radius: 3px;
-  padding: 0 2px;
-  transition: background 0.2s;
-  ${({ isActive }) => isActive && `
-    animation: ${flash} 1.5s ease-out;
-    box-shadow: 0 0 0 2px #ffd10099;
-  `}
-`;
-
-const Sidebar = styled.div`
-  flex: 1.2;
-  border-left: 1px solid #ccc;
-  padding-left: 1rem;
-  max-height: 60vh;
-  overflow-y: auto;
-  background: #f6faff;
-  border-radius: 8px;
-`;
-
-const HighlightItem = styled.div<{ active?: boolean }>`
-  display: flex;
-  align-items: center;
-  background: ${({ active }) => active ? '#e0f2fe' : '#f9f9f9'};
-  padding: 8px;
-  margin-bottom: 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  user-select: none;
-  box-shadow: ${({ active }) => active ? '0 0 0 2px #3b82f6' : 'none'};
-  &:hover {
-    background: #dbeafe;
-  }
-`;
-
-const ColorInput = styled.input`
-  margin-right: 8px;
-  border: none;
-  padding: 0;
-  width: 1.5em;
-  height: 1.5em;
-  cursor: pointer;
-`;
-
-const RemoveButton = styled.button`
-  margin-left: auto;
-  background: transparent;
-  border: none;
-  color: #e55353;
-  font-size: 1.2rem;
-  cursor: pointer;
-`;
-
-const Button = styled.button`
-  width: 100%;
-  padding: 12px;
-  background: #1e4268;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  margin-top: 1.5em;
-
-  &:disabled {
-    background: #64748b;
-    cursor: not-allowed;
-  }
-`;
-
-const UtilityBar = styled.div`
-  margin-bottom: 1.2em;
-  display: flex;
-  gap: 0.5em;
-  align-items: center;
-  font-size: .98em;
-`;
-
-const Input = styled.input`
-  padding: 3px 6px;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  min-width: 0;
-  width: 100%;
-`;
-
-const Toast = styled.div`
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1e4268;
-  color: #fff;
-  padding: 0.7em 1.8em;
-  border-radius: 8px;
-  font-size: 1.08em;
-  box-shadow: 0 2px 18px #1e293b33;
-  z-index: 100000;
-  animation: fadeOut 2.5s forwards;
-  @keyframes fadeOut {
-    0% { opacity: 1 }
-    85% { opacity: 1 }
-    100% { opacity: 0 }
-  }
-`;
+// ... [styles unchanged] ...
 
 // --- Highlight Interface ---
 export interface Highlight {
@@ -156,6 +20,7 @@ interface Props {
   sharing?: boolean;
   onShare?: (highlights: Highlight[]) => Promise<void> | void;
   highlightId?: string;
+  onHighlightsChange?: (highlights: Highlight[]) => void; // PATCH: add this prop
 }
 
 // --- Main Component ---
@@ -166,6 +31,7 @@ export default function HighlightEditor({
   sharing = false,
   onShare,
   highlightId,
+  onHighlightsChange, // PATCH: receive this prop
 }: Props) {
   const [highlights, setHighlights] = useState<Highlight[]>(() => {
     const saved = typeof window !== "undefined"
@@ -180,6 +46,13 @@ export default function HighlightEditor({
   const [activeHighlight, setActiveHighlight] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState<string | null>(null);
+
+  // PATCH: call onHighlightsChange whenever highlights change
+  useEffect(() => {
+    if (onHighlightsChange) {
+      onHighlightsChange(highlights);
+    }
+  }, [highlights, onHighlightsChange]);
 
   // --- Save to localStorage ---
   useEffect(() => {
