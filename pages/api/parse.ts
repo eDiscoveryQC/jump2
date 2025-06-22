@@ -2,8 +2,6 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import fetch from "node-fetch";
 import { JSDOM } from "jsdom";
 import { logParse, logApi } from "@/lib/log";
-
-// Optional: Install @mozilla/readability for ultimate extraction
 import { Readability } from "@mozilla/readability";
 
 interface Article {
@@ -26,7 +24,6 @@ function cleanArticleText(html: string): string {
   cleaned = cleaned.replace(/^\s*[\r\n]/gm, "");
   cleaned = cleaned.replace(/\n{3,}/g, "\n\n");
   cleaned = cleaned.replace(/<!--[\s\S]*?-->/g, ""); // Remove HTML comments
-  // Remove excessive whitespace
   cleaned = cleaned.replace(/(\s{2,})/g, " ");
   return cleaned.trim();
 }
@@ -84,9 +81,9 @@ async function tryDirectFetchAndParse(url: string): Promise<{content: string, er
 
     // --- 2. If not found, try the largest visible div/section by text length ---
     if (!mainContent) {
-      let biggest = null;
+      let biggest: Element | null = null;
       let maxLen = 0;
-      const candidates = Array.from(doc.querySelectorAll('div, section'));
+      const candidates: Element[] = Array.from(doc.querySelectorAll('div, section'));
       for (const el of candidates) {
         const txt = el.textContent?.replace(/\s+/g, " ").trim() || "";
         if (txt.length > maxLen) {
@@ -174,7 +171,6 @@ export default async function handler(
 
     const extractRules = JSON.stringify({
       article: [
-        // Try all major selectors
         "article, main, .content, section, .caas-body, [data-type='text'], [data-test-locator='article-body'], section[name='articleBody'], .ssrcss-uf6wea-RichTextComponentWrapper, .article__content, .article-body, .content__article-body, article .section-inner, .body, .post-content, .entry-content, .blog-post, .story-content"
       ].join(", ")
     });
