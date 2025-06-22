@@ -11,13 +11,21 @@ interface ResponseData {
   error?: string;
 }
 
+interface ChromiumModule {
+  args: string[];
+  defaultViewport: any;
+  executablePath: Promise<string>;
+  headless: boolean;
+}
+
 let browser: puppeteer.Browser | null = null;
 
 async function getBrowser(): Promise<puppeteer.Browser> {
   if (!browser) {
-    const chromium = await import("@sparticuz/chromium");
+    const chromium = (await import("@sparticuz/chromium")) as ChromiumModule;
     const executablePath = await chromium.executablePath;
-    console.log("[parse.ts] Puppeteer launching with:", executablePath);
+
+    logParse("Launching Puppeteer with: %s", executablePath);
 
     browser = await puppeteer.launch({
       args: chromium.args,
@@ -27,7 +35,7 @@ async function getBrowser(): Promise<puppeteer.Browser> {
       ignoreHTTPSErrors: true,
     });
 
-    console.log("[parse.ts] Browser launched");
+    logParse("Browser launched");
   }
   return browser;
 }
@@ -48,7 +56,6 @@ export default async function handler(
   try {
     const browser = await getBrowser();
     page = await browser.newPage();
-    console.log("[parse.ts] Created new page");
 
     await page.setRequestInterception(true);
     page.on("request", (request) => {
