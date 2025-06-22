@@ -80,7 +80,8 @@ export default async function handler(
       ];
       for (const sel of selectors) {
         const el = document.querySelector(sel);
-        if (el && el.innerText.length > 100) {
+        // Cast el to HTMLElement to access innerText
+        if (el && (el as HTMLElement).innerText.length > 100) {
           return el.innerHTML.trim();
         }
       }
