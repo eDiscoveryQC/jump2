@@ -2,14 +2,34 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import ArticleError from "./ArticleError";
 import HighlightEditor, { Highlight } from "./HighlightEditor";
+import DOMPurify from "dompurify";
 
 // Emoji-based icons to avoid react-icons dependency
-const FaCopy = () => <span role="img" aria-label="Copy" style={{fontSize:"1.1em"}}>📋</span>;
-const FaRedo = () => <span role="img" aria-label="Redo" style={{fontSize:"1.1em"}}>🔄</span>;
-const FaCheckCircle = () => <span role="img" aria-label="Check" style={{fontSize:"1.1em", color:"#38a169"}}>✔️</span>;
+const FaCopy = () => (
+  <span role="img" aria-label="Copy" style={{ fontSize: "1.1em" }}>
+    📋
+  </span>
+);
+const FaRedo = () => (
+  <span role="img" aria-label="Redo" style={{ fontSize: "1.1em" }}>
+    🔄
+  </span>
+);
+const FaCheckCircle = () => (
+  <span
+    role="img"
+    aria-label="Check"
+    style={{ fontSize: "1.1em", color: "#38a169" }}
+  >
+    ✔️
+  </span>
+);
 
 // --- Styles ---
-const fadeIn = keyframes`from { opacity: 0; } to { opacity: 1; }`;
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
 const highlightFlash = keyframes`
     0%   { background: #ffe066; }
     40%  { background: #ffb700; }
@@ -55,7 +75,7 @@ const OnboardingHint = styled.div`
 `;
 
 const Message = styled.p<{ error?: boolean }>`
-  color: ${({ error }) => (error ? '#e53e3e' : '#555')};
+  color: ${({ error }) => (error ? "#e53e3e" : "#555")};
   font-size: 1.13rem;
   margin: 1.2rem 0;
 `;
@@ -120,22 +140,26 @@ const HIGHLIGHT_COLORS = [
   "#fcd34d", // orange
   "#fca5a5", // red
   "#d8b4fe", // purple
-  "#fbcfe8"  // pink
+  "#fbcfe8", // pink
 ];
 
 // --- Utility for in-place highlighting (for visual preview only) ---
-function markHtmlWithHighlights(html: string, highlights: Highlight[]) {
-  if (!highlights?.length) return html;
-  // Sort highlights by start position ascending
-  const sorted = [...highlights].sort((a, b) => a.start - b.start);
+function markHtmlWithHighlightsSafe(html: string, highlights: Highlight[]) {
+  if (!highlights?.length) return DOMPurify.sanitize(html);
+  // Defensive: sort, avoid overlap, escape HTML
+  const sorted = [...highlights]
+    .filter((h) => h.start < h.end && h.start >= 0 && h.end <= html.length)
+    .sort((a, b) => a.start - b.start);
   let result = "";
   let pos = 0;
   sorted.forEach(({ start, end, color, id }) => {
-    if (start > pos) result += html.slice(pos, start);
-    result += `<mark class="jump2-highlight" tabindex="0" data-highlight-id="${id}" style="--highlight-color:${color};background:${color};">${html.slice(start, end)}</mark>`;
+    if (start > pos) result += DOMPurify.sanitize(html.slice(pos, start));
+    result += `<mark class="jump2-highlight" tabindex="0" data-highlight-id="${id}" style="--highlight-color:${color};background:${color};">${DOMPurify.sanitize(
+      html.slice(start, end)
+    )}</mark>`;
     pos = end;
   });
-  if (pos < html.length) result += html.slice(pos);
+  if (pos < html.length) result += DOMPurify.sanitize(html.slice(pos));
   return result;
 }
 
@@ -146,8 +170,16 @@ type ArticlePreviewFullProps = {
 };
 
 const KNOWN_SUPPORTED = [
-  "nytimes.com", "bbc.co", "cnn.com", "yahoo.com", "npr.org",
-  "reuters.com", "theguardian.com", "wikipedia.org", "substack.com", "medium.com"
+  "nytimes.com",
+  "bbc.co",
+  "cnn.com",
+  "yahoo.com",
+  "npr.org",
+  "reuters.com",
+  "theguardian.com",
+  "wikipedia.org",
+  "substack.com",
+  "medium.com",
 ];
 
 export default function ArticlePreviewFull({
@@ -162,6 +194,7 @@ export default function ArticlePreviewFull({
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   // --- Highlight state ---
   const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights);
@@ -170,8 +203,9 @@ export default function ArticlePreviewFull({
   const [showHint, setShowHint] = useState(true);
 
   const previewRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  // --- Fetch Article ---
+  // --- Fetch Article with timeout, abort, and detailed error ---
   useEffect(() => {
     if (!url) return;
     setLoading(true);
@@ -180,9 +214,18 @@ export default function ArticlePreviewFull({
     setShareLink(null);
     setShareError(null);
 
-    fetch(`/api/parse?url=${encodeURIComponent(url)}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch article");
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    const timeout = setTimeout(() => controller.abort(), 13000);
+
+    fetch(`/api/parse?url=${encodeURIComponent(url)}`, { signal: controller.signal })
+      .then(async (res) => {
+        clearTimeout(timeout);
+        if (!res.ok) {
+          const errMsg = (await res.text()) || "Failed to fetch article";
+          throw new Error(`(${res.status}) ${errMsg}`);
+        }
         return res.json();
       })
       .then((data) => {
@@ -192,8 +235,18 @@ export default function ArticlePreviewFull({
           setError(data.error || "Failed to load article content.");
         }
       })
-      .catch(() => setError("Failed to load article content."))
+      .catch((e) => {
+        if (e.name === "AbortError") {
+          setError("Loading timed out. Please try again.");
+        } else {
+          setError(e?.message || "Failed to load article content.");
+        }
+      })
       .finally(() => setLoading(false));
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
   }, [url]);
 
   // --- Scroll/flash to first highlight after content loads ---
@@ -202,7 +255,7 @@ export default function ArticlePreviewFull({
     setTimeout(() => {
       const container = previewRef.current;
       if (!container) return;
-      const mark = container.querySelector('mark.jump2-highlight');
+      const mark = container.querySelector("mark.jump2-highlight");
       if (mark) {
         mark.scrollIntoView({ behavior: "smooth", block: "center" });
         mark.classList.add("jump2-highlight--flash");
@@ -259,7 +312,24 @@ export default function ArticlePreviewFull({
   // --- Copy Share Link ---
   const handleCopyLink = () => {
     if (!shareLink) return;
-    navigator.clipboard.writeText(shareLink);
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(shareLink).then(() => setCopySuccess(true));
+    } else {
+      // fallback
+      const textArea = document.createElement("textarea");
+      textArea.value = shareLink;
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand("copy");
+        setCopySuccess(true);
+      } catch {
+        // ignore
+      }
+      document.body.removeChild(textArea);
+    }
+    setTimeout(() => setCopySuccess(false), 1200);
   };
 
   // --- Onboarding: Hide hint after 1st highlight or scroll
@@ -303,7 +373,13 @@ export default function ArticlePreviewFull({
           Works best for news, blogs, and Wikipedia.
         </OnboardingHint>
       )}
-      {loading && <Message>Loading article...</Message>}
+      {loading && (
+        <Message>
+          <span role="status" aria-live="polite">
+            Loading article...
+          </span>
+        </Message>
+      )}
       {error && <ArticleError error={error} url={url} />}
       {shareLink && (
         <ShareLinkContainer>
@@ -311,10 +387,15 @@ export default function ArticlePreviewFull({
           <a href={shareLink} target="_blank" rel="noopener noreferrer">
             {shareLink}
           </a>
-          <button onClick={handleCopyLink}>
+          <button onClick={handleCopyLink} aria-label="Copy share link">
             <FaCopy /> Copy
           </button>
         </ShareLinkContainer>
+      )}
+      {copySuccess && (
+        <Message>
+          <FaCheckCircle /> Copied!
+        </Message>
       )}
       {shareError && <Message error>{shareError}</Message>}
       {!loading && !error && articleHtml && (
@@ -323,15 +404,19 @@ export default function ArticlePreviewFull({
           <PreviewContainer ref={previewRef}>
             <div
               dangerouslySetInnerHTML={{
-                __html: markHtmlWithHighlights(articleHtml, highlights),
+                __html: markHtmlWithHighlightsSafe(articleHtml, highlights),
               }}
+              aria-label="Article preview with highlights"
+              tabIndex={0}
             />
             {missingHighlights.length > 0 && (
               <Message error>
                 <strong>Note:</strong> Could not find these highlight(s) in the article preview:
                 <ul>
                   {missingHighlights.map((h) => (
-                    <li key={h.id}><code>{h.text}</code></li>
+                    <li key={h.id}>
+                      <code>{h.text}</code>
+                    </li>
                   ))}
                 </ul>
                 <button
@@ -344,6 +429,7 @@ export default function ArticlePreviewFull({
                     background: "none",
                     cursor: "pointer",
                   }}
+                  aria-label="Clear highlights and try again"
                 >
                   <FaRedo /> Try again
                 </button>
@@ -353,11 +439,10 @@ export default function ArticlePreviewFull({
           <HighlightEditor
             htmlContent={articleHtml}
             initialHighlights={highlights}
+            onHighlightsChange={setHighlights}
             onShare={handleShare}
             sharing={sharing}
             readOnly={false}
-            // You may pass more props as needed
-            // highlightId={...}
           />
         </>
       )}
