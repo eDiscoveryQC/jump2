@@ -114,7 +114,10 @@ const TwoText = styled.span<{ animateBounce: boolean }>`
   transition: transform 0.3s ease, filter 0.3s ease;
   transform-origin: left center;
   text-shadow: 0 0 12px #3b82f6aa;
-  animation: ${({ animateBounce }) => (animateBounce ? `${bounce} 1.5s ease-in-out infinite` : "none")};
+  animation: ${({ animateBounce }) =>
+    animateBounce
+      ? css`${bounce} 1.5s ease-in-out infinite`
+      : "none"};
 `;
 
 const Subtitle = styled.p`
@@ -823,15 +826,18 @@ export default function Home() {
     const contentEl = previewRef.current;
     const search = debouncedSearchTerm.trim();
 
+    // Remove existing highlights
     const innerHTML = contentEl.innerHTML;
     const cleanedHTML = innerHTML.replace(/<mark class="highlight">([^<]*)<\/mark>/gi, "$1");
     contentEl.innerHTML = cleanedHTML;
 
     if (!search) return;
 
+    // Add new highlights for search term
     const regex = new RegExp(`(${search.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")})`, "gi");
     contentEl.innerHTML = contentEl.innerHTML.replace(regex, '<mark class="highlight">$1</mark>');
 
+    // Scroll to first highlight
     const firstMark = contentEl.querySelector("mark.highlight");
     if (firstMark) {
       firstMark.scrollIntoView({ behavior: "smooth", block: "center" });
