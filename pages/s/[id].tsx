@@ -2,6 +2,32 @@ import { GetServerSideProps } from 'next';
 import React from 'react';
 import { supabase } from '../../lib/supabase';
 
+// ---- Robust detection for all anchor/time fragment needs ----
+function needsClientRedirect(url: string): boolean {
+  if (!url) return false;
+  // Any #fragment (anchors, text, time, etc.)
+  if (/#/.test(url)) return true;
+  // YouTube and video time (query or fragment)
+  if (/[?&]t=\d+[smh]?/i.test(url)) return true;
+  if (/#[a-z]*t=\d+[smh]?/i.test(url)) return true;
+  if (/[?&#]start=\d+/i.test(url)) return true;
+  // Vimeo, SoundCloud, etc. could be added here
+  return false;
+}
+
+// ---- Extract text fragment for fallback highlight ----
+function extractTextFragment(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    if (urlObj.hash.startsWith("#:~:text=")) {
+      // Only extract the first :~:text fragment
+      const match = urlObj.hash.match(/^#:~:text=([^&]*)/);
+      if (match) return decodeURIComponent(match[1]);
+    }
+  } catch {}
+  return "";
+}
+
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const shortCode = context.params?.id as string;
   if (!shortCode) return { notFound: true };
@@ -14,21 +40,14 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   if (error || !data) return { notFound: true };
 
-  // Parse for anchor fragment or text fragment
-  const hasFragment = /#/.test(data.deep_link);
-  let anchorText = "";
-  try {
-    const urlObj = new URL(data.deep_link);
-    if (urlObj.hash.startsWith("#:~:text=")) {
-      anchorText = decodeURIComponent(urlObj.hash.replace("#:~:text=", ""));
-    }
-  } catch {}
+  const deepLink = data.deep_link;
+  const clientRedirect = needsClientRedirect(deepLink);
+  const anchorText = extractTextFragment(deepLink);
 
-  // Pass anchorText to client for fallback if needed
-  if (!hasFragment) {
+  if (!clientRedirect) {
     return {
       redirect: {
-        destination: data.deep_link,
+        destination: deepLink,
         permanent: false,
       },
     };
@@ -36,7 +55,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   return {
     props: {
-      deepLink: data.deep_link,
+      deepLink,
       anchorText,
     },
   };
@@ -52,39 +71,34 @@ export default function Redirect({ deepLink, anchorText }: Props) {
   const [html, setHtml] = React.useState('');
   const previewRef = React.useRef<HTMLDivElement>(null);
 
-  // Try native redirect first (for Chrome/Edge, etc)
+  // Try instant redirect first (for Chrome/Edge and for YouTube)
   React.useEffect(() => {
     if (!deepLink) return;
 
-    // Only try trick if text fragment is present
-    if (window.CSS && (window.CSS as any).supports('selector(:target)') && deepLink.includes(":~:text=")) {
-      // Try redirect, but fallback if text fragment not handled
-      const timer = setTimeout(() => {
-        // Chrome/Edge will handle highlight and jump, others will just land at top
+    // For text fragments, give browser a chance to handle, then fallback
+    if (deepLink.includes(":~:text=")) {
+      setTimeout(() => {
         window.location.replace(deepLink);
-        // After 1500ms, if still on this page, show fallback
         setTimeout(() => {
           if (document.visibilityState === "visible") setFallback(true);
         }, 1500);
       }, 50);
-      return () => clearTimeout(timer);
     } else {
-      // No text fragment: fallback directly
-      setFallback(true);
+      // For YouTube/time/other fragments, just redirect
+      setTimeout(() => window.location.replace(deepLink), 50);
     }
   }, [deepLink]);
 
-  // Fallback: fetch page HTML and highlight
+  // Fallback: fetch and highlight text fragment for non-supporting browsers
   React.useEffect(() => {
     if (!fallback || !deepLink || !anchorText) return;
-    // Defensive: don't fetch binary, only fetch HTML
     fetch(deepLink, { method: "GET" })
       .then(r => r.text())
       .then(txt => {
-        // Strip scripts/styles for safety
+        // Remove scripts/styles for safety
         let safe = txt.replace(/<script[\s\S]*?<\/script>/gi, '')
                       .replace(/<style[\s\S]*?<\/style>/gi, '');
-        // Highlight anchorText
+        // Highlight anchorText (first instance, case-insensitive)
         if (anchorText) {
           const esc = anchorText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
           const regex = new RegExp(esc, 'i');
@@ -96,7 +110,7 @@ export default function Redirect({ deepLink, anchorText }: Props) {
       });
   }, [fallback, deepLink, anchorText]);
 
-  // Auto-scroll to highlight in fallback
+  // Auto-scroll to highlight
   React.useEffect(() => {
     if (!fallback) return;
     const timer = setTimeout(() => {
@@ -106,6 +120,7 @@ export default function Redirect({ deepLink, anchorText }: Props) {
     return () => clearTimeout(timer);
   }, [html, fallback]);
 
+  // ---- UI ----
   if (!deepLink) {
     return (
       <div style={{ fontFamily: "sans-serif", textAlign: "center", marginTop: "5em", fontSize: "1.2em", color: "#ef4444" }}>
@@ -114,12 +129,13 @@ export default function Redirect({ deepLink, anchorText }: Props) {
     );
   }
 
+  // Fallback preview for text fragment (Chrome/Safari/Firefox that don't support :~:text)
   if (fallback && anchorText) {
     return (
       <div style={{ background: "#111827", minHeight: "100vh", color: "#eaf0fa", padding: "2em" }}>
         <h2 style={{ color: "#ffe066" }}>Jump2 Fallback Preview</h2>
         <div style={{ marginBottom: "1.5em", color: "#b5c7e4" }}>
-          Your browser does not support direct highlight/jump.  
+          Your browser does not support direct highlight/jump.<br/>
           The anchor phrase is highlighted below.<br />
           <a href={deepLink} style={{
             color: "#3b82f6",
@@ -141,11 +157,11 @@ export default function Redirect({ deepLink, anchorText }: Props) {
     );
   }
 
-  // The normal case: JS + meta refresh
+  // Default: jump/redirect for all other cases
   return (
     <html lang="en">
       <head>
-        <title>Jumping to highlight… | Jump2</title>
+        <title>Jumping to destination… | Jump2</title>
         {deepLink && (
           <meta httpEquiv="refresh" content={`2;url=${deepLink}`} />
         )}
@@ -158,7 +174,7 @@ export default function Redirect({ deepLink, anchorText }: Props) {
         `}</style>
       </head>
       <body>
-        <div className="jump">Jumping to highlight…</div>
+        <div className="jump">Jumping to destination…</div>
         {deepLink && (
           <div className="fallback">
             <div>
@@ -172,8 +188,7 @@ export default function Redirect({ deepLink, anchorText }: Props) {
         )}
         <noscript>
           <div className="fallback" style={{color:"#ef4444",marginTop:"3em"}}>
-            JavaScript is required for automatic highlight jump.
-            <br/>
+            JavaScript is required for automatic jump/highlight.<br/>
             Please click the link above.
           </div>
         </noscript>
