@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import chromium from "@sparticuz/chromium";
+// @ts-ignore: CommonJS import for sparticuz/chromium
+const chromium = require("@sparticuz/chromium");
 import puppeteer from "puppeteer-core";
 import { logParse, logApi } from "@/lib/log";
 
