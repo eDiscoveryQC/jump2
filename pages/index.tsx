@@ -1,9 +1,10 @@
-import {
+import React, {
   useState,
   useEffect,
   useCallback,
   useMemo,
   useRef,
+  useLayoutEffect,
 } from "react";
 import styled, { keyframes, css } from "styled-components";
 
@@ -53,6 +54,7 @@ const fadeInUpMixin = css`
 `;
 
 // === Styled Components ===
+// -- Layout containers, typography, form, buttons, preview etc.
 
 const PageContainer = styled.main`
   min-height: 100vh;
@@ -77,6 +79,7 @@ const LeftColumn = styled.section`
   gap: 2.5rem;
   max-width: 480px;
   ${fadeInUpMixin};
+
   @media (max-width: 850px) {
     max-width: 100%;
   }
@@ -134,8 +137,6 @@ const Description = styled.p`
   user-select: text;
   color: #cbd5e1;
 `;
-
-// Form & input styles...
 
 const FormWrapper = styled.div`
   width: 100%;
@@ -544,18 +545,21 @@ const ContactEmail = styled.a`
 `;
 
 // === Helper hooks & utils ===
+// Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState<T>(value);
-  useEffect(() => {
-    const timeout = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(timeout);
+  useLayoutEffect(() => {
+    const handler = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(handler);
   }, [value, delay]);
   return debounced;
 }
 
+// YouTube URL detection helper
 const isYouTubeUrl = (url: URL) =>
   ["www.youtube.com", "youtube.com", "youtu.be"].includes(url.hostname);
 
+// Timestamp parsing and formatting helpers
 function parseTimestamp(input: string): number {
   if (!input) return 0;
   const parts = input.trim().split(":").map(Number);
@@ -579,7 +583,7 @@ function formatTimestamp(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-// === YouTube Player ===
+// YouTube Player Component
 const YouTubePlayer = ({
   url,
   startSeconds,
@@ -627,8 +631,29 @@ const YouTubePlayer = ({
   );
 };
 
-// === Main Component ===
+// Loading spinner styled component
+const Spinner = styled.div`
+  border: 4px solid #2563eb44;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  animation: spin 1s linear infinite;
+  margin: 2rem auto;
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+// Main component
 export default function Home() {
+  // --- State ---
   const [link, setLink] = useState("");
   const [jumpTo, setJumpTo] = useState("");
   const [parsedSeconds, setParsedSeconds] = useState(0);
@@ -642,11 +667,16 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLightbox, setShowLightbox] = useState(true);
 
+  // --- Refs ---
   const previewRef = useRef<HTMLDivElement>(null);
+
+  // --- Debounced values ---
   const debouncedLink = useDebounce(link, 600);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Validate and parse jumpTo timestamp/text
+  // --- Effects ---
+
+  // Validate and parse jumpTo timestamp/text input
   useEffect(() => {
     if (jumpTo.trim() === "") {
       setParsedSeconds(0);
@@ -662,7 +692,7 @@ export default function Home() {
     }
   }, [jumpTo]);
 
-  // Fetch article preview if link changes (excluding YouTube)
+  // Fetch article preview for links (except YouTube)
   useEffect(() => {
     if (!debouncedLink) {
       setArticleContent("");
@@ -714,7 +744,7 @@ export default function Home() {
     fetchArticle();
   }, [debouncedLink]);
 
-  // Generate deep short URL for link + timestamp + highlights
+  // Generate short URL with highlights and timestamp
   const generateShortUrl = useCallback(async () => {
     setShortUrl("");
     setLoadingShort(true);
@@ -741,6 +771,7 @@ export default function Home() {
         url.searchParams.set("t", parsedSeconds.toString());
       }
 
+      // Combine highlights and jumpTo (if not in highlights)
       let highlightParam = highlightList.join(",");
       if (jumpTo.trim() && !highlightList.includes(jumpTo.trim())) {
         highlightParam = highlightParam ? highlightParam + "," + jumpTo.trim() : jumpTo.trim();
@@ -774,10 +805,12 @@ export default function Home() {
     setLoadingShort(false);
   }, [link, parsedSeconds, highlightList, jumpTo]);
 
+  // Handler for create button click
   const handleCreate = useCallback(() => {
     generateShortUrl();
   }, [generateShortUrl]);
 
+  // Handler for copying short URL to clipboard
   const handleCopy = useCallback(() => {
     if (!shortUrl) return;
     navigator.clipboard.writeText(shortUrl).then(() => {
@@ -785,7 +818,8 @@ export default function Home() {
     });
   }, [shortUrl]);
 
-  const handleTextSelect = () => {
+  // Handle text selection inside preview to add highlights
+  const handleTextSelect = useCallback(() => {
     if (!window.getSelection) return;
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed) return;
@@ -800,12 +834,14 @@ export default function Home() {
       setJumpTo("");
       selection.removeAllRanges();
     }
-  };
+  }, [highlightList]);
 
+  // Remove highlight by text
   const removeHighlight = useCallback((text: string) => {
     setHighlightList((prev) => prev.filter((h) => h !== text));
   }, []);
 
+  // Detect media file or known media hosts for timestamp input UI
   const isMediaFile = useMemo(() => {
     if (!link) return false;
     try {
@@ -821,37 +857,42 @@ export default function Home() {
     }
   }, [link]);
 
+  // Highlight search term inside preview content and scroll to first highlight
   useEffect(() => {
     if (!previewRef.current) return;
     const contentEl = previewRef.current;
     const search = debouncedSearchTerm.trim();
 
-    // Remove existing highlights
+    // Remove all previous highlights to avoid stacking
     const innerHTML = contentEl.innerHTML;
     const cleanedHTML = innerHTML.replace(/<mark class="highlight">([^<]*)<\/mark>/gi, "$1");
     contentEl.innerHTML = cleanedHTML;
 
     if (!search) return;
 
-    // Add new highlights for search term
+    // Escape special regex chars in search term
     const regex = new RegExp(`(${search.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")})`, "gi");
+
+    // Add new highlights for all matches
     contentEl.innerHTML = contentEl.innerHTML.replace(regex, '<mark class="highlight">$1</mark>');
 
-    // Scroll to first highlight
+    // Scroll smoothly to first highlighted term
     const firstMark = contentEl.querySelector("mark.highlight");
     if (firstMark) {
       firstMark.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [debouncedSearchTerm, articleContent]);
 
-  const toggleMobileMenu = () => setMobileMenuOpen((o) => !o);
+  // Toggle mobile menu
+  const toggleMobileMenu = useCallback(() => setMobileMenuOpen((o) => !o), []);
 
   return (
     <>
       <HamburgerButton aria-label="Toggle menu" onClick={toggleMobileMenu}>
         ☰ Menu
       </HamburgerButton>
-      <MobileMenu open={mobileMenuOpen} aria-hidden={!mobileMenuOpen}>
+
+      <MobileMenu open={mobileMenuOpen} aria-hidden={!mobileMenuOpen} aria-label="Mobile navigation menu">
         <MobileMenuClose
           aria-label="Close menu"
           onClick={() => setMobileMenuOpen(false)}
@@ -862,7 +903,9 @@ export default function Home() {
         <Description>
           Paste any link (articles, videos) to highlight and share the best parts.
         </Description>
-        <ContactEmail href="mailto:contact@jump2.com">Contact: contact@jump2.com</ContactEmail>
+        <ContactEmail href="mailto:contact@jump2.com" tabIndex={mobileMenuOpen ? 0 : -1}>
+          Contact: contact@jump2.com
+        </ContactEmail>
       </MobileMenu>
 
       <LightboxBackdrop
@@ -1022,18 +1065,20 @@ export default function Home() {
             aria-label="Search article preview"
             disabled={loadingPreview}
           />
-          {searchTerm && (
-            <CopyButton
-              type="button"
-              onClick={() => setSearchTerm("")}
-              aria-label="Clear preview search"
-              style={{ alignSelf: "flex-end", marginBottom: "1rem" }}
-            >
-              Clear Search
-            </CopyButton>
+
+          {loadingPreview && <Spinner aria-label="Loading preview" role="status" />}
+
+          {!loadingPreview && error && (
+            <Feedback role="alert" aria-live="assertive" style={{ marginTop: "1.5rem" }}>
+              {error}
+            </Feedback>
           )}
 
-          {loadingPreview && <em>Loading preview...</em>}
+          {!loadingPreview && !error && !articleContent && (
+            <p style={{ textAlign: "center", color: "#64748b", marginTop: "2rem" }}>
+              No preview available for this link.
+            </p>
+          )}
 
           {!loadingPreview && articleContent && (
             <div ref={previewRef} dangerouslySetInnerHTML={{ __html: articleContent }} />
