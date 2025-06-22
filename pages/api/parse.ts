@@ -24,20 +24,21 @@ async function getBrowser(): Promise<puppeteer.Browser> {
   if (!browser) {
     const chromium = (await import("@sparticuz/chromium")) as unknown as ChromiumModule;
 
-    const executablePath = typeof chromium.executablePath === "function"
-      ? await chromium.executablePath()
-      : await chromium.executablePath;
+    const chromiumExecutablePath =
+      typeof chromium.executablePath === "function"
+        ? await chromium.executablePath()
+        : chromium.executablePath;
 
-    logParse("Resolved executablePath: %s", executablePath);
+    logParse("Resolved executablePath: %s", chromiumExecutablePath);
 
-    if (!executablePath) {
+    if (!chromiumExecutablePath) {
       throw new Error("Executable path from @sparticuz/chromium is empty. Cannot launch browser.");
     }
 
     browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath,
+      executablePath: chromiumExecutablePath,
       headless: chromium.headless,
       ignoreHTTPSErrors: true,
     });
