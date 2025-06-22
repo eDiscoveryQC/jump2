@@ -9,6 +9,11 @@ import React, {
 import styled, { keyframes, css } from "styled-components";
 
 // === Animations ===
+const animatedGradient = keyframes`
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+`;
+
 const glowPulse = keyframes`
   0%, 100% {
     text-shadow: 0 0 6px #3b82f6, 0 0 15px #60a5fa;
@@ -49,12 +54,28 @@ const bounce = keyframes`
   }
 `;
 
+const chipIn = keyframes`
+  0% { opacity: 0; transform: scale(0.85) translateY(10px);}
+  100% { opacity: 1; transform: scale(1) translateY(0);}
+`;
+const chipOut = keyframes`
+  0% { opacity: 1; transform: scale(1);}
+  100% { opacity: 0; transform: scale(0.7);}
+`;
+
 const fadeInUpMixin = css`
   animation: ${fadeInUp} 0.5s ease forwards;
 `;
 
 // === Styled Components ===
-// -- Layout containers, typography, form, buttons, preview etc.
+
+const GlassCard = styled.div`
+  background: rgba(30,41,59,0.82);
+  border-radius: 1.2rem;
+  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.2);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(96,165,250,0.22);
+`;
 
 const PageContainer = styled.main`
   min-height: 100vh;
@@ -83,6 +104,16 @@ const LeftColumn = styled.section`
   @media (max-width: 850px) {
     max-width: 100%;
   }
+`;
+
+// --- Animated Gradient Logo ---
+const AnimatedLogoText = styled.span`
+  background: linear-gradient(90deg, #60a5fa, #3b82f6, #60a5fa);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: ${animatedGradient} 2.8s linear infinite alternate;
+  display: inline-block;
 `;
 
 const LogoWrapper = styled.div`
@@ -156,7 +187,7 @@ const Input = styled.input<{ disabled?: boolean }>`
   font-size: 1.125rem;
   font-weight: 500;
   color: #f1f5f9;
-  transition: border-color 0.3s ease, background-color 0.3s ease;
+  transition: border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.2s;
   caret-color: #3b82f6;
 
   &::placeholder {
@@ -216,6 +247,20 @@ const InfoIcon = styled.span`
   }
 `;
 
+// --- Loader spinner for button ---
+const Loader = styled.span`
+  display: inline-block;
+  border: 3px solid #60a5fa44;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  width: 1.1em;
+  height: 1.1em;
+  vertical-align: middle;
+  margin-right: 0.5em;
+  animation: spin 0.7s linear infinite;
+  @keyframes spin { to { transform: rotate(360deg); } }
+`;
+
 const Button = styled.button<{ disabled?: boolean }>`
   padding: 1.15rem 2rem;
   border-radius: 9999px;
@@ -225,19 +270,26 @@ const Button = styled.button<{ disabled?: boolean }>`
   font-size: 1.25rem;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.25s ease, background-color 0.25s ease;
+  transition: transform 0.25s ease, background-color 0.25s ease, box-shadow 0.22s;
   user-select: none;
   animation: ${pulse} 2.5s infinite;
 
   &:hover:not(:disabled) {
-    transform: scale(1.07);
-    background: linear-gradient(90deg, #2563eb, #3b82f6);
+    transform: scale(1.09);
+    background: linear-gradient(90deg, #2563eb, #60a5fa);
+    box-shadow: 0 4px 24px #60a5fa44;
+  }
+
+  &:focus-visible {
+    outline: 3px solid #60a5fa;
+    outline-offset: 2px;
   }
 
   &:disabled {
     background-color: #64748b;
     cursor: not-allowed;
     animation: none;
+    box-shadow: none;
   }
 `;
 
@@ -250,8 +302,9 @@ const Feedback = styled.p`
   ${fadeInUpMixin};
 `;
 
+// --- Glassmorphism preview wrapper ---
 const PreviewWrapper = styled.section`
-  background: #1e293b;
+  background: rgba(30,41,59,0.82);
   border-radius: 1rem;
   border: 1.5px solid #334155;
   padding: 2rem 3rem;
@@ -264,6 +317,7 @@ const PreviewWrapper = styled.section`
   min-height: 500px;
   max-height: 80vh;
   position: relative;
+  backdrop-filter: blur(8px);
 
   h1,
   h2,
@@ -414,6 +468,7 @@ const TimestampBadge = styled.div`
   text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
 `;
 
+// --- Animated highlight chips ---
 const HighlightChipsContainer = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -422,7 +477,7 @@ const HighlightChipsContainer = styled.div`
   margin-bottom: 1rem;
 `;
 
-const HighlightChip = styled.span`
+const HighlightChip = styled.span<{ leaving?: boolean }>`
   background: #2563ebaa;
   color: #e0e7ff;
   border-radius: 9999px;
@@ -432,7 +487,11 @@ const HighlightChip = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  animation: ${highlightFade} 0.8s ease forwards;
+  animation: ${({ leaving }) =>
+    leaving
+      ? css`${chipOut} 0.22s forwards`
+      : css`${chipIn} 0.25s ease`};
+  margin-bottom: 0.1em;
 `;
 
 const ChipRemoveButton = styled.button`
@@ -664,6 +723,7 @@ export default function Home() {
   const [loadingShort, setLoadingShort] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [highlightList, setHighlightList] = useState<string[]>([]);
+  const [chipLeaving, setChipLeaving] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLightbox, setShowLightbox] = useState(true);
 
@@ -836,9 +896,13 @@ export default function Home() {
     }
   }, [highlightList]);
 
-  // Remove highlight by text
+  // Remove highlight by text (with animation)
   const removeHighlight = useCallback((text: string) => {
-    setHighlightList((prev) => prev.filter((h) => h !== text));
+    setChipLeaving(text);
+    setTimeout(() => {
+      setHighlightList((prev) => prev.filter((h) => h !== text));
+      setChipLeaving(null);
+    }, 180);
   }, []);
 
   // Detect media file or known media hosts for timestamp input UI
@@ -935,7 +999,7 @@ export default function Home() {
       <PageContainer role="main" aria-label="Jump2 content sharer">
         <LeftColumn>
           <LogoWrapper aria-label="Jump2 logo" role="img" tabIndex={-1}>
-            <JumpText>Jump</JumpText>
+            <AnimatedLogoText>Jump</AnimatedLogoText>
             <TwoText animateBounce={showLightbox}>2</TwoText>
           </LogoWrapper>
 
@@ -945,155 +1009,163 @@ export default function Home() {
             Paste a link (article or video) and highlight the best part — timestamp, quote, or keyword.
           </Description>
 
-          <FormWrapper aria-live="polite" aria-atomic="true" aria-describedby="form-error">
-            <Form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleCreate();
-              }}
-              noValidate
-            >
-              <Input
-                type="url"
-                placeholder="Paste a link (article or video)..."
-                value={link}
-                onChange={(e) => setLink(e.target.value.trim())}
-                spellCheck={false}
-                autoComplete="off"
-                required
-                aria-label="Content link"
-                aria-invalid={!!error}
-                disabled={loadingPreview || loadingShort}
-                autoFocus
-              />
+          <GlassCard>
+            <FormWrapper aria-live="polite" aria-atomic="true" aria-describedby="form-error">
+              <Form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleCreate();
+                }}
+                noValidate
+              >
+                <Input
+                  type="url"
+                  placeholder="Paste a link (article or video)..."
+                  value={link}
+                  onChange={(e) => setLink(e.target.value.trim())}
+                  spellCheck={false}
+                  autoComplete="off"
+                  required
+                  aria-label="Content link"
+                  aria-invalid={!!error}
+                  disabled={loadingPreview || loadingShort}
+                  autoFocus
+                />
 
-              <Input
-                type="text"
-                placeholder={
-                  isMediaFile
-                    ? "Jump to timestamp like 1:23 or 0:02:15"
-                    : "Jump to highlight text or timestamp"
-                }
-                value={jumpTo}
-                onChange={(e) => setJumpTo(e.target.value)}
-                spellCheck={false}
-                autoComplete="off"
-                aria-label="Jump to position"
-                disabled={!link || loadingPreview || loadingShort}
-              />
+                <Input
+                  type="text"
+                  placeholder={
+                    isMediaFile
+                      ? "Jump to timestamp like 1:23 or 0:02:15"
+                      : "Jump to highlight text or timestamp"
+                  }
+                  value={jumpTo}
+                  onChange={(e) => setJumpTo(e.target.value)}
+                  spellCheck={false}
+                  autoComplete="off"
+                  aria-label="Jump to position"
+                  disabled={!link || loadingPreview || loadingShort}
+                />
 
-              {highlightList.length > 0 && (
-                <HighlightChipsContainer aria-label="Selected highlights">
-                  {highlightList.map((text) => (
-                    <HighlightChip key={text}>
-                      {text}
-                      <ChipRemoveButton
-                        onClick={() => removeHighlight(text)}
-                        aria-label={`Remove highlight: ${text}`}
-                        title="Remove highlight"
+                {highlightList.length > 0 && (
+                  <HighlightChipsContainer aria-label="Selected highlights">
+                    {highlightList.map((text) => (
+                      <HighlightChip
+                        key={text}
+                        leaving={chipLeaving === text}
                       >
-                        ×
-                      </ChipRemoveButton>
-                    </HighlightChip>
-                  ))}
-                </HighlightChipsContainer>
+                        {text}
+                        <ChipRemoveButton
+                          onClick={() => removeHighlight(text)}
+                          aria-label={`Remove highlight: ${text}`}
+                          title="Remove highlight"
+                        >
+                          ×
+                        </ChipRemoveButton>
+                      </HighlightChip>
+                    ))}
+                  </HighlightChipsContainer>
+                )}
+
+                <Hint>
+                  {isMediaFile ? (
+                    <>
+                      For videos/audio, enter timestamp like 1:23 or 0:02:15
+                      <InfoIcon data-tooltip="Use MM:SS or HH:MM:SS formats for timestamps. Example: 1:23, 0:02:15">
+                        ?
+                      </InfoIcon>
+                    </>
+                  ) : (
+                    "For articles, paste a quote or keyword to highlight"
+                  )}
+                </Hint>
+
+                <Button
+                  type="submit"
+                  disabled={loadingPreview || loadingShort || !link || (!!jumpTo && error !== "")}
+                  aria-disabled={loadingPreview || loadingShort || !link || (!!jumpTo && error !== "")}
+                  aria-live="polite"
+                  aria-busy={loadingShort}
+                >
+                  {loadingShort ? <Loader /> : null}
+                  {loadingShort ? "Generating..." : "Make it a Jump2"}
+                </Button>
+              </Form>
+              {error && (
+                <Feedback id="form-error" role="alert" aria-live="assertive" aria-atomic="true">
+                  {error}
+                </Feedback>
               )}
 
-              <Hint>
-                {isMediaFile ? (
+              <ShareWrapper>
+                {shortUrl && (
                   <>
-                    For videos/audio, enter timestamp like 1:23 or 0:02:15
-                    <InfoIcon data-tooltip="Use MM:SS or HH:MM:SS formats for timestamps. Example: 1:23, 0:02:15">
-                      ?
-                    </InfoIcon>
+                    <ShortUrlInput
+                      type="text"
+                      readOnly
+                      value={shortUrl}
+                      onFocus={(e) => e.target.select()}
+                      aria-label="Short URL"
+                    />
+                    <CopyButton
+                      type="button"
+                      onClick={handleCopy}
+                      aria-label="Copy short URL to clipboard"
+                    >
+                      Copy Short URL
+                    </CopyButton>
                   </>
-                ) : (
-                  "For articles, paste a quote or keyword to highlight"
                 )}
-              </Hint>
+              </ShareWrapper>
+            </FormWrapper>
+          </GlassCard>
+        </LeftColumn>
 
-              <Button
-                type="submit"
-                disabled={loadingPreview || loadingShort || !link || (!!jumpTo && error !== "")}
-                aria-disabled={loadingPreview || loadingShort || !link || (!!jumpTo && error !== "")}
-                aria-live="polite"
-                aria-busy={loadingShort}
-              >
-                {loadingShort ? "Generating..." : "Make it a Jump2"}
-              </Button>
-            </Form>
-            {error && (
-              <Feedback id="form-error" role="alert" aria-live="assertive" aria-atomic="true">
+        <GlassCard>
+          <PreviewWrapper
+            aria-live="polite"
+            aria-label="Article preview or video player"
+            tabIndex={0}
+            onMouseUp={handleTextSelect}
+          >
+            <PreviewSearch
+              type="search"
+              placeholder="Search preview text..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              aria-label="Search article preview"
+              disabled={loadingPreview}
+            />
+
+            {loadingPreview && <Spinner aria-label="Loading preview" role="status" />}
+
+            {!loadingPreview && error && (
+              <Feedback role="alert" aria-live="assertive" style={{ marginTop: "1.5rem" }}>
                 {error}
               </Feedback>
             )}
 
-            <ShareWrapper>
-              {shortUrl && (
-                <>
-                  <ShortUrlInput
-                    type="text"
-                    readOnly
-                    value={shortUrl}
-                    onFocus={(e) => e.target.select()}
-                    aria-label="Short URL"
-                  />
-                  <CopyButton
-                    type="button"
-                    onClick={handleCopy}
-                    aria-label="Copy short URL to clipboard"
-                  >
-                    Copy Short URL
-                  </CopyButton>
-                </>
-              )}
-            </ShareWrapper>
-          </FormWrapper>
-        </LeftColumn>
+            {!loadingPreview && !error && !articleContent && (
+              <p style={{ textAlign: "center", color: "#64748b", marginTop: "2rem" }}>
+                No preview available for this link.
+              </p>
+            )}
 
-        <PreviewWrapper
-          aria-live="polite"
-          aria-label="Article preview or video player"
-          tabIndex={0}
-          onMouseUp={handleTextSelect}
-        >
-          <PreviewSearch
-            type="search"
-            placeholder="Search preview text..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            aria-label="Search article preview"
-            disabled={loadingPreview}
-          />
+            {!loadingPreview && articleContent && (
+              <div ref={previewRef} dangerouslySetInnerHTML={{ __html: articleContent }} />
+            )}
 
-          {loadingPreview && <Spinner aria-label="Loading preview" role="status" />}
-
-          {!loadingPreview && error && (
-            <Feedback role="alert" aria-live="assertive" style={{ marginTop: "1.5rem" }}>
-              {error}
-            </Feedback>
-          )}
-
-          {!loadingPreview && !error && !articleContent && (
-            <p style={{ textAlign: "center", color: "#64748b", marginTop: "2rem" }}>
-              No preview available for this link.
-            </p>
-          )}
-
-          {!loadingPreview && articleContent && (
-            <div ref={previewRef} dangerouslySetInnerHTML={{ __html: articleContent }} />
-          )}
-
-          {link &&
-            (() => {
-              try {
-                const urlObj = new URL(link);
-                return isYouTubeUrl(urlObj);
-              } catch {
-                return false;
-              }
-            })() && <YouTubePlayer url={link} startSeconds={parsedSeconds} />}
-        </PreviewWrapper>
+            {link &&
+              (() => {
+                try {
+                  const urlObj = new URL(link);
+                  return isYouTubeUrl(urlObj);
+                } catch {
+                  return false;
+                }
+              })() && <YouTubePlayer url={link} startSeconds={parsedSeconds} />}
+          </PreviewWrapper>
+        </GlassCard>
       </PageContainer>
     </>
   );
