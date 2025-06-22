@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import puppeteer, { Browser, Page } from "puppeteer";
+import chromium from "chrome-aws-lambda";
+import type puppeteer from "puppeteer-core";
 
 interface Article {
   content: string;
@@ -10,17 +11,18 @@ interface ResponseData {
   error?: string;
 }
 
-let browserPromise: Promise<Browser> | null = null;
+let browser: puppeteer.Browser | null = null;
 
-async function getBrowser(): Promise<Browser> {
-  if (!browserPromise) {
-    browserPromise = puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      defaultViewport: { width: 1280, height: 800 },
+async function getBrowser(): Promise<puppeteer.Browser> {
+  if (!browser) {
+    browser = await chromium.puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath,
+      headless: chromium.headless,
     });
   }
-  return browserPromise;
+  return browser;
 }
 
 export default async function handler(
@@ -33,13 +35,12 @@ export default async function handler(
     return;
   }
 
-  let page: Page | null = null;
+  let page: puppeteer.Page | null = null;
 
   try {
     const browser = await getBrowser();
     page = await browser.newPage();
 
-    // Block images/fonts/stylesheets to speed up page load and reduce bandwidth
     await page.setRequestInterception(true);
     page.on("request", (request) => {
       const resourceType = request.resourceType();
@@ -54,7 +55,6 @@ export default async function handler(
       }
     });
 
-    // Set user agent to avoid bot detection
     await page.setUserAgent(
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
     );
@@ -68,7 +68,6 @@ export default async function handler(
       throw new Error(`Failed to load URL, status: ${response?.status()}`);
     }
 
-    // Extract article content by trying common selectors or fallback to full body HTML
     const content = await page.evaluate(() => {
       const selectors = [
         "article",
@@ -80,7 +79,6 @@ export default async function handler(
       ];
       for (const sel of selectors) {
         const el = document.querySelector(sel);
-        // Cast el to HTMLElement to access innerText
         if (el && (el as HTMLElement).innerText.length > 100) {
           return el.innerHTML.trim();
         }
