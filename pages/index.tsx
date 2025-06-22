@@ -1,7 +1,23 @@
-import React, { useRef, useState, useEffect, useCallback } from "react";
+import React, {
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+  useLayoutEffect,
+} from "react";
 import styled, { keyframes, css } from "styled-components";
 
-// Animations
+// --- Competitive coding: Smart debounce hook (no dependencies) ---
+function useDebouncedValue<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const handle = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(handle);
+  }, [value, delay]);
+  return debounced;
+}
+
+// --- Animations ---
 const gradient = keyframes`
   0% { background-position: 0% 50%; }
   100% { background-position: 100% 50%; }
@@ -24,7 +40,7 @@ const pop = keyframes`
   100% { transform: scale(1);}
 `;
 
-// Layout
+// --- Layout ---
 const Bg = styled.div`
   min-height: 100vh;
   background: radial-gradient(circle at 60% 20%, #25406a 0%, #0d1423 100%);
@@ -44,7 +60,7 @@ const Grid = styled.div`
   }
 `;
 
-// Hero & Branding
+// --- Hero & Branding ---
 const Hero = styled.section`
   display: flex;
   flex-direction: column;
@@ -96,7 +112,7 @@ const HeroDesc = styled.div`
   max-width: 490px;
 `;
 
-// Card
+// --- Card ---
 const Card = styled.div`
   background: rgba(20,28,45,0.98);
   border-radius: 1.25em;
@@ -146,6 +162,10 @@ const Button = styled.button<{ primary?: boolean }>`
     transform: scale(1.04);
     outline: none;
   }
+  &:active {
+    background: ${({primary}) =>
+      primary ? "linear-gradient(90deg, #1e293b 10%, #2563eb 90%)" : "#1e293b"};
+  }
 `;
 const ExampleLinks = styled.div`
   margin: 0.1em 0 1.1em 0;
@@ -178,20 +198,28 @@ const HowItWorks = styled.div`
   }
 `;
 
-const ShareBar = styled.div`
+// --- Sticky Share Bar (trick: sticky on desktop, fixed on mobile) ---
+const StickyBar = styled.div`
+  position: sticky;
+  top: 0;
+  z-index: 20;
   background: linear-gradient(90deg, #1b2336 70%, #25406a 100%);
-  border-radius: 1em;
+  border-radius: 1em 1em 0 0;
   box-shadow: 0 4px 18px #3b82f633;
-  padding: 1.3em 2em 1.2em;
+  padding: 1.1em 2em 1em;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 1.2em;
-  margin-bottom: 1.5em;
-  font-size: 1.15em;
+  gap: 1.1em;
+  min-height: 3.5em;
   @media (max-width: 600px) {
-    flex-direction: column;
-    gap: 0.7em;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    border-radius: 0;
     padding: 1em 0.6em 1.2em;
+    z-index: 9900;
   }
 `;
 
@@ -215,6 +243,7 @@ const CopyBtn = styled(Button)`
   margin: 0;
   background: #2563eb;
   border-radius: 0.5em;
+  transition: background 0.13s, transform 0.11s;
   &:hover {background: #3b82f6;}
 `;
 
@@ -240,7 +269,7 @@ const ShareToast = styled.div`
   animation: ${pop} 0.5s;
 `;
 
-// Loader & Skeletons
+// --- Loader & Skeletons ---
 const Loader = styled.div`
   width: 32px; height: 32px;
   border-radius: 50%;
@@ -260,7 +289,7 @@ const Skeleton = styled.div`
   animation: ${gradient} 1.3s linear infinite;
 `;
 
-// Preview
+// --- Preview ---
 const PreviewCard = styled(Card)`
   min-height: 420px;
   max-height: 79vh;
@@ -296,19 +325,6 @@ const TimestampBadge = styled.div`
   pointer-events: none;
   text-shadow: 0 0 8px #000c;
 `;
-
-const Mark = styled.mark`
-  background: linear-gradient(90deg, #ffe066 70%, #ffd100 100%);
-  color: #334155;
-  padding: 0 0.15em;
-  border-radius: 0.33em;
-  font-weight: 700;
-  box-decoration-break: clone;
-  box-shadow: 0 2px 10px #ffd10022;
-  /* for selection UX */
-  cursor: pointer;
-`;
-
 
 const Footer = styled.footer`
   margin: 3.5em auto 1.2em auto;
@@ -371,8 +387,7 @@ const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: numbe
   );
 };
 
-// === Highlighting utility ===
-// Replace all highlight phrases in HTML with a <mark> tag (case-insensitive, works with HTML).
+// --- Highlighting utility (trick: scroll first highlight into view) ---
 function highlightHtml(rawHtml: string, highlight: string): string {
   if (!rawHtml || !highlight) return rawHtml;
   const phrase = highlight.trim();
@@ -388,12 +403,18 @@ function highlightHtml(rawHtml: string, highlight: string): string {
   );
   // Replace in HTML (not inside tags)
   // Split by tags, only replace in text nodes
+  let found = false;
   return rawHtml.replace(/(<[^>]+>)|([^<]+)/g, (m, tag, text) => {
     if (tag) return tag;
     if (text) {
-      return text.replace(regex, matched =>
-        `<mark style="background: linear-gradient(90deg, #ffe066 70%, #ffd100 100%); color: #334155; padding: 0 0.15em; border-radius: 0.33em; font-weight: 700; box-decoration-break: clone;">${matched}</mark>`
-      );
+      return text.replace(regex, matched => {
+        // Competitive trick: mark first with special id for auto-scroll
+        if (!found) {
+          found = true;
+          return `<mark id="jump2-highlight-anchor" style="background: linear-gradient(90deg, #ffe066 70%, #ffd100 100%); color: #334155; padding: 0 0.15em; border-radius: 0.33em; font-weight: 700; box-decoration-break: clone;">${matched}</mark>`;
+        }
+        return `<mark style="background: linear-gradient(90deg, #ffe066 70%, #ffd100 100%); color: #334155; padding: 0 0.15em; border-radius: 0.33em; font-weight: 700; box-decoration-break: clone;">${matched}</mark>`;
+      });
     }
     return m;
   });
@@ -401,7 +422,7 @@ function highlightHtml(rawHtml: string, highlight: string): string {
 
 // --- Main ---
 export default function Home() {
-  // State
+  // --- State ---
   const [link, setLink] = useState("");
   const [anchor, setAnchor] = useState(""); // the anchor phrase
   const [showPreview, setShowPreview] = useState(false);
@@ -420,6 +441,9 @@ export default function Home() {
     { url: "https://www.theguardian.com/environment/2025/jun/08/renewable-energy-breakthrough", text: "solar power" }
   ];
 
+  // --- Debounced anchor for smooth highlight (competitive coding trick) ---
+  const debouncedAnchor = useDebouncedValue(anchor, 120);
+
   // --- Form/Preview Logic ---
   useEffect(() => {
     if (!link) {
@@ -428,6 +452,7 @@ export default function Home() {
       setShowPreview(false);
       setShortUrl("");
       setAnchor("");
+      setSearchPhrase("");
       return;
     }
     let url: URL;
@@ -445,6 +470,7 @@ export default function Home() {
       setShowPreview(false);
       setShortUrl("");
       setAnchor("");
+      setSearchPhrase("");
       return;
     }
     setLoadingPreview(true);
@@ -453,6 +479,7 @@ export default function Home() {
     setShowPreview(true);
     setShortUrl("");
     setAnchor("");
+    setSearchPhrase("");
     fetch(`/api/parse?url=${encodeURIComponent(link)}`)
       .then(async res => {
         if (!res.ok) throw new Error("Failed to fetch article preview.");
@@ -491,15 +518,12 @@ export default function Home() {
     setShowToast(false);
     try {
       let urlObj = new URL(link);
-      // Add timestamp for YT
       if (isYouTubeUrl(urlObj) && parsedSeconds > 0) {
         urlObj.searchParams.set("t", parsedSeconds.toString());
       }
-      // Add highlight as hash (for demo; you may want to persist on backend)
-      if (anchor && !isYouTubeUrl(urlObj)) {
-        urlObj.hash = `:~:text=${encodeURIComponent(anchor)}`;
+      if (debouncedAnchor && !isYouTubeUrl(urlObj)) {
+        urlObj.hash = `:~:text=${encodeURIComponent(debouncedAnchor)}`;
       }
-      // Simulate backend: returns a short code
       const res = await fetch("/api/links", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -513,14 +537,16 @@ export default function Home() {
     } catch (e: any) {
       setError(e.message || "Failed to generate short URL");
     }
-  }, [link, parsedSeconds, anchor]);
+  }, [link, parsedSeconds, debouncedAnchor]);
 
-  // --- Clipboard
+  // --- Clipboard (competitive: focus back to input after copy) ---
+  const copyBtnRef = useRef<HTMLButtonElement>(null);
   const handleCopy = useCallback(() => {
     if (!shortUrl) return;
     navigator.clipboard.writeText(shortUrl).then(() => {
       setShowToast(true);
       setTimeout(() => setShowToast(false), 1400);
+      copyBtnRef.current?.focus();
     });
   }, [shortUrl]);
 
@@ -534,13 +560,22 @@ export default function Home() {
     setShowPreview(true);
   }
 
-  // --- Search bar above preview for phrase highlight ---
-  function handleSearchSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (searchPhrase.trim()) {
-      setAnchor(searchPhrase.trim());
+  // --- Keyboard shortcut for anchor clear/copy (competitive coding) ---
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.ctrlKey && e.key === "l") {
+        // Ctrl+L to clear anchor
+        setAnchor("");
+        setSearchPhrase("");
+      }
+      if (e.ctrlKey && e.key === "c" && shortUrl) {
+        // Ctrl+C to copy link if bar focused
+        handleCopy();
+      }
     }
-  }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [shortUrl, handleCopy]);
 
   // --- When user selects text in preview, set anchor ---
   const previewRef = useRef<HTMLDivElement>(null);
@@ -569,7 +604,28 @@ export default function Home() {
     };
   }, [articleContent, showPreview]);
 
-  // --- Render
+  // --- Competitive: scroll highlight into view after render ---
+  useLayoutEffect(() => {
+    if (debouncedAnchor && previewRef.current) {
+      // Wait for DOM update
+      setTimeout(() => {
+        const el = document.getElementById("jump2-highlight-anchor");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.classList.add("jump2-highlight-pulse");
+          setTimeout(() => el.classList.remove("jump2-highlight-pulse"), 1100);
+        }
+      }, 90);
+    }
+  }, [debouncedAnchor, articleContent, showPreview]);
+
+  // --- Clear Anchor ---
+  const handleClearAnchor = useCallback(() => {
+    setAnchor("");
+    setSearchPhrase("");
+  }, []);
+
+  // --- Render ---
   return (
     <Bg>
       <Grid>
@@ -619,90 +675,134 @@ export default function Home() {
             </HowItWorks>
           </Card>
         </div>
-
-        {/* Right: Live Preview + Share */}
-        <div>
-          {showPreview && (
-            <PreviewCard>
-              {/* Jump2 Share Bar ALWAYS at the top */}
-              <ShareBar>
-                <ShareInput type="text" readOnly value={shortUrl ? shortUrl : "Your Jump2 link will appear here…"} aria-label="Jump2 shareable link" />
-                <ShareActions>
-                  <CopyBtn type="button" onClick={shortUrl ? handleCopy : handleShare}>
-                    {shortUrl ? "Copy" : "Share"}
-                  </CopyBtn>
-                  {shortUrl &&
-                    <a href={shortUrl} target="_blank" rel="noopener noreferrer" style={{color:"#3b82f6", fontWeight:700, textDecoration:"none"}}>
-                      Open ↗
-                    </a>
-                  }
-                </ShareActions>
-              </ShareBar>
-              {/* Search-to-highlight bar */}
-              <form onSubmit={handleSearchSubmit} style={{marginBottom:"1.2em", display:"flex", gap:"0.6em", alignItems:"center"}}>
-                <Input
-                  type="text"
-                  placeholder="Search or type a phrase to anchor/highlight…"
-                  value={searchPhrase}
-                  onChange={e => setSearchPhrase(e.target.value)}
-                  aria-label="Search phrase to anchor"
-                  style={{flex:"1 1 0%", fontSize:"1.07em"}}
-                />
-                <Button type="submit">Set as Anchor</Button>
-              </form>
-              {/* Anchor phrase display */}
-              {anchor && (
-                <div style={{marginBottom:"1.1em", color:"#ffe066", fontWeight:700, fontSize:"1.03em"}}>
-                  Anchor: <span style={{background:"rgba(255,224,102,0.17)", color:"#ffe066", borderRadius:6, padding:"0.15em 0.5em", fontWeight:800}}>{anchor}</span>
-                </div>
-              )}
-              {/* Article/video preview */}
-              {loadingPreview && <Loader />}
-              {!loadingPreview && (() => {
-                try {
-                  const urlObj = new URL(link);
-                  if (isYouTubeUrl(urlObj)) {
-                    return (
-                      <>
-                        <YouTubePlayer url={link} startSeconds={parsedSeconds} />
-                        <div style={{marginTop:"1.5em", color:"#b5c7e4", fontSize:"1.08em"}}>
-                          Enter a timestamp (e.g. <b>1:23</b>) above to create a Jump2 link to that moment.
-                        </div>
-                      </>
-                    );
-                  }
-                } catch {}
-                if (error) {
-                  return <div style={{ color: "#f87171", fontWeight: 600, marginTop: "2.1em" }}>{error}</div>;
-                }
-                if (!articleContent && !error) {
+        {/* Right: Sticky Share/Anchor bar + Preview */}
+        <div style={{position:"relative"}}>
+          {/* Sticky Share/Anchor Bar */}
+          <StickyBar role="region" aria-label="Jump2 sharing and anchor bar">
+            <ShareInput
+              type="text"
+              readOnly
+              tabIndex={0}
+              value={shortUrl ? shortUrl : "Your Jump2 link appears here…"}
+              aria-label="Jump2 shareable link"
+              style={{minWidth: 200, flexBasis: "40%"}}
+              onFocus={e => e.target.select()}
+            />
+            <ShareActions>
+              <CopyBtn
+                ref={copyBtnRef}
+                type="button"
+                onClick={shortUrl ? handleCopy : handleShare}
+                aria-label={shortUrl ? "Copy jump link to clipboard" : "Generate jump link"}
+              >
+                {shortUrl ? "Copy" : "Share"}
+              </CopyBtn>
+              {shortUrl &&
+                <a href={shortUrl} target="_blank" rel="noopener noreferrer" tabIndex={0}
+                   style={{color:"#3b82f6", fontWeight:700, textDecoration:"none"}}>
+                  Open ↗
+                </a>
+              }
+            </ShareActions>
+            {debouncedAnchor && (
+              <>
+                <span style={{
+                  background:"rgba(255,224,102,0.17)",
+                  color:"#ffe066",
+                  borderRadius:6,
+                  padding:"0.15em 0.5em",
+                  fontWeight:800,
+                  marginLeft:"0.8em",
+                  fontSize:"1.03em"
+                }}>
+                  Anchor: {debouncedAnchor}
+                </span>
+                <Button style={{
+                  marginLeft: "0.8em",
+                  background: "#172554",
+                  color: "#ffe066",
+                  fontWeight: 700,
+                  padding: "0.45em 1.1em",
+                  borderRadius: "0.3em",
+                  fontSize: "0.98em"
+                }} onClick={handleClearAnchor} type="button" aria-label="Clear anchor">
+                  Clear
+                </Button>
+              </>
+            )}
+          </StickyBar>
+          {/* Space for sticky bar */}
+          <div style={{height:"4.7em"}} aria-hidden />
+          {/* Search-to-highlight (anchor set on change, no Set Anchor btn) */}
+          <form
+            onSubmit={e => {e.preventDefault(); setAnchor(searchPhrase.trim());}}
+            style={{marginBottom:"1.2em", display:"flex", gap:"0.6em", alignItems:"center"}}
+            aria-label="Anchor phrase search"
+          >
+            <Input
+              type="text"
+              placeholder="Search or type a phrase to anchor/highlight…"
+              value={searchPhrase}
+              onChange={e => {
+                setSearchPhrase(e.target.value);
+                setAnchor(e.target.value.trim());
+              }}
+              aria-label="Search phrase to anchor"
+              style={{flex:"1 1 0%", fontSize:"1.07em"}}
+            />
+            {searchPhrase && (
+              <Button type="button" onClick={handleClearAnchor}>
+                Clear
+              </Button>
+            )}
+          </form>
+          <PreviewCard>
+            {/* Article/video preview */}
+            {loadingPreview && <Loader />}
+            {!loadingPreview && (() => {
+              try {
+                const urlObj = new URL(link);
+                if (isYouTubeUrl(urlObj)) {
                   return (
                     <>
-                      <Skeleton style={{width:"95%"}} />
-                      <Skeleton style={{width:"85%"}} />
-                      <Skeleton style={{width:"65%"}} />
+                      <YouTubePlayer url={link} startSeconds={parsedSeconds} />
+                      <div style={{marginTop:"1.5em", color:"#b5c7e4", fontSize:"1.08em"}}>
+                        Enter a timestamp (e.g. <b>1:23</b>) above to create a Jump2 link to that moment.
+                      </div>
                     </>
                   );
                 }
-                // --- Highlight anchor phrase in preview ---
-                let html = articleContent;
-                if (html && anchor) {
-                  html = highlightHtml(html, anchor);
-                }
-                if (html) {
-                  return (
-                    <div
-                      ref={previewRef}
-                      tabIndex={0}
-                      style={{outline:"none", cursor:"text", userSelect:"text"}}
-                      dangerouslySetInnerHTML={{ __html: html }}
-                    />
-                  );
-                }
-                return null;
-              })()}
-            </PreviewCard>
-          )}
+              } catch {}
+              if (error) {
+                return <div style={{ color: "#f87171", fontWeight: 600, marginTop: "2.1em" }}>{error}</div>;
+              }
+              if (!articleContent && !error) {
+                return (
+                  <>
+                    <Skeleton style={{width:"95%"}} />
+                    <Skeleton style={{width:"85%"}} />
+                    <Skeleton style={{width:"65%"}} />
+                  </>
+                );
+              }
+              let html = articleContent;
+              if (html && debouncedAnchor) {
+                html = highlightHtml(html, debouncedAnchor);
+              }
+              if (html) {
+                return (
+                  <div
+                    ref={previewRef}
+                    tabIndex={0}
+                    style={{outline:"none", cursor:"text", userSelect:"text"}}
+                    dangerouslySetInnerHTML={{ __html: html }}
+                    aria-label="Article preview"
+                  />
+                );
+              }
+              return null;
+            })()}
+          </PreviewCard>
         </div>
       </Grid>
       {showToast && (
@@ -719,6 +819,18 @@ export default function Home() {
           Questions or feedback? <a style={{color:"#3b82f6"}} href="mailto:support@jump2.link">Contact us</a>
         </div>
       </Footer>
+      {/* Competitive-coding: highlight pulse effect */}
+      <style>{`
+        .jump2-highlight-pulse {
+          animation: jump2-pulse 1.1s cubic-bezier(.4,1.7,.5,1.2) 1;
+          outline: 2.5px solid #FFD100;
+        }
+        @keyframes jump2-pulse {
+          0% { box-shadow: 0 0 0 0 rgba(255,209,0,0.7);}
+          50% { box-shadow: 0 0 0 7px rgba(255,209,0,0.13);}
+          100% { box-shadow: 0 0 0 0 rgba(255,209,0,0);}
+        }
+      `}</style>
     </Bg>
   );
 }
