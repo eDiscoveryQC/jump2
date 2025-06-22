@@ -14,7 +14,7 @@ interface ResponseData {
 interface ChromiumModule {
   args: string[];
   defaultViewport: any;
-  executablePath: Promise<string>;
+  executablePath: (() => Promise<string>) | Promise<string>;
   headless: boolean;
 }
 
@@ -24,7 +24,10 @@ async function getBrowser(): Promise<puppeteer.Browser> {
   if (!browser) {
     const chromium = (await import("@sparticuz/chromium")) as unknown as ChromiumModule;
 
-    const executablePath = await chromium.executablePath;
+    const executablePath = typeof chromium.executablePath === "function"
+      ? await chromium.executablePath()
+      : await chromium.executablePath;
+
     logParse("Resolved executablePath: %s", executablePath);
 
     if (!executablePath) {
