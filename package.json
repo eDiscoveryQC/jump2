@@ -1,6 +1,6 @@
 {
   "name": "jump2",
-  "version": "6.0.0",
+  "version": "6.0.1",
   "private": true,
   "description": "Jump2 - Share Smarter. Highlight Faster.",
   "scripts": {
@@ -9,14 +9,14 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "type-check": "tsc --noEmit",
-    "postinstall": "node ./scripts/download-chromium.js"
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.0",
     "framer-motion": "^12.18.1",
     "next": "15.3.4",
     "openai": "^5.6.0",
+    "puppeteer": "^24.10.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "styled-components": "^5.3.11",
@@ -28,11 +28,9 @@
     "@types/styled-components": "^5.1.26",
     "@typescript-eslint/eslint-plugin": "^6.8.0",
     "@typescript-eslint/parser": "^6.8.0",
-    "babel-plugin-styled-components": "^2.1.4",
     "eslint": "^8.43.0",
     "eslint-config-next": "15.3.4",
-    "prettier": "^3.0.0",
-    "puppeteer": "^24.10.2"
+    "prettier": "^3.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
