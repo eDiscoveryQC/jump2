@@ -1,5 +1,5 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import puppeteer, { Browser, Page } from 'puppeteer';
+import type { NextApiRequest, NextApiResponse } from "next";
+import puppeteer, { Browser, Page } from "puppeteer";
 
 interface Article {
   content: string;
@@ -10,45 +10,17 @@ interface ResponseData {
   error?: string;
 }
 
-let browser: Browser | null = null;
+let browserPromise: Promise<Browser> | null = null;
 
-// Helper to get or launch Puppeteer browser instance
 async function getBrowser(): Promise<Browser> {
-  if (browser) return browser;
-
-  browser = await puppeteer.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    headless: true,
-    ignoreHTTPSErrors: true,
-    defaultViewport: { width: 1280, height: 800 },
-  });
-
-  return browser;
-}
-
-// Helper to create a new page with resource blocking for performance
-async function newPageWithBlock(browser: Browser): Promise<Page> {
-  const page = await browser.newPage();
-
-  await page.setRequestInterception(true);
-  page.on('request', (req) => {
-    const resourceType = req.resourceType();
-    const blockedResources = ['image', 'stylesheet', 'font', 'media', 'manifest', 'other'];
-    if (blockedResources.includes(resourceType)) {
-      req.abort();
-    } else {
-      req.continue();
-    }
-  });
-
-  // Set user agent to avoid bot detection
-  await page.setUserAgent(
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' +
-      'AppleWebKit/537.36 (KHTML, like Gecko) ' +
-      'Chrome/114.0.0.0 Safari/537.36'
-  );
-
-  return page;
+  if (!browserPromise) {
+    browserPromise = puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      defaultViewport: { width: 1280, height: 800 },
+    });
+  }
+  return browserPromise;
 }
 
 export default async function handler(
@@ -56,74 +28,75 @@ export default async function handler(
   res: NextApiResponse<ResponseData>
 ) {
   const { url } = req.query;
-
-  if (!url || typeof url !== 'string') {
-    res.status(400).json({ error: 'Missing or invalid URL parameter' });
+  if (!url || typeof url !== "string") {
+    res.status(400).json({ error: "Missing or invalid URL parameter" });
     return;
   }
-
-  console.log(`[parse.ts] Starting parse for URL: ${url}`);
 
   let page: Page | null = null;
 
   try {
-    const browserInstance = await getBrowser();
-    page = await newPageWithBlock(browserInstance);
+    const browser = await getBrowser();
+    page = await browser.newPage();
+
+    // Block images/fonts/stylesheets to speed up page load and reduce bandwidth
+    await page.setRequestInterception(true);
+    page.on("request", (request) => {
+      const resourceType = request.resourceType();
+      if (
+        ["image", "stylesheet", "font", "media", "manifest", "other"].includes(
+          resourceType
+        )
+      ) {
+        request.abort();
+      } else {
+        request.continue();
+      }
+    });
+
+    // Set user agent to avoid bot detection
+    await page.setUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+    );
 
     const response = await page.goto(url, {
-      waitUntil: 'networkidle2',
+      waitUntil: "networkidle2",
       timeout: 20000,
     });
 
-    if (!response) throw new Error('No response when navigating to URL');
+    if (!response || !response.ok()) {
+      throw new Error(`Failed to load URL, status: ${response?.status()}`);
+    }
 
-    if (!response.ok()) throw new Error(`Bad response status: ${response.status()}`);
-
-    console.log('[parse.ts] Extracting article content...');
-    const articleContent = await page.evaluate(() => {
+    // Extract article content by trying common selectors or fallback to full body HTML
+    const content = await page.evaluate(() => {
       const selectors = [
-        'article',
-        'main',
-        'section.article-body',
-        '.article-content',
-        '#article-body',
-        '.content',
+        "article",
+        "main",
+        "section.article-body",
+        ".article-content",
+        "#article-body",
+        ".content",
       ];
-
-      let content = '';
       for (const sel of selectors) {
         const el = document.querySelector(sel);
-        if (el) {
-          content = el.innerHTML.trim();
-          if (content.length > 50) break;
+        if (el && el.innerText.length > 100) {
+          return el.innerHTML.trim();
         }
       }
-
-      if (!content) {
-        content = document.body.innerHTML || '';
-      }
-
-      return content;
+      return document.body.innerHTML || "";
     });
 
-    if (!articleContent || articleContent.length < 50) {
-      console.warn('[parse.ts] Article content empty or too short.');
-      res.status(204).json({ article: { content: '' } });
+    if (!content || content.length < 100) {
+      res.status(204).json({ article: { content: "" } });
       return;
     }
 
-    console.log('[parse.ts] Successfully extracted article content');
-    res.status(200).json({ article: { content: articleContent } });
+    res.status(200).json({ article: { content } });
   } catch (error: any) {
-    console.error('[parse.ts] Error:', error);
-    res.status(500).json({ error: error.message || 'Internal Server Error' });
+    console.error("[parse.ts]", error);
+    res.status(500).json({ error: error.message || "Internal server error" });
   } finally {
-    if (page) {
-      try {
-        await page.close();
-      } catch (closeError) {
-        console.error('[parse.ts] Error closing page:', closeError);
-      }
-    }
+    if (page) await page.close();
   }
 }
