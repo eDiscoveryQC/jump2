@@ -45,13 +45,14 @@ const highlightFade = keyframes`
   100% { background-color: #2563ebaa; }
 `;
 
-const jumpBounce = keyframes`
+// Subtle fun bounce for the "2"
+const funBounce = keyframes`
   0%, 100% { transform: translateY(0); }
-  15%      { transform: translateY(-25%); }
-  30%      { transform: translateY(0); }
-  35%      { transform: translateY(-15%);}
-  40%      { transform: translateY(0);}
-  100%     { transform: translateY(0);}
+  10% { transform: translateY(-18%); }
+  20% { transform: translateY(0); }
+  23% { transform: translateY(-10%);}
+  28% { transform: translateY(0);}
+  100% { transform: translateY(0);}
 `;
 
 const chipIn = keyframes`
@@ -106,7 +107,6 @@ const LeftColumn = styled.section`
   }
 `;
 
-// --- Animated Gradient Logo ---
 const AnimatedLogoText = styled.span`
   background: linear-gradient(90deg, #60a5fa, #3b82f6, #60a5fa);
   background-size: 200% 200%;
@@ -142,7 +142,7 @@ const TwoText = styled.span`
   transition: transform 0.3s ease, filter 0.3s ease;
   transform-origin: left center;
   text-shadow: 0 0 12px #3b82f6aa;
-  animation: ${jumpBounce} 2.5s cubic-bezier(0.3, 0.7, 0.4, 1.5) infinite;
+  animation: ${funBounce} 3.5s cubic-bezier(0.32, 0.72, 0.52, 1.5) infinite;
 `;
 
 const Subtitle = styled.p`
@@ -292,7 +292,6 @@ const Feedback = styled.p`
   ${fadeInUpMixin};
 `;
 
-// --- Glassmorphism preview wrapper ---
 const PreviewWrapper = styled.section`
   background: rgba(30,41,59,0.82);
   border-radius: 1rem;
@@ -458,7 +457,6 @@ const TimestampBadge = styled.div`
   text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
 `;
 
-// --- Animated highlight chips ---
 const HighlightChipsContainer = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -1109,51 +1107,50 @@ export default function Home() {
           </FormWrapper>
         </LeftColumn>
 
-        <GlassCard>
-          <PreviewWrapper
-            aria-live="polite"
-            aria-label="Article preview or video player"
-            tabIndex={0}
-            onMouseUp={handleTextSelect}
-          >
-            <PreviewSearch
-              type="search"
-              placeholder="Search preview text..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              aria-label="Search article preview"
-              disabled={loadingPreview}
-            />
+        {/* Only ONE preview box, glass effect applied directly */}
+        <PreviewWrapper as={GlassCard}
+          aria-live="polite"
+          aria-label="Article preview or video player"
+          tabIndex={0}
+          onMouseUp={handleTextSelect}
+        >
+          <PreviewSearch
+            type="search"
+            placeholder="Search preview text..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="Search article preview"
+            disabled={loadingPreview}
+          />
 
-            {loadingPreview && <Spinner aria-label="Loading preview" role="status" />}
+          {loadingPreview && <Spinner aria-label="Loading preview" role="status" />}
 
-            {!loadingPreview && error && (
-              <Feedback role="alert" aria-live="assertive" style={{ marginTop: "1.5rem" }}>
-                {error}
-              </Feedback>
-            )}
+          {!loadingPreview && error && (
+            <Feedback role="alert" aria-live="assertive" style={{ marginTop: "1.5rem" }}>
+              {error}
+            </Feedback>
+          )}
 
-            {!loadingPreview && !error && !articleContent && (
-              <p style={{ textAlign: "center", color: "#64748b", marginTop: "2rem" }}>
-                No preview available for this link.
-              </p>
-            )}
+          {!loadingPreview && !error && !articleContent && (
+            <p style={{ textAlign: "center", color: "#64748b", marginTop: "2rem" }}>
+              No preview available for this link.
+            </p>
+          )}
 
-            {!loadingPreview && articleContent && (
-              <div ref={previewRef} dangerouslySetInnerHTML={{ __html: articleContent }} />
-            )}
+          {!loadingPreview && articleContent && (
+            <div ref={previewRef} dangerouslySetInnerHTML={{ __html: articleContent }} />
+          )}
 
-            {link &&
-              (() => {
-                try {
-                  const urlObj = new URL(link);
-                  return isYouTubeUrl(urlObj);
-                } catch {
-                  return false;
-                }
-              })() && <YouTubePlayer url={link} startSeconds={parsedSeconds} />}
-          </PreviewWrapper>
-        </GlassCard>
+          {link &&
+            (() => {
+              try {
+                const urlObj = new URL(link);
+                return isYouTubeUrl(urlObj);
+              } catch {
+                return false;
+              }
+            })() && <YouTubePlayer url={link} startSeconds={parsedSeconds} />}
+        </PreviewWrapper>
       </PageContainer>
     </>
   );
