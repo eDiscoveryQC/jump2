@@ -1,12 +1,9 @@
 import React, {
   useState,
-  useEffect,
   useCallback,
-  useMemo,
   useRef,
-  useLayoutEffect,
 } from "react";
-import styled, { keyframes, css } from "styled-components";
+import styled, { keyframes } from "styled-components";
 import ArticlePreviewFull from "../components/ArticlePreviewFull";
 
 // === Animations ===
@@ -298,6 +295,15 @@ const EXAMPLES = [
   }
 ];
 
+// --- Highlight Type ---
+type Highlight = {
+  id: string;
+  text: string;
+  start: number;
+  end: number;
+  color: string;
+};
+
 // === Main Page ===
 export default function Home() {
   const [link, setLink] = useState("");
@@ -312,6 +318,15 @@ export default function Home() {
   const urlInputRef = useRef<HTMLInputElement>(null);
   const highlightInputRef = useRef<HTMLInputElement>(null);
 
+  // --- Convert highlights to Highlight[] for ArticlePreviewFull ---
+  const highlightObjects: Highlight[] = highlightArray.map((text, i) => ({
+    id: String(i),
+    text,
+    start: 0,
+    end: text.length,
+    color: colorsArray[i] || "#ffe066"
+  }));
+
   // --- Handle submit ---
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -322,7 +337,7 @@ export default function Home() {
     // Build arrays: allow multiple highlights split by ";"
     const highlights = highlightText.split(";").map(h => h.trim()).filter(Boolean);
     setHighlightArray(highlights);
-    setColorsArray(highlights.map((_, i) => highlightColor));
+    setColorsArray(highlights.map(() => highlightColor));
     setShowPreview(true);
   }
 
@@ -492,8 +507,7 @@ export default function Home() {
           {showPreview && link && (
             <ArticlePreviewFull
               url={link}
-              initialHighlights={highlightArray}
-              initialColors={colorsArray}
+              initialHighlights={highlightObjects}
               onClose={handleClosePreview}
             />
           )}
