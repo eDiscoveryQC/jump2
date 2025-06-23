@@ -1,10 +1,4 @@
-import React, {
-  useRef,
-  useState,
-  useEffect,
-  useCallback,
-  useLayoutEffect,
-} from "react";
+import React, { useRef, useState, useEffect, useCallback, useLayoutEffect } from "react";
 import styled, { keyframes } from "styled-components";
 
 // --- Animations ---
@@ -38,18 +32,17 @@ const Bg = styled.div`
   position: relative;
 `;
 
-// Main responsive grid layout.
 const Grid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1.25fr;
   gap: 3.5rem;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 3rem 1.5rem 2.5rem;
+  padding: 4.3rem 1.5rem 2.5rem;
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
     gap: 2.2rem;
-    padding: 1.2rem 0.2rem 2.8rem;
+    padding: 2.1rem 0.2rem 2.8rem;
   }
 `;
 
@@ -61,7 +54,7 @@ const Hero = styled.section`
   min-height: 250px;
   margin-bottom: 2.5em;
   @media (max-width: 600px) {
-    margin-top: 5.2em; /* ensure logo/hero is not hidden by stickybar */
+    margin-top: 1.8em;
   }
 `;
 const LogoRow = styled.h1`
@@ -119,6 +112,7 @@ const Card = styled.div`
   margin-bottom: 2.1em;
   @media (max-width: 900px) { padding: 1.2em 0.6em 1.7em; }
 `;
+
 const InputRow = styled.form`
   display: flex;
   flex-direction: column;
@@ -194,38 +188,37 @@ const HowItWorks = styled.div`
   }
 `;
 
-// --- Sticky Share Bar (trick: sticky on desktop, fixed on mobile) ---
-const StickyBar = styled.div`
-  position: sticky;
-  top: 0;
-  z-index: 20;
+// --- Share Bar (relocated under the logo/hero) ---
+const ShareBarWrapper = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 2.2em auto;
+  @media (max-width: 900px) {
+    margin-bottom: 1.5em;
+    padding: 0 0.4em;
+  }
+`;
+
+const ShareBar = styled.div`
   background: linear-gradient(90deg, #1b2336 70%, #25406a 100%);
-  border-radius: 1em 1em 0 0;
+  border-radius: 1em;
   box-shadow: 0 4px 18px #3b82f633;
-  padding: 1.1em 2em 1em;
+  padding: 1em 2em;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 1.1em;
-  min-height: 3.5em;
+  min-height: 3.2em;
+  width: 100%;
+  max-width: 650px;
+  position: relative;
+  z-index: 20;
   @media (max-width: 600px) {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    border-radius: 0;
-    padding: 1em 0.6em 1.2em;
-    z-index: 9900;
+    padding: 0.95em 0.5em;
+    border-radius: 0.7em;
     gap: 0.6em;
-  }
-`;
-
-const StickyBarSpacer = styled.div`
-  display: none;
-  @media (max-width: 600px) {
-    display: block;
-    width: 100%;
-    height: 4.7em; /* must match StickyBar height on mobile */
+    min-height: 2.6em;
   }
 `;
 
@@ -728,62 +721,6 @@ export default function Home() {
   // --- Render ---
   return (
     <Bg>
-      {/* StickyBar is always rendered at the very top and overlays on mobile */}
-      <StickyBar role="region" aria-label="Jump2 sharing and anchor bar">
-        <ShareInput
-          type="text"
-          readOnly
-          tabIndex={0}
-          value={shortUrl ? shortUrl : "Your Jump2 link appears here…"}
-          aria-label="Jump2 shareable link"
-          style={{minWidth: 200, flexBasis: "40%"}}
-          onFocus={e => e.target.select()}
-        />
-        <ShareActions>
-          <CopyBtn
-            ref={copyBtnRef}
-            type="button"
-            onClick={shortUrl ? handleCopy : handleShare}
-            aria-label={shortUrl ? "Copy jump link to clipboard" : "Generate jump link"}
-          >
-            {shortUrl ? "Copy" : "Share"}
-          </CopyBtn>
-          {shortUrl &&
-            <a href={shortUrl} target="_blank" rel="noopener noreferrer" tabIndex={0}
-               style={{color:"#3b82f6", fontWeight:700, textDecoration:"none"}}>
-              Open ↗
-            </a>
-          }
-        </ShareActions>
-        {debouncedAnchor && (
-          <>
-            <span style={{
-              background:"rgba(255,224,102,0.17)",
-              color:"#ffe066",
-              borderRadius:6,
-              padding:"0.15em 0.5em",
-              fontWeight:800,
-              marginLeft:"0.8em",
-              fontSize:"1.03em"
-            }}>
-              Anchor: {debouncedAnchor}
-            </span>
-            <Button style={{
-              marginLeft: "0.8em",
-              background: "#172554",
-              color: "#ffe066",
-              fontWeight: 700,
-              padding: "0.45em 1.1em",
-              borderRadius: "0.3em",
-              fontSize: "0.98em"
-            }} onClick={handleClearAnchor} type="button" aria-label="Clear anchor">
-              Clear
-            </Button>
-          </>
-        )}
-      </StickyBar>
-      {/* Spacer to prevent StickyBar from overlapping top content on mobile */}
-      <StickyBarSpacer />
       <Grid>
         {/* Left: Hero + Form */}
         <div>
@@ -796,6 +733,62 @@ export default function Home() {
             <HeroDesc>
               Paste any article, blog, or YouTube link below. Drop an anchor where you want users to start, highlight it, and share your Jump2 link!
             </HeroDesc>
+            {/* Share Bar now right under the logo/hero */}
+            <ShareBarWrapper>
+              <ShareBar>
+                <ShareInput
+                  type="text"
+                  readOnly
+                  tabIndex={0}
+                  value={shortUrl ? shortUrl : "Your Jump2 link appears here…"}
+                  aria-label="Jump2 shareable link"
+                  style={{minWidth: 200, flexBasis: "40%"}}
+                  onFocus={e => e.target.select()}
+                />
+                <ShareActions>
+                  <CopyBtn
+                    ref={copyBtnRef}
+                    type="button"
+                    onClick={shortUrl ? handleCopy : handleShare}
+                    aria-label={shortUrl ? "Copy jump link to clipboard" : "Generate jump link"}
+                  >
+                    {shortUrl ? "Copy" : "Share"}
+                  </CopyBtn>
+                  {shortUrl &&
+                    <a href={shortUrl} target="_blank" rel="noopener noreferrer" tabIndex={0}
+                      style={{color:"#3b82f6", fontWeight:700, textDecoration:"none"}}>
+                      Open ↗
+                    </a>
+                  }
+                </ShareActions>
+                {debouncedAnchor && (
+                  <>
+                    <span style={{
+                      background:"rgba(255,224,102,0.17)",
+                      color:"#ffe066",
+                      borderRadius:6,
+                      padding:"0.15em 0.5em",
+                      fontWeight:800,
+                      marginLeft:"0.8em",
+                      fontSize:"1.03em"
+                    }}>
+                      Anchor: {debouncedAnchor}
+                    </span>
+                    <Button style={{
+                      marginLeft: "0.8em",
+                      background: "#172554",
+                      color: "#ffe066",
+                      fontWeight: 700,
+                      padding: "0.45em 1.1em",
+                      borderRadius: "0.3em",
+                      fontSize: "0.98em"
+                    }} onClick={handleClearAnchor} type="button" aria-label="Clear anchor">
+                      Clear
+                    </Button>
+                  </>
+                )}
+              </ShareBar>
+            </ShareBarWrapper>
           </Hero>
           <Card>
             <InputRow onSubmit={handleSubmit}>
