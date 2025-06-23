@@ -7,16 +7,6 @@ import React, {
 } from "react";
 import styled, { keyframes, css } from "styled-components";
 
-// --- Competitive coding: Smart debounce hook (no dependencies) ---
-function useDebouncedValue<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const handle = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(handle);
-  }, [value, delay]);
-  return debounced;
-}
-
 // --- Animations ---
 const gradient = keyframes`
   0% { background-position: 0% 50%; }
@@ -220,6 +210,7 @@ const StickyBar = styled.div`
     border-radius: 0;
     padding: 1em 0.6em 1.2em;
     z-index: 9900;
+    gap: 0.6em;
   }
 `;
 
@@ -332,6 +323,11 @@ const Footer = styled.footer`
   text-align: center;
   font-size: 1em;
   opacity: 0.95;
+  @media (max-width: 600px) {
+    margin: 2.1em auto 1.2em auto;
+    font-size: 0.93em;
+    padding: 0 0.7em;
+  }
 `;
 
 // --- YouTube helpers ---
@@ -418,6 +414,16 @@ function highlightHtml(rawHtml: string, highlight: string): string {
     }
     return m;
   });
+}
+
+// --- Competitive coding: Smart debounce hook (no dependencies) ---
+function useDebouncedValue<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const handle = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(handle);
+  }, [value, delay]);
+  return debounced;
 }
 
 // --- Main ---
@@ -829,6 +835,13 @@ export default function Home() {
           0% { box-shadow: 0 0 0 0 rgba(255,209,0,0.7);}
           50% { box-shadow: 0 0 0 7px rgba(255,209,0,0.13);}
           100% { box-shadow: 0 0 0 0 rgba(255,209,0,0);}
+        }
+        @media (max-width: 900px) {
+          .sc-bcXHqe, .sc-bcXHqe > div {
+            max-width: 100vw !important;
+            padding-left: 0.2em !important;
+            padding-right: 0.2em !important;
+          }
         }
       `}</style>
     </Bg>
