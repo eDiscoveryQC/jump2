@@ -1,53 +1,55 @@
 import styled from "styled-components";
 
-const primaryBlue = "#2151FF";
-const secondaryBlue = "#18E0FF";
-const gold = "#FFB300";
+const PRIMARY_BLUE = "#2051FF";
+const CYAN = "#20E1FF";
+const GOLD = "#FFB300";
 
 const LogoWrap = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.55em;
+  gap: 0.58em;
   user-select: none;
 `;
 
 const Wordmark = styled.span`
-  font-family: "Geist", "Inter", "Plus Jakarta Sans", "ui-sans-serif", "system-ui", sans-serif;
+  font-family: 'Geist', 'Inter', 'Plus Jakarta Sans', 'ui-sans-serif', 'system-ui', sans-serif;
   font-weight: 900;
-  font-size: 2.1em;
-  color: ${primaryBlue};
-  letter-spacing: -0.01em;
+  font-size: 2.12em;
+  color: ${PRIMARY_BLUE};
+  letter-spacing: -0.012em;
   line-height: 1;
   display: flex;
   align-items: flex-end;
   > sup {
-    font-size: 0.60em;
-    color: ${gold};
+    font-size: 0.62em;
+    color: ${GOLD};
     font-weight: 900;
-    margin-left: 0.13em;
-    margin-bottom: 0.20em;
-    letter-spacing: 0.02em;
+    margin-left: 0.11em;
+    margin-bottom: 0.19em;
+    letter-spacing: 0.01em;
   }
 `;
 
 const Icon = () => (
-  <svg width="46" height="46" viewBox="0 0 46 46" fill="none">
+  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
     <defs>
-      <linearGradient id="j2g1" x1="13" y1="6" x2="34" y2="41" gradientUnits="userSpaceOnUse">
-        <stop stopColor={primaryBlue}/>
-        <stop offset="1" stopColor={secondaryBlue}/>
+      <linearGradient id="jump2-arc" x1="13" y1="7" x2="36" y2="44" gradientUnits="userSpaceOnUse">
+        <stop stopColor={PRIMARY_BLUE} />
+        <stop offset="1" stopColor={CYAN} />
       </linearGradient>
     </defs>
-    {/* Unmistakable, upright "J" with energy */}
+    {/* Upright, bold "J"—no abstraction */}
     <path
-      d="M23 9 Q15 9 15 23 Q15 40 34 40"
-      stroke="url(#j2g1)"
-      strokeWidth="5.5"
+      d="M24 9 Q14 9 14 24 Q14 43 34 43"
+      stroke="url(#jump2-arc)"
+      strokeWidth="6"
       strokeLinecap="round"
       fill="none"
     />
-    {/* Sharing/content node at the tip */}
-    <circle cx="34" cy="40" r="4.2" fill={gold} />
+    {/* Distinct content node for sharing */}
+    <circle cx="34" cy="43" r="4.2" fill={GOLD} />
+    {/* Upward accent for energy */}
+    <polygon points="34,39 38,35 35,34" fill={GOLD} />
   </svg>
 );
 
