@@ -2,7 +2,6 @@ import type { AppProps } from 'next/app';
 import { createContext, useReducer, ReactNode, useContext } from 'react';
 import { ThemeProvider, createGlobalStyle } from 'styled-components';
 import ErrorBoundary from '../components/ErrorBoundary';
-import Layout from '../components/Layout'; // <-- import Layout!
 
 const GlobalStyle = createGlobalStyle`
   /* CSS Reset + Smooth font rendering + custom variables */
@@ -117,9 +116,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
       <ThemeProvider theme={theme}>
         <ErrorBoundary>
           <AppProvider>
-            <Layout>
-              <Component {...pageProps} />
-            </Layout>
+            <Component {...pageProps} />
           </AppProvider>
         </ErrorBoundary>
       </ThemeProvider>
