@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback, useLayoutEffect } from "react";
 import styled, { keyframes } from "styled-components";
-import Menu from "../components/Menu";
 import Footer from "../components/Footer";
 
 // --- Fonts: Inter, JetBrains Mono (ensure loaded in _document.tsx or via CDN) ---
@@ -10,13 +9,6 @@ const fontStack = `'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSys
 const gradient = keyframes`
   0% { background-position: 0% 50%; }
   100% { background-position: 100% 50%; }
-`;
-const bounce = keyframes`
-  0%, 100% { transform: translateY(0);}
-  20% { transform: translateY(-18%);}
-  40% { transform: translateY(0);}
-  50% { transform: translateY(-11%);}
-  60% { transform: translateY(0);}
 `;
 const pop = keyframes`
   0% { transform: scale(0.9);}
@@ -77,37 +69,39 @@ const DividerHeader = styled.div`
   padding-bottom: 0.1em;
 `;
 
+// --- Jump2 Brand Logo: matches menu style (Inter, bold, blue/yellow, subtle shadow) ---
 const LogoRow = styled.h1`
   display: flex;
   align-items: center;
-  gap: 0.22em;
-  font-size: clamp(2.5rem, 7vw, 4.3rem);
+  gap: 0.1em;
+  font-size: clamp(2.0rem, 7vw, 3.2rem);
   font-weight: 900;
-  letter-spacing: -1.6px;
+  letter-spacing: -0.04em;
   user-select: none;
   margin: 1.1em 0 0.13em 0;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Inter', ui-sans-serif;
   background: none;
   justify-content: center;
+  text-shadow: 0 2px 16px #2563eb22, 0 1.5px 0 #ffe06611;
 `;
 
 const LogoText = styled.span`
-  background: linear-gradient(90deg, #6ee7ff 10%, #3b82f6 90%, #60a5fa 100%);
-  background-size: 200% 200%;
+  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+  background-clip: text;
   -webkit-background-clip: text;
+  color: transparent;
   -webkit-text-fill-color: transparent;
-  animation: ${gradient} 3.9s alternate infinite, ${bounce} 3.3s cubic-bezier(0.32, 0.72, 0.52, 1.5) infinite;
   font-weight: 900;
   display: inline-block;
-  letter-spacing: -0.07em;
+  letter-spacing: -0.03em;
+  line-height: 1.03;
 `;
 const LogoTwo = styled.span`
   color: #ffd100;
-  font-size: 1.1em;
+  font-size: 1.07em;
   font-weight: 900;
-  margin-left: 0.08em;
-  text-shadow: 0 0 18px #3b82f6aa;
-  animation: ${bounce} 2.8s cubic-bezier(.46,1.58,.47,.86) infinite;
+  margin-left: 0.06em;
+  text-shadow: 0 0 18px #3b82f6aa, 0 0.5px 0 #ffd10044;
   display: inline-block;
 `;
 
@@ -651,8 +645,6 @@ export default function Home() {
 
   return (
     <Bg>
-      <Menu />
-
       <LogoRow>
         <LogoText>Jump</LogoText>
         <LogoTwo>2</LogoTwo>
