@@ -5,7 +5,7 @@ import React, {
   useCallback,
   useLayoutEffect,
 } from "react";
-import styled, { keyframes, css } from "styled-components";
+import styled, { keyframes } from "styled-components";
 
 // --- Animations ---
 const gradient = keyframes`
@@ -35,7 +35,10 @@ const Bg = styled.div`
   min-height: 100vh;
   background: radial-gradient(circle at 60% 20%, #25406a 0%, #0d1423 100%);
   padding: 0;
+  position: relative;
 `;
+
+// Main responsive grid layout.
 const Grid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1.25fr;
@@ -57,6 +60,9 @@ const Hero = styled.section`
   justify-content: center;
   min-height: 250px;
   margin-bottom: 2.5em;
+  @media (max-width: 600px) {
+    margin-top: 5.2em; /* ensure logo/hero is not hidden by stickybar */
+  }
 `;
 const LogoRow = styled.h1`
   display: flex;
@@ -214,6 +220,15 @@ const StickyBar = styled.div`
   }
 `;
 
+const StickyBarSpacer = styled.div`
+  display: none;
+  @media (max-width: 600px) {
+    display: block;
+    width: 100%;
+    height: 4.7em; /* must match StickyBar height on mobile */
+  }
+`;
+
 const ShareInput = styled.input`
   font-size: 1.11em;
   border-radius: 0.6em;
@@ -292,31 +307,86 @@ const PreviewCard = styled(Card)`
   @media (max-width: 900px) { padding: 1.1em 0.6em 1.7em; }
 `;
 
-const VideoWrapper = styled.div`
-  margin: 2rem auto 3rem;
-  max-width: 640px;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 8px 20px #131c2b55;
+// --- Lightbox/Welcome Modal ---
+const LightboxOverlay = styled.div`
+  position: fixed;
+  z-index: 20000;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(17,24,39,0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: ${fadeIn} 0.25s;
+`;
+const LightboxCard = styled.div`
+  background: #202940;
+  border-radius: 1.2em;
+  box-shadow: 0 8px 32px 0 #1e293b99;
+  max-width: 98vw;
+  width: 400px;
+  padding: 2.3em 1.7em 2.1em;
+  color: #eaf0fa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   position: relative;
+  @media (max-width: 500px) {
+    width: 97vw;
+    padding: 1.3em 0.7em 1.4em;
+  }
 `;
-
-const TimestampBadge = styled.div`
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  background: rgba(0, 0, 0, 0.65);
-  color: #fff;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  font-family: monospace;
-  font-size: 0.95em;
+const LightboxLogo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.19em;
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin-bottom: 0.35em;
   user-select: none;
-  pointer-events: none;
-  text-shadow: 0 0 8px #000c;
+`;
+const LightboxSlogan = styled.div`
+  font-size: 1.13em;
+  color: #ffe066;
+  font-weight: 700;
+  margin-bottom: 0.6em;
+  text-align: center;
+`;
+const LightboxDesc = styled.div`
+  color: #c5d6fa;
+  font-size: 1.09em;
+  font-weight: 400;
+  margin-bottom: 1.3em;
+  text-align: center;
+  line-height: 1.65;
+`;
+const LightboxButton = styled.button`
+  font-size: 1.09em;
+  border-radius: 0.6em;
+  padding: 0.78em 2.1em;
+  font-weight: 700;
+  border: none;
+  color: #fff;
+  background: linear-gradient(90deg, #3b82f6 10%, #2563eb 90%);
+  box-shadow: 0 3px 16px #2563eb66;
+  cursor: pointer;
+  transition: background 0.13s, box-shadow 0.13s, transform 0.12s;
+  &:hover, &:focus {
+    background: linear-gradient(90deg, #2563eb 10%, #3b82f6 90%);
+    transform: scale(1.04);
+    outline: none;
+  }
+`;
+const LightboxContact = styled.a`
+  color: #ffd100;
+  font-size: 1.01em;
+  font-weight: 600;
+  margin-top: 1.15em;
+  text-decoration: underline dotted;
+  &:hover {text-decoration: underline solid;}
 `;
 
+// --- Footer ---
 const Footer = styled.footer`
   margin: 3.5em auto 1.2em auto;
   color: #b5c7e4;
@@ -330,7 +400,7 @@ const Footer = styled.footer`
   }
 `;
 
-// --- YouTube helpers ---
+// --- YouTube helpers and highlight utility ---
 const isYouTubeUrl = (url: URL) =>
   ["www.youtube.com", "youtube.com", "youtu.be"].includes(url.hostname);
 function parseTimestamp(input: string): number {
@@ -366,7 +436,14 @@ const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: numbe
     [videoId, startSeconds]
   );
   return (
-    <VideoWrapper>
+    <div style={{
+      margin: "2rem auto 3rem",
+      maxWidth: 640,
+      borderRadius: 12,
+      overflow: "hidden",
+      boxShadow: "0 8px 20px #131c2b55",
+      position: "relative"
+    }}>
       <iframe
         width="100%"
         height="360"
@@ -377,18 +454,31 @@ const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: numbe
         allowFullScreen
       />
       {startSeconds > 0 && (
-        <TimestampBadge>▶ {formatTimestamp(startSeconds)}</TimestampBadge>
+        <div style={{
+          position: "absolute",
+          top: 8,
+          right: 12,
+          background: "rgba(0, 0, 0, 0.65)",
+          color: "#fff",
+          fontWeight: 600,
+          padding: "4px 10px",
+          borderRadius: 9999,
+          fontFamily: "monospace",
+          fontSize: "0.95em",
+          userSelect: "none",
+          pointerEvents: "none",
+          textShadow: "0 0 8px #000c"
+        }}>
+          ▶ {formatTimestamp(startSeconds)}
+        </div>
       )}
-    </VideoWrapper>
+    </div>
   );
 };
-
-// --- Highlighting utility (trick: scroll first highlight into view) ---
 function highlightHtml(rawHtml: string, highlight: string): string {
   if (!rawHtml || !highlight) return rawHtml;
   const phrase = highlight.trim();
   if (!phrase) return rawHtml;
-  // Regex for the phrase, escaping special regex characters
   const regex = new RegExp(
     "(" +
       phrase
@@ -397,14 +487,11 @@ function highlightHtml(rawHtml: string, highlight: string): string {
       + ")",
     "gi"
   );
-  // Replace in HTML (not inside tags)
-  // Split by tags, only replace in text nodes
   let found = false;
   return rawHtml.replace(/(<[^>]+>)|([^<]+)/g, (m, tag, text) => {
     if (tag) return tag;
     if (text) {
       return text.replace(regex, matched => {
-        // Competitive trick: mark first with special id for auto-scroll
         if (!found) {
           found = true;
           return `<mark id="jump2-highlight-anchor" style="background: linear-gradient(90deg, #ffe066 70%, #ffd100 100%); color: #334155; padding: 0 0.15em; border-radius: 0.33em; font-weight: 700; box-decoration-break: clone;">${matched}</mark>`;
@@ -415,8 +502,6 @@ function highlightHtml(rawHtml: string, highlight: string): string {
     return m;
   });
 }
-
-// --- Competitive coding: Smart debounce hook (no dependencies) ---
 function useDebouncedValue<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
@@ -440,6 +525,18 @@ export default function Home() {
   const [showToast, setShowToast] = useState(false);
   const [searchPhrase, setSearchPhrase] = useState(""); // search bar above preview
 
+  // --- Lightbox (first-time visitor welcome) ---
+  const [showLightbox, setShowLightbox] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined" && localStorage.getItem("jump2_welcomed") !== "yes") {
+      setTimeout(() => setShowLightbox(true), 350);
+    }
+  }, []);
+  const handleCloseLightbox = useCallback(() => {
+    setShowLightbox(false);
+    localStorage.setItem("jump2_welcomed", "yes");
+  }, []);
+
   // --- Onboarding examples ---
   const EXAMPLES = [
     { url: "https://www.bbc.com/news/world-us-canada-66159295", text: "democracy" },
@@ -447,7 +544,7 @@ export default function Home() {
     { url: "https://www.theguardian.com/environment/2025/jun/08/renewable-energy-breakthrough", text: "solar power" }
   ];
 
-  // --- Debounced anchor for smooth highlight (competitive coding trick) ---
+  // --- Debounced anchor for smooth highlight ---
   const debouncedAnchor = useDebouncedValue(anchor, 120);
 
   // --- Form/Preview Logic ---
@@ -545,7 +642,7 @@ export default function Home() {
     }
   }, [link, parsedSeconds, debouncedAnchor]);
 
-  // --- Clipboard (competitive: focus back to input after copy) ---
+  // --- Clipboard (focus back to input after copy) ---
   const copyBtnRef = useRef<HTMLButtonElement>(null);
   const handleCopy = useCallback(() => {
     if (!shortUrl) return;
@@ -566,16 +663,14 @@ export default function Home() {
     setShowPreview(true);
   }
 
-  // --- Keyboard shortcut for anchor clear/copy (competitive coding) ---
+  // --- Keyboard shortcut for anchor clear/copy ---
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.ctrlKey && e.key === "l") {
-        // Ctrl+L to clear anchor
         setAnchor("");
         setSearchPhrase("");
       }
       if (e.ctrlKey && e.key === "c" && shortUrl) {
-        // Ctrl+C to copy link if bar focused
         handleCopy();
       }
     }
@@ -593,7 +688,7 @@ export default function Home() {
       if (sel && sel.rangeCount > 0) {
         const range = sel.getRangeAt(0);
         if (!ref.contains(range.commonAncestorContainer)) {
-          return; // Only react to selection inside preview
+          return;
         }
         const selected = sel.toString().trim();
         if (selected.length > 0) {
@@ -610,10 +705,9 @@ export default function Home() {
     };
   }, [articleContent, showPreview]);
 
-  // --- Competitive: scroll highlight into view after render ---
+  // --- Scroll highlight into view after render ---
   useLayoutEffect(() => {
     if (debouncedAnchor && previewRef.current) {
-      // Wait for DOM update
       setTimeout(() => {
         const el = document.getElementById("jump2-highlight-anchor");
         if (el) {
@@ -634,6 +728,62 @@ export default function Home() {
   // --- Render ---
   return (
     <Bg>
+      {/* StickyBar is always rendered at the very top and overlays on mobile */}
+      <StickyBar role="region" aria-label="Jump2 sharing and anchor bar">
+        <ShareInput
+          type="text"
+          readOnly
+          tabIndex={0}
+          value={shortUrl ? shortUrl : "Your Jump2 link appears here…"}
+          aria-label="Jump2 shareable link"
+          style={{minWidth: 200, flexBasis: "40%"}}
+          onFocus={e => e.target.select()}
+        />
+        <ShareActions>
+          <CopyBtn
+            ref={copyBtnRef}
+            type="button"
+            onClick={shortUrl ? handleCopy : handleShare}
+            aria-label={shortUrl ? "Copy jump link to clipboard" : "Generate jump link"}
+          >
+            {shortUrl ? "Copy" : "Share"}
+          </CopyBtn>
+          {shortUrl &&
+            <a href={shortUrl} target="_blank" rel="noopener noreferrer" tabIndex={0}
+               style={{color:"#3b82f6", fontWeight:700, textDecoration:"none"}}>
+              Open ↗
+            </a>
+          }
+        </ShareActions>
+        {debouncedAnchor && (
+          <>
+            <span style={{
+              background:"rgba(255,224,102,0.17)",
+              color:"#ffe066",
+              borderRadius:6,
+              padding:"0.15em 0.5em",
+              fontWeight:800,
+              marginLeft:"0.8em",
+              fontSize:"1.03em"
+            }}>
+              Anchor: {debouncedAnchor}
+            </span>
+            <Button style={{
+              marginLeft: "0.8em",
+              background: "#172554",
+              color: "#ffe066",
+              fontWeight: 700,
+              padding: "0.45em 1.1em",
+              borderRadius: "0.3em",
+              fontSize: "0.98em"
+            }} onClick={handleClearAnchor} type="button" aria-label="Clear anchor">
+              Clear
+            </Button>
+          </>
+        )}
+      </StickyBar>
+      {/* Spacer to prevent StickyBar from overlapping top content on mobile */}
+      <StickyBarSpacer />
       <Grid>
         {/* Left: Hero + Form */}
         <div>
@@ -681,64 +831,8 @@ export default function Home() {
             </HowItWorks>
           </Card>
         </div>
-        {/* Right: Sticky Share/Anchor bar + Preview */}
+        {/* Right: Preview and anchor/search */}
         <div style={{position:"relative"}}>
-          {/* Sticky Share/Anchor Bar */}
-          <StickyBar role="region" aria-label="Jump2 sharing and anchor bar">
-            <ShareInput
-              type="text"
-              readOnly
-              tabIndex={0}
-              value={shortUrl ? shortUrl : "Your Jump2 link appears here…"}
-              aria-label="Jump2 shareable link"
-              style={{minWidth: 200, flexBasis: "40%"}}
-              onFocus={e => e.target.select()}
-            />
-            <ShareActions>
-              <CopyBtn
-                ref={copyBtnRef}
-                type="button"
-                onClick={shortUrl ? handleCopy : handleShare}
-                aria-label={shortUrl ? "Copy jump link to clipboard" : "Generate jump link"}
-              >
-                {shortUrl ? "Copy" : "Share"}
-              </CopyBtn>
-              {shortUrl &&
-                <a href={shortUrl} target="_blank" rel="noopener noreferrer" tabIndex={0}
-                   style={{color:"#3b82f6", fontWeight:700, textDecoration:"none"}}>
-                  Open ↗
-                </a>
-              }
-            </ShareActions>
-            {debouncedAnchor && (
-              <>
-                <span style={{
-                  background:"rgba(255,224,102,0.17)",
-                  color:"#ffe066",
-                  borderRadius:6,
-                  padding:"0.15em 0.5em",
-                  fontWeight:800,
-                  marginLeft:"0.8em",
-                  fontSize:"1.03em"
-                }}>
-                  Anchor: {debouncedAnchor}
-                </span>
-                <Button style={{
-                  marginLeft: "0.8em",
-                  background: "#172554",
-                  color: "#ffe066",
-                  fontWeight: 700,
-                  padding: "0.45em 1.1em",
-                  borderRadius: "0.3em",
-                  fontSize: "0.98em"
-                }} onClick={handleClearAnchor} type="button" aria-label="Clear anchor">
-                  Clear
-                </Button>
-              </>
-            )}
-          </StickyBar>
-          {/* Space for sticky bar */}
-          <div style={{height:"4.7em"}} aria-hidden />
           {/* Search-to-highlight (anchor set on change, no Set Anchor btn) */}
           <form
             onSubmit={e => {e.preventDefault(); setAnchor(searchPhrase.trim());}}
@@ -822,10 +916,13 @@ export default function Home() {
           Built for you. <span style={{color:"#3b82f6"}}>Open source. Privacy-first.</span>
         </div>
         <div style={{marginTop:"0.5em"}}>
-          Questions or feedback? <a style={{color:"#3b82f6"}} href="mailto:support@jump2.link">Contact us</a>
+          Questions or feedback?{" "}
+          <a style={{color:"#3b82f6"}} href="mailto:support@jump2share.com">
+            Contact us
+          </a>
         </div>
       </Footer>
-      {/* Competitive-coding: highlight pulse effect */}
+      {/* Highlight pulse effect */}
       <style>{`
         .jump2-highlight-pulse {
           animation: jump2-pulse 1.1s cubic-bezier(.4,1.7,.5,1.2) 1;
@@ -836,14 +933,34 @@ export default function Home() {
           50% { box-shadow: 0 0 0 7px rgba(255,209,0,0.13);}
           100% { box-shadow: 0 0 0 0 rgba(255,209,0,0);}
         }
-        @media (max-width: 900px) {
-          .sc-bcXHqe, .sc-bcXHqe > div {
-            max-width: 100vw !important;
-            padding-left: 0.2em !important;
-            padding-right: 0.2em !important;
-          }
-        }
       `}</style>
+      {/* Lightbox modal for first-time users */}
+      {showLightbox && (
+        <LightboxOverlay>
+          <LightboxCard>
+            <LightboxLogo>
+              <LogoText>Jump</LogoText>
+              <LogoTwo>2</LogoTwo>
+            </LightboxLogo>
+            <LightboxSlogan>
+              Welcome to Jump2!
+            </LightboxSlogan>
+            <LightboxDesc>
+              Instantly share the <b>best part</b> of any article, blog, or video.<br/>
+              <br/>
+              <b>Jump2</b> lets you paste a link, <b>highlight a phrase or time</b>, and create a short link that lands others right there.<br/>
+              <br/>
+              No more scrolling, searching, or "where is it?" — just highlight, jump, and share.
+              <br/><br/>
+              <b>Save time. Guide your audience. Share better.</b>
+            </LightboxDesc>
+            <LightboxButton onClick={handleCloseLightbox}>Let's go!</LightboxButton>
+            <LightboxContact href="mailto:support@jump2share.com">
+              Contact us
+            </LightboxContact>
+          </LightboxCard>
+        </LightboxOverlay>
+      )}
     </Bg>
   );
 }
