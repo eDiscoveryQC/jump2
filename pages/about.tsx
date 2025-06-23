@@ -1,5 +1,3 @@
-import Menu from "../components/Menu";
-import Footer from "../components/Footer";
 import styled from "styled-components";
 
 const PageBg = styled.div`

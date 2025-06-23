@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback, useLayoutEffect } from "react";
 import styled, { keyframes } from "styled-components";
-import Footer from "../components/Footer";
 
 // --- Fonts: Inter, JetBrains Mono (ensure loaded in _document.tsx or via CDN) ---
 const fontStack = `'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'JetBrains Mono', monospace, sans-serif`;
