@@ -5,11 +5,13 @@ const blue = "#1e3af2";
 const gold = "#ffd700";
 const white = "#ffffff";
 
+// Glow for the superscript 2
 const pulse = keyframes`
   0% { text-shadow: 0 0 4px ${gold}44, 0 0 2px ${gold}22; }
   100% { text-shadow: 0 0 8px ${gold}aa, 0 0 3px ${gold}55; }
 `;
 
+// Reusable bounce animation
 const bounce = keyframes`
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-6px); }
@@ -26,15 +28,12 @@ const Logo = styled.h1`
   letter-spacing: -0.03em;
   user-select: none;
   margin: 0;
-  gap: 0.04em;
-
-  &:hover span.j {
-    animation: ${bounce} 0.6s ease;
-  }
 `;
 
-const J = styled.span.attrs({ className: 'j' })`
+const Letter = styled.span<{ delay?: number }>`
   display: inline-block;
+  animation: ${bounce} 2s ease-in-out infinite;
+  animation-delay: ${({ delay }) => `${delay}s`};
 `;
 
 const Sup2 = styled.sup`
@@ -50,7 +49,13 @@ const Sup2 = styled.sup`
 const Jump2Logo = () => {
   return (
     <Logo>
-      <J>J</J>UMP<Sup2>2</Sup2>
+      <Letter delay={0}>J</Letter>
+      <Letter delay={0.1}>U</Letter>
+      <Letter delay={0.2}>M</Letter>
+      <Letter delay={0.3}>P</Letter>
+      <Letter delay={0.4}>
+        <Sup2>2</Sup2>
+      </Letter>
     </Logo>
   );
 };
