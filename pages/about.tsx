@@ -97,7 +97,6 @@ export default function About() {
           <a href="https://x.com/jump2share" target="_blank" rel="noopener noreferrer">Twitter</a>
         </SocialLinks>
       </Wrapper>
-      <Footer />
     </PageBg>
   );
 }
