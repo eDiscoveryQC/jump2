@@ -89,13 +89,14 @@ export default function Redirect({ deepLink, anchorText, previewOnly }: Props) {
 
   // Preload destination for faster jumps (except in preview-only mode)
   React.useEffect(() => {
-    if (deepLink && !previewOnly) {
-      const link = document.createElement('link');
-      link.rel = 'prefetch';
-      link.href = deepLink;
-      document.head.appendChild(link);
-      return () => document.head.removeChild(link);
-    }
+    if (!deepLink || previewOnly) return;
+    const link = document.createElement('link');
+    link.rel = 'prefetch';
+    link.href = deepLink;
+    document.head.appendChild(link);
+    return () => {
+      if (link.parentNode) link.parentNode.removeChild(link);
+    };
   }, [deepLink, previewOnly]);
 
   // Try instant redirect (unless previewOnly)
