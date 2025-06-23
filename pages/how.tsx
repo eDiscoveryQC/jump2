@@ -1,101 +1,69 @@
-import React from "react";
 import styled from "styled-components";
 
-const PageWrapper = styled.div`
-  max-width: 700px;
-  margin: 3em auto 2em auto;
-  padding: 2.4em 2em 2em 2em;
+const Wrapper = styled.div`
   background: rgba(16,23,45,0.97);
   border-radius: 1.15em;
-  color: #eaf0fa;
-  font-family: 'Inter', sans-serif;
+  max-width: 780px;
+  margin: 2em auto;
+  padding: 2.8em 2em 2.3em 2em;
   box-shadow: 0 8px 32px 0 #1e293b33, 0 0 0 2.5px #2563eb77;
 `;
 
 const Headline = styled.h1`
-  color: #67b7fd;
-  font-size: 2.2em;
-  font-weight: 900;
-  margin-bottom: 0.2em;
-`;
-
-const Subheading = styled.div`
   color: #ffe066;
-  font-size: 1.22em;
-  font-weight: 700;
+  font-size: 2.1em;
+  font-weight: 900;
+  margin-bottom: 0.7em;
+`;
+
+const Section = styled.section`
+  margin-bottom: 2.1em;
+`;
+
+const Step = styled.div`
+  margin-bottom: 1.2em;
+  font-size: 1.15em;
+  font-weight: 600;
+  color: #67b7fd;
+`;
+
+const Para = styled.p`
   margin-bottom: 1.3em;
-`;
-
-const StepList = styled.ol`
-  margin-left: 1.5em;
-  margin-bottom: 2em;
-  li {
-    margin-bottom: 0.7em;
-    font-size: 1.09em;
-    font-weight: 500;
-  }
-`;
-
-const WhyTitle = styled.h2`
-  color: #60a5fa;
-  font-size: 1.12em;
-  font-weight: 800;
-  margin: 1.5em 0 0.8em 0;
-`;
-
-const WhyList = styled.ul`
-  margin-left: 1.2em;
-  margin-bottom: 2.2em;
-  li {
-    margin-bottom: 0.6em;
-    font-size: 1.06em;
-  }
-`;
-
-const CTAButton = styled.a`
-  display: inline-block;
-  margin-top: 1.7em;
-  padding: 0.78em 2.2em;
-  background: linear-gradient(90deg, #3b82f6 10%, #2563eb 90%);
-  color: #fff;
-  font-weight: 800;
-  border-radius: 0.7em;
-  font-size: 1.14em;
-  letter-spacing: 0.01em;
-  box-shadow: 0 3px 16px #2563eb66;
-  text-decoration: none;
-  transition: background 0.13s, transform 0.12s;
-  &:hover, &:focus {
-    background: linear-gradient(90deg, #2563eb 10%, #3b82f6 90%);
-    transform: scale(1.04);
-    outline: none;
-  }
+  font-size: 1.1em;
 `;
 
 export default function HowItWorks() {
   return (
-    <PageWrapper>
-      <Headline>From Article to Action in Seconds</Headline>
-      <Subheading>
-        Smart sharing for the way you read, highlight, and engage.
-      </Subheading>
-
-      <StepList>
-        <li><b>Paste a Link</b> – Start with any article or long-form content.</li>
-        <li><b>Highlight Anything</b> – Select text that matters to you.</li>
-        <li><b>Share Your Jump</b> – Generate a custom link that brings others straight to your highlight.</li>
-      </StepList>
-
-      <WhyTitle>Why People Use Jump2:</WhyTitle>
-      <WhyList>
-        <li>🔍 <b>Researchers:</b> Save exact quotes with context</li>
-        <li>✍️ <b>Writers & Creators:</b> Let readers share your best lines</li>
-        <li>🧠 <b>Learners & Teams:</b> Keep knowledge organized and precise</li>
-      </WhyList>
-
-      <CTAButton href="/">
-        Try It Free
-      </CTAButton>
-    </PageWrapper>
+    <Wrapper>
+      <Headline>How Jump2 Works</Headline>
+      <Section>
+        <Step>1. Highlight Anything</Step>
+        <Para>
+          Whether you’re reading an article, watching a YouTube video, or reviewing a document, just highlight the text or select the moment you want to share.
+        </Para>
+        <Step>2. Clip Instantly</Step>
+        <Para>
+          Click the Jump2 button to create a precise, shareable link—pointing right to your selection, even at a specific timestamp in a video.
+        </Para>
+        <Step>3. Share with Impact</Step>
+        <Para>
+          Send your Jump2 link anywhere: in chat, email, or on social. Recipients jump straight to what matters—no hunting, no scrolling.
+        </Para>
+      </Section>
+      <Section>
+        <Step>Supports All Kinds of Content</Step>
+        <Para>
+          - Articles and blogs<br/>
+          - YouTube and other videos<br/>
+          - Documents, PDFs, more!
+        </Para>
+      </Section>
+      <Section>
+        <Step>Smart Integrations</Step>
+        <Para>
+          Use our browser extension, web app, or integrate via API to bring Jump2’s clipping and sharing power anywhere you work.
+        </Para>
+      </Section>
+    </Wrapper>
   );
 }

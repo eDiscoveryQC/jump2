@@ -1,14 +1,11 @@
-import React from "react";
 import styled from "styled-components";
 
-const PageWrapper = styled.div`
-  max-width: 700px;
-  margin: 3em auto 2em auto;
-  padding: 2.4em 2em 2em 2em;
+const Wrapper = styled.div`
   background: rgba(16,23,45,0.97);
   border-radius: 1.15em;
-  color: #eaf0fa;
-  font-family: 'Inter', sans-serif;
+  max-width: 780px;
+  margin: 2em auto;
+  padding: 2.8em 2em 2.2em 2em;
   box-shadow: 0 8px 32px 0 #1e293b33, 0 0 0 2.5px #2563eb77;
 `;
 
@@ -17,6 +14,11 @@ const Headline = styled.h1`
   font-size: 2.2em;
   font-weight: 900;
   margin-bottom: 0.5em;
+`;
+
+const Para = styled.p`
+  font-size: 1.13em;
+  margin-bottom: 1.6em;
 `;
 
 const SectionTitle = styled.h2`
@@ -51,22 +53,22 @@ const SocialLinks = styled.div`
 
 export default function About() {
   return (
-    <PageWrapper>
+    <Wrapper>
       <Headline>We’re Building the Future of Smart Sharing</Headline>
-      <p>
+      <Para>
         Jump2 is a content sharing technology platform that helps people extract, highlight, and share exactly what matters — instantly.
-      </p>
-      <p>
+      </Para>
+      <Para>
         We believe in a more thoughtful internet. One where links take you to ideas, not just pages.
-      </p>
+      </Para>
       <SectionTitle>Our Mission:</SectionTitle>
-      <p>
+      <Para>
         To make sharing knowledge as easy as highlighting a word.
-      </p>
+      </Para>
       <SectionTitle>Built For:</SectionTitle>
       <ul>
         <li>Everyday readers</li>
-        <li>Journalists & content creators</li>
+        <li>Journalists &amp; content creators</li>
         <li>Developers building with precision</li>
         <li>Educators, researchers, and lifelong learners</li>
       </ul>
@@ -74,12 +76,13 @@ export default function About() {
         <b>Founder’s Note:</b><br />
         We created Jump2 because we were tired of hunting through long pages just to find one line. Now, with smart links and shareable highlights, we hope to make every conversation clearer, faster, and more meaningful.<br /><br />
         Want to work with us?<br />
-        Contact us or follow our journey on LinkedIn.
+        Contact us or follow our journey on LinkedIn or Twitter.
       </FounderNote>
       <SocialLinks>
         <a href="mailto:support@jump2share.com">Contact</a>
-        <a href="https://linkedin.com/company/jump2" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        <a href="https://linkedin.com/company/jump2share" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        <a href="https://x.com/jump2share" target="_blank" rel="noopener noreferrer">Twitter</a>
       </SocialLinks>
-    </PageWrapper>
+    </Wrapper>
   );
 }
