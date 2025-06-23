@@ -1,5 +1,5 @@
 import { GetServerSideProps } from 'next';
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 
 // --- Utility: Robust platform/time/anchor detection ---
@@ -24,7 +24,7 @@ function extractTextFragment(url: string): string {
     const urlObj = new URL(url);
     if (urlObj.hash.startsWith("#:~:text=")) {
       const match = urlObj.hash.match(/^#:~:text=([^&]*)/);
-      if (match) return decodeURIComponent(match[1]);
+      if (match) return decodeURIComponent(match[1].replace(/\+/g, ' '));
     }
   } catch {}
   return "";
@@ -38,6 +38,29 @@ function basicSanitize(html: string): string {
     .replace(/<style[\s\S]*?<\/style>/gi, '')
     .replace(/\son\w+="[^"]*"/gi, '')
     .replace(/\son\w+='[^']*'/gi, '');
+}
+
+// --- Utility: Anchor reliability check ---
+function validateAnchor(rawHtml: string, anchor: string): {
+  isValid: boolean,
+  reason?: string,
+  multiple?: boolean,
+  foundIndex?: number
+} {
+  if (!anchor || anchor.length < 5) return { isValid: false, reason: "Anchor too short." };
+  // Must be a match (case-insensitive)
+  const occurrences = (rawHtml.match(new RegExp(anchor.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), "gi")) || []).length;
+  if (occurrences === 0) return { isValid: false, reason: "Phrase not found in this article." };
+  if (occurrences > 1) return { isValid: false, reason: `Phrase appears ${occurrences} times; please select a more unique phrase.`, multiple: true };
+  // Check for problematic characters
+  if (/[\n\r]/.test(anchor)) return { isValid: false, reason: "Anchor contains line breaks." };
+  // Heuristic: avoid very generic phrases
+  if (/^(the|and|is|a|to|in|of|for|on|at|by|with)$/i.test(anchor.trim())) {
+    return { isValid: false, reason: "Anchor is too generic. Please choose a more distinctive phrase." };
+  }
+  // Optionally: warn if contains HTML tags (broken across tags)
+  if (/<[^>]+>/.test(anchor)) return { isValid: false, reason: "Anchor crosses formatting or HTML tags. Please select simple, contiguous text." };
+  return { isValid: true, foundIndex: rawHtml.toLowerCase().indexOf(anchor.toLowerCase()) };
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
@@ -82,13 +105,19 @@ interface Props {
 }
 
 export default function Redirect({ deepLink, anchorText, previewOnly }: Props) {
-  const [fallback, setFallback] = React.useState(false);
-  const [html, setHtml] = React.useState('');
-  const [fetchError, setFetchError] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
+  const [fallback, setFallback] = useState(false);
+  const [html, setHtml] = useState('');
+  const [fetchError, setFetchError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [anchorWarning, setAnchorWarning] = useState<string | null>(null);
+  const [browserWarning, setBrowserWarning] = useState(false);
+  const [copyMsg, setCopyMsg] = useState('');
+  const [showQr, setShowQr] = useState(false);
+
+  const highlightRef = useRef<HTMLDivElement>(null);
 
   // Preload destination for faster jumps (except in preview-only mode)
-  React.useEffect(() => {
+  useEffect(() => {
     if (!deepLink || previewOnly) return;
     const link = document.createElement('link');
     link.rel = 'prefetch';
@@ -100,7 +129,7 @@ export default function Redirect({ deepLink, anchorText, previewOnly }: Props) {
   }, [deepLink, previewOnly]);
 
   // Try instant redirect (unless previewOnly)
-  React.useEffect(() => {
+  useEffect(() => {
     if (!deepLink || previewOnly) return;
 
     // For text fragments, give browser a chance to handle, then fallback
@@ -117,7 +146,7 @@ export default function Redirect({ deepLink, anchorText, previewOnly }: Props) {
   }, [deepLink, previewOnly]);
 
   // Fallback: fetch and highlight text fragment for non-supporting browsers or in previewOnly mode
-  React.useEffect(() => {
+  useEffect(() => {
     if ((!fallback && !previewOnly) || !deepLink || !anchorText) return;
     setLoading(true);
     setFetchError('');
@@ -129,14 +158,22 @@ export default function Redirect({ deepLink, anchorText, previewOnly }: Props) {
       .then(txt => {
         let safe = basicSanitize(txt);
         let found = false;
-        if (anchorText) {
-          const esc = anchorText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-          const regex = new RegExp(esc, 'i');
-          safe = safe.replace(regex, match => {
-            found = true;
-            return `<mark id="jump2-highlight" style="background:linear-gradient(90deg,#ffe066 70%,#ffd100 100%);color:#334155;padding:0 0.15em;border-radius:0.33em;font-weight:700;">${match}</mark>`;
-          });
-        }
+        let anchorVal = validateAnchor(safe, anchorText);
+        setAnchorWarning(anchorVal.isValid ? null : anchorVal.reason || null);
+
+        // If phrase is found multiple times, highlight all
+        const regex = new RegExp(anchorText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), 'gi');
+        let first = true;
+        safe = safe.replace(regex, match => {
+          found = true;
+          // First occurrence gets extra animation
+          if (first) {
+            first = false;
+            return `<mark id="jump2-highlight" style="background:linear-gradient(90deg,#ffe066 70%,#ffd100 100%);color:#334155;padding:0 0.15em;border-radius:0.33em;font-weight:700;animation:pulse 1.4s;">${match}</mark>`;
+          }
+          return `<mark style="background:#ffe06655;color:#334155;padding:0 0.15em;border-radius:0.33em;">${match}</mark>`;
+        });
+
         if (!found) {
           safe = `<div style="color:#ef4444;font-weight:500;margin-bottom:1em;">Could not highlight – phrase not found in article.</div>` + safe;
         }
@@ -149,7 +186,7 @@ export default function Redirect({ deepLink, anchorText, previewOnly }: Props) {
   }, [fallback, deepLink, anchorText, previewOnly]);
 
   // Auto-scroll to highlight
-  React.useEffect(() => {
+  useEffect(() => {
     if (!fallback && !previewOnly) return;
     const timer = setTimeout(() => {
       const el = document.getElementById('jump2-highlight');
@@ -157,6 +194,29 @@ export default function Redirect({ deepLink, anchorText, previewOnly }: Props) {
     }, 500);
     return () => clearTimeout(timer);
   }, [html, fallback, previewOnly]);
+
+  // Browser support warning
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const ua = window.navigator.userAgent;
+    if (!/Chrome|Edg|Chromium/i.test(ua)) setBrowserWarning(true);
+  }, []);
+
+  // Copy helpers
+  function handleCopyAnchor() {
+    if (anchorText) {
+      navigator.clipboard.writeText(anchorText);
+      setCopyMsg('Anchor copied!');
+      setTimeout(() => setCopyMsg(''), 1400);
+    }
+  }
+  function handleCopyLink() {
+    if (deepLink) {
+      navigator.clipboard.writeText(deepLink);
+      setCopyMsg('Link copied!');
+      setTimeout(() => setCopyMsg(''), 1400);
+    }
+  }
 
   // ---- Mobile-friendly UI ----
   if (!deepLink) {
@@ -188,27 +248,139 @@ export default function Redirect({ deepLink, anchorText, previewOnly }: Props) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          marginBottom: "1em"
+          marginBottom: "1.4em"
         }}>
           <img
             src="/logo.png"
             alt="Jump2"
             style={{
-              width: "36px",
-              height: "36px",
-              marginRight: "0.5em",
+              width: "38px",
+              height: "38px",
+              marginRight: "0.65em",
               borderRadius: "8px",
               background: "#fff",
               boxShadow: "0 2px 6px #0002"
             }}
           />
           <span style={{
-            fontWeight: 700,
-            fontSize: "1.6em",
-            letterSpacing: "-0.02em",
+            fontWeight: 900,
+            fontSize: "2em",
+            letterSpacing: "-0.04em",
             color: "#ffe066"
-          }}>Jump2 Fallback Preview</span>
+          }}>Jump2</span>
         </header>
+        <div style={{
+          fontWeight: 700,
+          fontSize: "1.13em",
+          color: "#b5c7e4",
+          textAlign: "center",
+          marginBottom: "0.8em"
+        }}>
+          <span role="img" aria-label="flag">🏁</span> Anchor phrase: <span style={{color:"#ffe066"}}>{anchorText}</span>
+        </div>
+        {browserWarning && (
+          <div style={{
+            background: "#ffe066",
+            color: "#1e293b",
+            fontWeight: "bold",
+            borderRadius: "1em",
+            padding: "0.8em 1.3em",
+            marginBottom: "1.1em",
+            marginTop: "0.3em"
+          }}>
+            Notice: Text fragment anchors work best in Chrome/Edge. <a href="https://web.dev/text-fragments/" style={{color:"#1e40af"}} target="_blank">Learn more</a>
+          </div>
+        )}
+        {anchorWarning && (
+          <div style={{
+            background: "#fecd57",
+            color: "#843110",
+            fontWeight: "bold",
+            borderRadius: "0.7em",
+            padding: "0.7em 1.2em",
+            marginBottom: "1.1em",
+          }}>
+            {anchorWarning}
+          </div>
+        )}
+        <div style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: "0.8em",
+          flexWrap: "wrap",
+          marginBottom: "1.3em"
+        }}>
+          <button
+            onClick={handleCopyAnchor}
+            style={{
+              padding: "0.45em 1.3em",
+              borderRadius: "0.7em",
+              fontWeight: 700,
+              background: "#ffe066",
+              color: "#1e293b",
+              border: "none",
+              cursor: "pointer"
+            }}
+          >
+            Copy Anchor
+          </button>
+          <button
+            onClick={handleCopyLink}
+            style={{
+              padding: "0.45em 1.3em",
+              borderRadius: "0.7em",
+              fontWeight: 700,
+              background: "#3b82f6",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer"
+            }}
+          >
+            Copy Link
+          </button>
+          <button
+            onClick={() => setShowQr(q => !q)}
+            style={{
+              padding: "0.45em 1.3em",
+              borderRadius: "0.7em",
+              fontWeight: 700,
+              background: "#222b44",
+              color: "#ffe066",
+              border: "none",
+              cursor: "pointer"
+            }}
+          >
+            {showQr ? "Hide QR" : "Show QR"}
+          </button>
+        </div>
+        {copyMsg && (
+          <div style={{
+            color: "#ffe066",
+            fontWeight: 700,
+            textAlign: "center",
+            marginBottom: "1.1em"
+          }}>
+            {copyMsg}
+          </div>
+        )}
+        {showQr && deepLink && (
+          <div style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: "1em"
+          }}>
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(deepLink)}`}
+              alt="Jump2 QR"
+              style={{
+                background: "#fff",
+                borderRadius: 16,
+                padding: 6,
+                margin: "0 auto"
+              }}
+            />
+          </div>
+        )}
         <div style={{
           marginBottom: "1.2em",
           color: "#b5c7e4",
@@ -235,18 +407,20 @@ export default function Redirect({ deepLink, anchorText, previewOnly }: Props) {
             }}>Open original article</a>
           </div>
         </div>
-        <div style={{
-          background: "#202940",
-          borderRadius: 16,
-          maxWidth: 700,
-          margin: "0 auto",
-          padding: "1.1em 0.9em",
-          maxHeight: 480,
-          overflowY: "auto",
-          fontSize: "1.06em",
-          wordBreak: "break-word",
-          boxShadow: "0 4px 24px #0003"
-        }}
+        <div
+          ref={highlightRef}
+          style={{
+            background: "#202940",
+            borderRadius: 16,
+            maxWidth: 700,
+            margin: "0 auto",
+            padding: "1.1em 0.9em",
+            maxHeight: 480,
+            overflowY: "auto",
+            fontSize: "1.06em",
+            wordBreak: "break-word",
+            boxShadow: "0 4px 24px #0003"
+          }}
           aria-live="polite"
         >
           {loading &&
@@ -288,11 +462,22 @@ export default function Redirect({ deepLink, anchorText, previewOnly }: Props) {
           }}>
             <b>Tip:</b> For best highlight support, open in Chrome or Edge.
           </span>
+          <br />
+          <span style={{
+            background: "#202940",
+            color: "#b5c7e4",
+            borderRadius: 8,
+            padding: "0.2em 0.7em",
+            marginTop: "0.8em",
+            display: "inline-block"
+          }}>
+            <a href="mailto:support@jump2share.com" style={{ color: "#3b82f6" }}>Report issue or feedback</a>
+          </span>
         </footer>
         <style>{`
           @media (max-width: 600px) {
             header span {
-              font-size: 1.1em !important;
+              font-size: 1.15em !important;
             }
             .preview-content {
               padding: 1em 0.3em !important;
@@ -305,6 +490,11 @@ export default function Redirect({ deepLink, anchorText, previewOnly }: Props) {
             footer {
               font-size: 0.85em !important;
             }
+          }
+          @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 #ffd10088;}
+            60% { box-shadow: 0 0 12px 8px #ffd10033;}
+            100% { box-shadow: 0 0 0 0 #ffd10000;}
           }
         `}</style>
       </div>
