@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback, useLayoutEffect } from "react";
 import styled, { keyframes } from "styled-components";
 
-// --- Fonts: Inter, JetBrains Mono (ensure loaded in _document.tsx or via CDN) ---
 const fontStack = `'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'JetBrains Mono', monospace, sans-serif`;
 
 // --- Animations ---
@@ -19,9 +18,11 @@ const fadeIn = keyframes`
   to { opacity: 1;}
 `;
 const bounce = keyframes`
-  0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
-  40% {transform: translateY(-18px);}
-  60% {transform: translateY(-8px);}
+  0%, 100% { transform: translateY(0);}
+  20% { transform: translateY(-4px);}
+  40% { transform: translateY(-18px);}
+  60% { transform: translateY(-8px);}
+  80% { transform: translateY(2px);}
 `;
 
 // --- Layout ---
@@ -87,7 +88,7 @@ const LogoRow = styled.h1`
   background: none;
   justify-content: center;
   text-shadow: 0 2px 16px #2563eb22, 0 1.5px 0 #ffe06611;
-  animation: ${bounce} 1.8s cubic-bezier(.71,-0.15,.34,1.36) infinite;
+  animation: ${bounce} 1.9s cubic-bezier(.71,-0.15,.34,1.36) infinite;
 `;
 
 const LogoText = styled.span`
@@ -101,6 +102,7 @@ const LogoText = styled.span`
   letter-spacing: -0.03em;
   line-height: 1.03;
 `;
+
 const LogoTwo = styled.span`
   color: #ffd100;
   font-size: 1.07em;
@@ -108,6 +110,8 @@ const LogoTwo = styled.span`
   margin-left: 0.06em;
   text-shadow: 0 0 18px #3b82f6aa, 0 0.5px 0 #ffd10044;
   display: inline-block;
+  animation: ${bounce} 1.3s cubic-bezier(.71,-0.15,.34,1.36) infinite;
+  animation-delay: 0.5s;
 `;
 
 // --- Feedback Button ---
@@ -650,6 +654,25 @@ export default function Home() {
 
   return (
     <Bg>
+      {/* Lightbox Welcome */}
+      {showLightbox && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
+          background: "rgba(16,23,45,0.97)", color: "#fff", display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center", zIndex: 20000
+        }}>
+          <h2 style={{fontSize:"2.1em", marginBottom:"0.6em"}}>Welcome to Jump2!</h2>
+          <div style={{fontSize:"1.2em", maxWidth:430, textAlign:"center", marginBottom:"1.6em", color:"#cdd9f6"}}>
+            Paste any article, blog, Wikipedia, or <b>YouTube</b> link.<br />
+            Highlight a phrase, search a keyword, or for YouTube, enter a timestamp (e.g. <b>1:23</b>).<br/>
+            Share a direct Jump2 link with friends!
+          </div>
+          <button style={{marginTop: 32, fontSize: "1.2em", padding: "0.5em 1.3em", borderRadius: 9, background: "#2563eb", color: "#fff", fontWeight: 800, border: "none"}}
+            onClick={handleCloseLightbox}
+          >Start Using Jump2</button>
+        </div>
+      )}
+
       <LogoRow>
         <LogoText>Jump</LogoText>
         <LogoTwo>2</LogoTwo>
@@ -685,9 +708,9 @@ export default function Home() {
           <HowItWorks>
             <b>How it works:</b>
             <ul>
-              <li>Paste a link (“Paste” or drag & drop!)</li>
-              <li>Preview loads. Highlight or search for a phrase.</li>
-              <li>Click <b>Share</b> and copy your Jump2 link!</li>
+              <li>Paste any article, blog, Wikipedia, or <b>YouTube</b> link (paste or drag &amp; drop!)</li>
+              <li>Preview loads. Highlight a phrase, search a keyword, or for YouTube, enter a timestamp (e.g. <b>1:23</b>).</li>
+              <li>Click <b>Share</b> and copy your Jump2 link. Anyone with the link jumps right to what matters!</li>
             </ul>
           </HowItWorks>
         </Card>
