@@ -1,4 +1,5 @@
 import Menu from "../components/Menu";
+import Footer from "../components/Footer";
 import styled from "styled-components";
 
 const PageBg = styled.div`
@@ -55,7 +56,12 @@ const SocialLinks = styled.div`
     margin-right: 1.3em;
     font-weight: 700;
     text-decoration: none;
-    &:hover { text-decoration: underline; }
+    &:hover,
+    &:focus {
+      text-decoration: underline;
+      color: #ffe066;
+      outline: none;
+    }
   }
 `;
 
@@ -94,6 +100,7 @@ export default function About() {
           <a href="https://x.com/jump2share" target="_blank" rel="noopener noreferrer">Twitter</a>
         </SocialLinks>
       </Wrapper>
+      <Footer />
     </PageBg>
   );
 }

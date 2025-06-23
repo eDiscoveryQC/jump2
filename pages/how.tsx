@@ -1,4 +1,5 @@
 import Menu from "../components/Menu";
+import Footer from "../components/Footer";
 import styled from "styled-components";
 
 const PageBg = styled.div`
@@ -40,6 +41,28 @@ const Para = styled.p`
   font-size: 1.1em;
 `;
 
+const CTA = styled.a`
+  display: inline-block;
+  margin: 2.5em auto 0 auto;
+  font-size: 1.12em;
+  font-weight: 800;
+  background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+  color: #fff;
+  padding: 0.8em 2.2em;
+  border-radius: 1.6em;
+  box-shadow: 0 4px 20px #2563eb44;
+  text-decoration: none;
+  transition: background 0.17s, color 0.17s, transform 0.16s;
+  letter-spacing: 0.02em;
+  &:hover, &:focus {
+    background: linear-gradient(90deg, #ffd100 0%, #3b82f6 100%);
+    color: #223050;
+    outline: 2px solid #ffd100;
+    transform: scale(1.04);
+    text-decoration: none;
+  }
+`;
+
 export default function HowItWorks() {
   return (
     <PageBg>
@@ -74,7 +97,9 @@ export default function HowItWorks() {
             Use our browser extension, web app, or integrate via API to bring Jump2’s clipping and sharing power anywhere you work.
           </Para>
         </Section>
+        <CTA href="/upload">Try Jump2 Now</CTA>
       </Wrapper>
+      <Footer />
     </PageBg>
   );
 }

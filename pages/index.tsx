@@ -1,5 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback, useLayoutEffect } from "react";
 import styled, { keyframes } from "styled-components";
+import Menu from "../components/Menu";
+import Footer from "../components/Footer";
 
 // --- Fonts: Inter, JetBrains Mono (ensure loaded in _document.tsx or via CDN) ---
 const fontStack = `'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'JetBrains Mono', monospace, sans-serif`;
@@ -34,6 +36,8 @@ const Bg = styled.div`
   padding: 0;
   position: relative;
   animation: ${fadeIn} 1s;
+  display: flex;
+  flex-direction: column;
 `;
 
 // --- Main layout grid ---
@@ -43,6 +47,8 @@ const WideGrid = styled.div`
   gap: 2.5rem;
   margin: 0 auto 2.7rem auto;
   align-items: flex-start;
+  flex: 1;
+  width: 100%;
   @media (max-width: 1100px) { padding: 0 1rem; }
   @media (max-width: 900px) { flex-direction: column; gap: 1.4rem; }
 `;
@@ -70,60 +76,6 @@ const DividerHeader = styled.div`
   border-bottom: 2px solid #1e293b33;
   line-height: 1.1;
   padding-bottom: 0.1em;
-`;
-
-// --- Top Bar ---
-const TopBar = styled.header`
-  width: 100%;
-  background: rgba(12,18,28,0.98);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.1rem 2.2rem 0.7rem 2.2rem;
-  border-bottom: 2px solid #223050;
-  box-shadow: 0 3px 16px #1e293b33;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  @media (max-width: 700px) { flex-direction: column; gap: .6em; padding: 1.1rem 0.5rem 0.7rem 0.5rem; }
-`;
-const Brand = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.32em;
-  font-size: 1.75em;
-  font-weight: 900;
-  letter-spacing: -1px;
-  color: #67b7fd;
-  img { height: 32px; border-radius: 8px; margin-right: 0.7em;}
-  text-shadow: 0 2px 12px #3b82f6cc;
-  background: none;
-  font-family: 'JetBrains Mono', monospace;
-  animation: ${fadeIn} 0.7s;
-`;
-
-const TopNav = styled.nav`
-  display: flex;
-  gap: 2.2em;
-  align-items: center;
-  font-size: 1.06em;
-  a, button {
-    color: #b7d7ff;
-    border: none;
-    background: none;
-    font-weight: 800;
-    text-decoration: none;
-    cursor: pointer;
-    padding: 0.23em 1.1em;
-    border-radius: 0.7em;
-    transition: background 0.12s, color 0.12s;
-    letter-spacing: 0.01em;
-    &:hover {
-      background: #1e293b;
-      color: #fff;
-    }
-  }
-  @media (max-width: 700px) { gap: 1.2em; }
 `;
 
 // --- Hero & Branding ---
@@ -480,20 +432,6 @@ const LightboxContact = styled.a`
   &:hover {text-decoration: underline solid;}
 `;
 
-// --- Footer ---
-const Footer = styled.footer`
-  margin: 4em auto 1.2em auto;
-  color: #93b4e9;
-  text-align: center;
-  font-size: 1.08em;
-  opacity: 0.97;
-  @media (max-width: 600px) {
-    margin: 2.1em auto 1.2em auto;
-    font-size: 0.93em;
-    padding: 0 0.7em;
-  }
-`;
-
 // --- YouTube helpers and highlight utility ---
 const isYouTubeUrl = (url: URL) =>
   ["www.youtube.com", "youtube.com", "youtu.be"].includes(url.hostname);
@@ -819,21 +757,9 @@ export default function Home() {
     setSearchPhrase("");
   }, []);
 
-  // --- Render ---
   return (
     <Bg>
-      <TopBar>
-        <Brand>
-          <img src="/favicon.ico" alt="Jump2" />
-          Jump2
-        </Brand>
-        <TopNav>
-          <a href="/about">About</a>
-          <a href="/how">How it works</a>
-          <a href="/api">API</a>
-          <a href="/contact">Contact</a>
-        </TopNav>
-      </TopBar>
+      <Menu />
       <HeroRow>
         <HeroTextCol>
           <LogoRow>
@@ -1030,15 +956,6 @@ export default function Home() {
           Link copied!
         </ShareToast>
       )}
-      <Footer>
-        <div>
-          <b>Jump2</b> — The best way to jump to the best.<br />
-          <span style={{color:"#3b82f6"}}>Open source. Privacy-first. No sign-ups.</span>
-        </div>
-        <div style={{marginTop:"0.5em"}}>
-          <span>Questions or feedback? <a style={{color:"#3b82f6"}} href="mailto:support@jump2share.com">Contact us</a></span>
-        </div>
-      </Footer>
       {/* Highlight pulse effect */}
       <style>{`
         .jump2-highlight-pulse {
@@ -1077,6 +994,7 @@ export default function Home() {
           </LightboxCard>
         </LightboxOverlay>
       )}
+      <Footer />
     </Bg>
   );
 }
