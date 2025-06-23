@@ -3,6 +3,7 @@ import fetch from "node-fetch";
 import { JSDOM } from "jsdom";
 import { logParse, logApi } from "@/lib/log";
 import { Readability } from "@mozilla/readability";
+import createDOMPurify from "dompurify";
 
 interface Article {
   content: string;
@@ -12,26 +13,34 @@ interface ResponseData {
   error?: string;
 }
 
-function cleanArticleText(html: string): string {
-  let cleaned = html.replace(/<(style|script|noscript)[^>]*>[\s\S]*?<\/\1>/gi, "");
-  cleaned = cleaned.replace(/[#.@\w\s\-]+{[^}]+}/g, "");
-  cleaned = cleaned.replace(/@media[^{]+{[^}]+}/g, "");
-  cleaned = cleaned.replace(/.*advertisement.*\n?/gi, "");
-  cleaned = cleaned.replace(/.*sponsored.*\n?/gi, "");
-  cleaned = cleaned.replace(/.*Ad:.*\n?/gi, "");
-  cleaned = cleaned.replace(/Return to Homepage.*/gi, "");
-  cleaned = cleaned.replace(/Top Stories.*/gi, "");
-  cleaned = cleaned.replace(/^\s*[\r\n]/gm, "");
-  cleaned = cleaned.replace(/\n{3,}/g, "\n\n");
-  cleaned = cleaned.replace(/<!--[\s\S]*?-->/g, ""); // Remove HTML comments
-  cleaned = cleaned.replace(/(\s{2,})/g, " ");
-  return cleaned.trim();
+// Only remove dangerous/invisible nodes, not visible text
+function sanitizeArticleHtml(html: string, url: string): string {
+  const dom = new JSDOM(html, { url });
+  const doc = dom.window.document;
+  // Remove dangerous/invisible elements
+  doc.querySelectorAll("script, style, noscript, iframe, object, embed, form, header, footer, nav, aside, [aria-hidden='true'], [hidden]").forEach(el => el.remove());
+  // Use Readability for main content (if possible)
+  let articleHtml = "";
+  try {
+    const reader = new Readability(doc);
+    const article = reader.parse();
+    if (article && article.content && article.content.length > 100) {
+      articleHtml = article.content;
+    }
+  } catch {}
+  if (!articleHtml) articleHtml = doc.body.innerHTML;
+  // Sanitized, but don't touch visible text
+  const DOMPurify = createDOMPurify(dom.window as any);
+  return DOMPurify.sanitize(articleHtml, {
+    USE_PROFILES: { html: true },
+    FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form'],
+    FORBID_ATTR: ['onerror', 'onclick', 'onload', 'onmouseover', 'onfocus']
+  });
 }
 
-// The ultimate gold-standard bulletproof parser
+// The ultimate gold-standard bulletproof parser (used as fallback)
 async function tryDirectFetchAndParse(url: string): Promise<{content: string, error?: string}> {
   try {
-    // Aggressive timeout
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 12000);
     const resp = await fetch(url, {
@@ -45,106 +54,7 @@ async function tryDirectFetchAndParse(url: string): Promise<{content: string, er
     clearTimeout(timeout);
     if (!resp.ok) return { content: "", error: `Direct fetch failed: ${resp.status}` };
     const html = await resp.text();
-    const dom = new JSDOM(html, { url });
-    const doc = dom.window.document;
-
-    // --- 1. Try modern article selectors (broad, platform-specific) ---
-    const selectors = [
-      'article', 'main', '.content', 'section',
-      // Yahoo News
-      'div.caas-body',
-      '[data-type="text"]',
-      '[data-test-locator="article-body"]',
-      // NYT
-      'section[name="articleBody"]',
-      // BBC
-      '.ssrcss-uf6wea-RichTextComponentWrapper',
-      // CNN, Fox, The Guardian
-      '.article__content', '.article-body', '.content__article-body',
-      // Medium
-      'article .section-inner',
-      // Substack
-      '.body',
-      // Fallback for web novels, blogs, etc.
-      '.post-content', '.entry-content', '.blog-post', '.story-content'
-    ];
-
-    let mainContent: Element | null = null;
-    for (const sel of selectors) {
-      mainContent = doc.querySelector(sel);
-      if (
-        mainContent &&
-        mainContent.textContent &&
-        mainContent.textContent.replace(/\s+/g, " ").length > 120
-      ) break;
-    }
-
-    // --- 2. If not found, try the largest visible div/section by text length ---
-    if (!mainContent) {
-      let biggest: Element | null = null;
-      let maxLen = 0;
-      const candidates: Element[] = Array.from(doc.querySelectorAll('div, section'));
-      for (const el of candidates) {
-        const txt = el.textContent?.replace(/\s+/g, " ").trim() || "";
-        if (txt.length > maxLen) {
-          maxLen = txt.length;
-          biggest = el;
-        }
-      }
-      if (maxLen > 120) mainContent = biggest;
-    }
-
-    // --- 3. If still not found, join all <p> tags with visible text ---
-    let cleaned = "";
-    if (mainContent && mainContent.innerHTML) {
-      cleaned = mainContent.innerHTML.trim();
-    } else {
-      const allP: HTMLParagraphElement[] = Array.from(doc.querySelectorAll("p"));
-      const pTexts = allP
-        .map(p => (p as Element).textContent?.replace(/\s+/g, " ").trim() || "")
-        .filter(t => t.length > 0 && t.length > 25);
-      cleaned = pTexts.join("\n\n");
-    }
-
-    cleaned = cleanArticleText(cleaned);
-
-    // --- 4. As ultimate fallback, use Mozilla Readability (if not enough content) ---
-    if ((!cleaned || cleaned.length < 120) && typeof Readability === "function") {
-      try {
-        const reader = new Readability(doc);
-        const article = reader.parse();
-        if (article && article.content && article.content.length > 120) {
-          cleaned = cleanArticleText(article.content);
-        }
-      } catch (e) {
-        // Ignore, fallback to whatever we have
-      }
-    }
-
-    // --- 5. If still not enough, try joining all <li> and <span> tags (for chatty/bloggy sites) ---
-    if (!cleaned || cleaned.length < 120) {
-      const allLi: HTMLLIElement[] = Array.from(doc.querySelectorAll("li"));
-      const liTexts = allLi
-        .map(li => (li as Element).textContent?.replace(/\s+/g, " ").trim() || "")
-        .filter(t => t.length > 0 && t.length > 15);
-      if (liTexts.length) cleaned = liTexts.join("\n\n");
-    }
-    if (!cleaned || cleaned.length < 120) {
-      const allSpan: HTMLSpanElement[] = Array.from(doc.querySelectorAll("span"));
-      const spanTexts = allSpan
-        .map(span => (span as Element).textContent?.replace(/\s+/g, " ").trim() || "")
-        .filter(t => t.length > 0 && t.length > 25);
-      if (spanTexts.length) cleaned = spanTexts.join("\n\n");
-    }
-
-    // --- 6. Final fallback: just use the document body's plain text ---
-    if (!cleaned || cleaned.length < 120) {
-      const bodyText = doc.body?.textContent?.replace(/\s+/g, " ").trim() || "";
-      cleaned = bodyText;
-    }
-
-    cleaned = cleanArticleText(cleaned);
-
+    const cleaned = sanitizeArticleHtml(html, url);
     if (!cleaned || cleaned.length < 100) {
       return { content: "", error: "Fetched content too short or not found (after exhaustive parsing)." };
     }
@@ -185,7 +95,15 @@ export default async function handler(
     const response = await fetch(apiUrl);
 
     let beeError = "";
-    if (!response.ok) {
+    let html = "";
+    if (response.ok) {
+      try {
+        const data = (await response.json()) as { article?: string };
+        html = data.article || "";
+      } catch {
+        beeError = "Invalid response from ScrapingBee";
+      }
+    } else {
       let errorMessage = `ScrapingBee error: ${response.status}`;
       try {
         const errJson = await response.json() as { error?: string };
@@ -194,42 +112,12 @@ export default async function handler(
       beeError = errorMessage;
     }
 
-    let data: { article?: string } = {};
-    if (response.ok) {
-      try {
-        data = (await response.json()) as { article?: string };
-      } catch (err) {
-        beeError = "Invalid response from ScrapingBee";
-      }
-    }
-
-    const html = data.article || "";
     let cleaned = "";
     let scrapingBeeWorked = false;
 
     if (html.length >= 100) {
       try {
-        const dom = new JSDOM(html, { url });
-        const doc = dom.window.document;
-        doc.querySelectorAll("style, script, noscript").forEach(el => el.remove());
-        doc.querySelectorAll("div").forEach(div => {
-          const id = div.id || "";
-          if (/^R[35]b8/.test(id) || /ad/i.test(id)) div.remove();
-        });
-        cleaned = doc.body.innerHTML.trim();
-        cleaned = cleanArticleText(cleaned);
-
-        // If still not enough, try Readability
-        if ((!cleaned || cleaned.length < 100) && typeof Readability === "function") {
-          try {
-            const reader = new Readability(doc);
-            const article = reader.parse();
-            if (article && article.content && article.content.length > 100) {
-              cleaned = cleanArticleText(article.content);
-            }
-          } catch {}
-        }
-
+        cleaned = sanitizeArticleHtml(html, url);
         scrapingBeeWorked = !!cleaned && cleaned.length >= 100;
       } catch (jsdomErr: any) {
         beeError = "Could not parse content from ScrapingBee preview.";
@@ -241,7 +129,7 @@ export default async function handler(
       return res.status(200).json({ article: { content: cleaned } });
     }
 
-    // Fallback: try fetching directly with the gold-standard parser
+    // Fallback: try fetching directly
     logParse("ScrapingBee failed/too short, trying direct fetch fallback", { beeError });
     const fallbackResult = await tryDirectFetchAndParse(url);
 

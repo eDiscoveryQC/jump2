@@ -1,4 +1,3 @@
-import Menu from "../components/Menu";
 import styled from "styled-components";
 
 const PageBg = styled.div`
@@ -63,7 +62,6 @@ const CTAButton = styled.a`
 export default function ApiPage() {
   return (
     <PageBg>
-      <Menu />
       <Wrapper>
         <Title>Jump2 API</Title>
         <p>
