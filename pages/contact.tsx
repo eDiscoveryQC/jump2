@@ -74,7 +74,6 @@ const IconList = styled.div`
 export default function ContactPage() {
   return (
     <PageBg>
-      <Menu />
       <Wrapper>
         <Title>Contact Us</Title>
         <Para>

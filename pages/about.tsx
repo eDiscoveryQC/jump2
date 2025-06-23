@@ -66,7 +66,6 @@ const SocialLinks = styled.div`
 export default function About() {
   return (
     <PageBg>
-      <Menu />
       <Wrapper>
         <Headline>We’re Building the Future of Smart Sharing</Headline>
         <Para>

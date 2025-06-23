@@ -64,7 +64,6 @@ const CTA = styled.a`
 export default function HowItWorks() {
   return (
     <PageBg>
-      <Menu />
       <Wrapper>
         <Headline>How Jump2 Works</Headline>
         <Section>
