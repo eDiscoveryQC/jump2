@@ -14,8 +14,14 @@ const FaRedo = () => (
 const FaCheckCircle = () => (
   <span role="img" aria-label="Check" style={{ fontSize: "1.1em", color: "#38a169" }}>✔️</span>
 );
+const FaLink = () => (
+  <span role="img" aria-label="Link" style={{ fontSize: "1.1em" }}>🔗</span>
+);
+const FaQr = () => (
+  <span role="img" aria-label="QR Code" style={{ fontSize: "1.15em" }}>� QR</span>
+);
 
-// --- Styles ---
+// --- Animations & Styles ---
 const fadeIn = keyframes`
   from { opacity: 0; }
   to { opacity: 1; }
@@ -29,7 +35,7 @@ const highlightFlash = keyframes`
 
 const PageContainer = styled.div`
   max-width: 980px;
-  margin: 2.5rem auto 3rem;
+  margin: 2.7rem auto 3rem;
   padding: 0 1.2rem;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   animation: ${fadeIn} 0.45s;
@@ -56,9 +62,9 @@ const OnboardingHint = styled.div`
   color: #2274a5;
   border: 1.5px solid #bee3f8;
   border-radius: 0.6em;
-  font-size: 1.06em;
-  padding: 0.6em 1.1em;
-  margin-bottom: 1.1em;
+  font-size: 1.07em;
+  padding: 0.65em 1.2em;
+  margin-bottom: 1.15em;
   font-weight: 500;
   box-shadow: 0 2px 12px #dbeafe44;
   display: inline-block;
@@ -68,6 +74,7 @@ const Message = styled.p<{ error?: boolean }>`
   color: ${({ error }) => (error ? "#e53e3e" : "#555")};
   font-size: 1.13rem;
   margin: 1.2rem 0;
+  font-weight: ${({ error }) => (error ? 600 : 400)};
 `;
 
 const ShareLinkContainer = styled.div`
@@ -142,10 +149,24 @@ function markHtmlWithHighlightsSafe(html: string, highlights: Highlight[]) {
   return result;
 }
 
+// --- Contextual Snippet Utility ---
+function getContextSnippet(text: string, anchor: string, n = 120) {
+  if (!anchor) return { before: "", anchor: "", after: "" };
+  const idx = text.toLowerCase().indexOf(anchor.toLowerCase());
+  if (idx === -1) return { before: "", anchor: "", after: "" };
+  let before = text.slice(Math.max(0, idx - n), idx);
+  let after = text.slice(idx + anchor.length, idx + anchor.length + n);
+  before = before.replace(/^.*?([.?!])\s/, "$1 ");
+  after = after.replace(/([.?!]).*$/, "$1");
+  return { before, anchor: text.substr(idx, anchor.length), after };
+}
+
 type ArticlePreviewFullProps = {
   url: string;
   initialHighlights?: Highlight[];
   onClose?: () => void;
+  anchor?: string;
+  onAnchorEdit?: (anchor: string) => void;
 };
 
 const KNOWN_SUPPORTED = [
@@ -165,15 +186,21 @@ export default function ArticlePreviewFull({
   url,
   initialHighlights = [],
   onClose,
+  anchor = "",
+  onAnchorEdit,
 }: ArticlePreviewFullProps) {
   // --- State ---
   const [articleHtml, setArticleHtml] = useState<string>("");
+  const [articleText, setArticleText] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [showQr, setShowQr] = useState(false);
+  const [feedback, setFeedback] = useState<"up"|"down"|"">("");
+  const [editAnchor, setEditAnchor] = useState(anchor);
 
   // --- Highlight state ---
   const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights);
@@ -210,6 +237,7 @@ export default function ArticlePreviewFull({
       .then((data) => {
         if (data.article?.content) {
           setArticleHtml(data.article.content);
+          setArticleText(data.article.content.replace(/<[^>]+>/g, " "));
         } else {
           setError(data.error || "Failed to load article content.");
         }
@@ -320,6 +348,19 @@ export default function ArticlePreviewFull({
   const domain = url ? new URL(url).hostname.replace(/^www\./, "") : "";
   const isKnownSupported = KNOWN_SUPPORTED.some((d) => domain.endsWith(d));
 
+  // --- Contextual Snippet
+  const snippet = getContextSnippet(articleText, anchor);
+
+  // --- Editable anchor feedback
+  function handleAnchorEdit(e: React.ChangeEvent<HTMLInputElement>) {
+    const newAnchor = e.target.value;
+    setEditAnchor(newAnchor);
+    onAnchorEdit && onAnchorEdit(newAnchor);
+  }
+
+  // --- QR code logic
+  const [showQRCode, setShowQRCode] = useState(false);
+
   return (
     <PageContainer>
       <TitleRow>
@@ -352,6 +393,97 @@ export default function ArticlePreviewFull({
           Works best for news, blogs, and Wikipedia.
         </OnboardingHint>
       )}
+
+      {/* Anchor editing, copy, QR, and feedback */}
+      {anchor && (
+        <div style={{
+          background: "#f9fafb",
+          borderRadius: 9,
+          boxShadow: "0 1px 6px #dbeafe44",
+          padding: "0.7em 1.2em",
+          marginBottom: "1.1em",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.7em",
+          flexWrap: "wrap"
+        }}>
+          <span style={{ fontWeight: 700, color: "#14314d" }}>Anchor:</span>
+          <input
+            value={editAnchor}
+            onChange={handleAnchorEdit}
+            style={{
+              fontWeight: 600,
+              color: "#17456b",
+              background: "#fff8dc",
+              border: "1.2px solid #ffe066",
+              borderRadius: 7,
+              padding: "0.17em 0.65em",
+              fontSize: "1em",
+              minWidth: 70,
+            }}
+          />
+          <button
+            onClick={() => { navigator.clipboard.writeText(editAnchor); }}
+            style={{
+              background: "#ffe066", color: "#17456b", borderRadius: 6, border: "none", fontWeight: 700, padding: "0.23em 1.05em", cursor: "pointer"
+            }}
+          >
+            <FaCopy /> Copy
+          </button>
+          <button
+            onClick={() => setShowQRCode(q => !q)}
+            style={{
+              background: "#3578e5", color: "#fff", borderRadius: 6, border: "none", fontWeight: 700, padding: "0.23em 1.05em", cursor: "pointer"
+            }}
+          >
+            <FaQr /> {showQRCode ? "Hide" : "QR"}
+          </button>
+          {showQRCode && (
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url + "#:~:text=" + encodeURIComponent(editAnchor))}`}
+              alt="QR code"
+              style={{ marginLeft: 10, background: "#fff", borderRadius: 6 }}
+            />
+          )}
+          <span style={{ flex: 1 }} />
+          <span>
+            <button
+              aria-label="Thumbs up"
+              style={{ background: "none", border: "none", fontSize: "1.2em", cursor: "pointer" }}
+              onClick={() => setFeedback("up")}
+            >👍</button>
+            <button
+              aria-label="Thumbs down"
+              style={{ background: "none", border: "none", fontSize: "1.2em", cursor: "pointer" }}
+              onClick={() => setFeedback("down")}
+            >👎</button>
+          </span>
+          {feedback === "up" && (
+            <span style={{ color: "#38a169", marginLeft: 10, fontWeight: 600 }}><FaCheckCircle /> Thanks!</span>
+          )}
+          {feedback === "down" && (
+            <span style={{ color: "#e53e3e", marginLeft: 10, fontWeight: 600 }}>Sorry! Contact us to help improve.</span>
+          )}
+        </div>
+      )}
+      {/* Contextual snippet */}
+      {anchor && snippet.anchor && (
+        <div style={{
+          fontSize: "1.10em",
+          textAlign: "left",
+          margin: "1.05em 0 1.15em 0",
+          background: "#f9fafb",
+          borderRadius: 8,
+          padding: "0.6em 1em"
+        }}>
+          <span style={{ opacity: 0.6 }}>{snippet.before}</span>
+          <mark style={{
+            background: "#ffe066", color: "#334155", fontWeight: 700, padding: "0 0.13em", borderRadius: "0.33em"
+          }}>{snippet.anchor}</mark>
+          <span style={{ opacity: 0.6 }}>{snippet.after}</span>
+        </div>
+      )}
+
       {loading && (
         <Message>
           <span role="status" aria-live="polite">
