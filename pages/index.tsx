@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback, useLayoutEffect } from "react";
 import styled, { keyframes } from "styled-components";
+import Jump2Logo from "../components/Jump2Logo";
 
 const fontStack = `'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'JetBrains Mono', monospace, sans-serif`;
 
@@ -16,13 +17,6 @@ const pop = keyframes`
 const fadeIn = keyframes`
   from { opacity: 0;}
   to { opacity: 1;}
-`;
-const bounce = keyframes`
-  0%, 100% { transform: translateY(0);}
-  20% { transform: translateY(-4px);}
-  40% { transform: translateY(-18px);}
-  60% { transform: translateY(-8px);}
-  80% { transform: translateY(2px);}
 `;
 
 // --- Layout ---
@@ -72,46 +66,6 @@ const DividerHeader = styled.div`
   border-bottom: 2px solid #1e293b33;
   line-height: 1.1;
   padding-bottom: 0.1em;
-`;
-
-// --- Jump2 Brand Logo: Animated Bouncing ---
-const LogoRow = styled.h1`
-  display: flex;
-  align-items: center;
-  gap: 0.1em;
-  font-size: clamp(2.0rem, 7vw, 3.2rem);
-  font-weight: 900;
-  letter-spacing: -0.04em;
-  user-select: none;
-  margin: 1.1em 0 0.13em 0;
-  font-family: 'Inter', ui-sans-serif;
-  background: none;
-  justify-content: center;
-  text-shadow: 0 2px 16px #2563eb22, 0 1.5px 0 #ffe06611;
-  animation: ${bounce} 1.9s cubic-bezier(.71,-0.15,.34,1.36) infinite;
-`;
-
-const LogoText = styled.span`
-  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-  font-weight: 900;
-  display: inline-block;
-  letter-spacing: -0.03em;
-  line-height: 1.03;
-`;
-
-const LogoTwo = styled.span`
-  color: #ffd100;
-  font-size: 1.07em;
-  font-weight: 900;
-  margin-left: 0.06em;
-  text-shadow: 0 0 18px #3b82f6aa, 0 0.5px 0 #ffd10044;
-  display: inline-block;
-  animation: ${bounce} 1.3s cubic-bezier(.71,-0.15,.34,1.36) infinite;
-  animation-delay: 0.5s;
 `;
 
 // --- Feedback Button ---
@@ -673,10 +627,10 @@ export default function Home() {
         </div>
       )}
 
-      <LogoRow>
-        <LogoText>Jump</LogoText>
-        <LogoTwo>2</LogoTwo>
-      </LogoRow>
+      {/* EXECUTIVE LOGO */}
+      <div style={{ display: "flex", justifyContent: "center", margin: "2.3em 0 1.2em 0" }}>
+        <Jump2Logo />
+      </div>
 
       <DividerHeader>Jump2 in Action</DividerHeader>
       <WideGrid>
