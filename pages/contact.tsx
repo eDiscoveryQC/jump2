@@ -80,7 +80,7 @@ export default function ContactPage() {
           Have a question, feedback, or want to partner? Reach out to the Jump2 team!
         </Para>
         <IconList>
-          <a href="mailto:hello@jump2.sh" aria-label="Email">
+          <a href="mailto:support@jump2share.com" aria-label="Email">
             <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="5" fill="#67b7fd"/><path d="M6 8v8h12V8H6Zm10 0-4 3.5L8 8" stroke="#fff" strokeWidth="1.3" strokeLinejoin="round"/></svg>
             Email
           </a>
@@ -94,7 +94,7 @@ export default function ContactPage() {
           </a>
         </IconList>
         <Para>
-          For direct support or inquiries, just email us at <SocialLink href="mailto:hello@jump2.sh">hello@jump2.sh</SocialLink>.<br />
+          For direct support or inquiries, just email us at <SocialLink href="mailto:support@jump2share.com">support@jump2share.com</SocialLink>.<br />
           We respond fast!
         </Para>
       </Wrapper>
