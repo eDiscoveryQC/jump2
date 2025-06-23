@@ -3,115 +3,111 @@ import { useEffect, useState } from "react";
 
 const FooterBar = styled.footer.attrs({ role: "contentinfo" })`
   width: 100%;
-  background: rgba(16,23,45,0.97);
+  background: rgba(16, 23, 45, 0.97);
   color: #b8c6e4;
   text-align: center;
   padding: 2em 1em 1.3em 1em;
-  font-size: 1.07em;
-  margin-top: 3em;
+  font-size: 1.05em;
   border-top: 1.5px solid #23305c;
   box-shadow: 0 -2px 24px #0ea5e922;
-  letter-spacing: 0.02em;
 `;
 
 const FooterContainer = styled.div`
-  max-width: 900px;
+  max-width: 960px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 1em;
   align-items: center;
+  gap: 1em;
 `;
 
 const SocialLinks = styled.nav.attrs({ "aria-label": "Social media" })`
-  margin-bottom: 0.7em;
   display: flex;
-  gap: 1.5em;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.2em;
   a {
     color: #67b7fd;
-    font-size: 1.23em;
-    font-weight: 800;
+    font-size: 1.2em;
+    font-weight: 700;
     text-decoration: none;
-    transition: color 0.16s, transform 0.16s;
     display: inline-flex;
     align-items: center;
-    gap: 0.48em;
+    gap: 0.5em;
+    transition: all 0.18s ease-in-out;
+    padding: 0.3em 0.6em;
     border-radius: 0.4em;
-    padding: 0.13em 0.34em;
-    &:hover, &:focus {
+
+    &:hover,
+    &:focus {
       color: #ffe066;
-      text-shadow: 0 0 4px #ffe066bb;
-      transform: scale(1.12);
-      outline: 2px solid #ffe06644;
-      background: #22305044;
+      background: #1e293b44;
+      outline: 2px solid #ffe06688;
+      transform: scale(1.08);
     }
+
     svg {
-      display: inline-block;
-      vertical-align: middle;
-      font-size: 1.3em;
+      font-size: 1.4em;
     }
   }
 `;
 
 const PolicyLinks = styled.div`
   display: flex;
-  gap: 1.1em;
-  font-size: 0.99em;
-  margin-bottom: 0.2em;
   flex-wrap: wrap;
   justify-content: center;
+  gap: 1em;
+  font-size: 0.95em;
   a {
     color: #93b4e9;
-    text-decoration: none;
     font-weight: 600;
-    transition: color 0.16s;
-    border-radius: 0.3em;
-    padding: 0.08em 0.3em;
-    &:hover, &:focus {
+    text-decoration: none;
+    transition: color 0.18s ease;
+
+    &:hover,
+    &:focus {
       color: #3b82f6;
       text-decoration: underline;
-      outline: 2px solid #3b82f688;
       background: #1e293b33;
+      outline: 2px solid #3b82f688;
+      border-radius: 0.3em;
     }
   }
 `;
 
 const Copyright = styled.div`
-  margin-top: 0.3em;
-  font-size: 0.98em;
+  font-size: 0.94em;
   color: #6a7996;
   font-weight: 500;
 `;
 
 const BackToTop = styled.button`
+  position: fixed;
+  right: 1.4em;
+  bottom: 1.4em;
+  padding: 0.6em 1.3em;
+  font-size: 1em;
+  font-weight: bold;
+  border: none;
+  border-radius: 0.8em;
   background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
   color: #fff;
-  font-weight: 800;
-  padding: 0.55em 1.4em;
-  border: none;
-  border-radius: 0.7em;
-  box-shadow: 0 3px 14px #2563eb44;
-  position: fixed;
-  right: 2.2em;
-  bottom: 2.2em;
-  z-index: 9999;
+  box-shadow: 0 4px 16px #2563eb66;
   cursor: pointer;
-  font-size: 1.07em;
-  opacity: 0.94;
-  transition: background 0.16s, box-shadow 0.16s, transform 0.17s, opacity 0.2s;
   display: ${({ visible }: { visible: boolean }) => (visible ? "inline-block" : "none")};
-  &:hover, &:focus {
+  opacity: 0.94;
+  transition: all 0.2s ease;
+
+  &:hover,
+  &:focus {
+    transform: scale(1.1);
     background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
-    box-shadow: 0 8px 32px #2563eb44;
     outline: 2px solid #fff200;
-    transform: scale(1.08);
-    opacity: 1;
   }
+
   @media (max-width: 700px) {
-    right: 1em;
-    bottom: 1em;
-    font-size: 1em;
-    padding: 0.48em 1.1em;
+    font-size: 0.9em;
+    padding: 0.5em 1.1em;
   }
 `;
 
@@ -141,20 +137,23 @@ export default function Footer() {
             GitHub
           </a>
         </SocialLinks>
+
         <PolicyLinks>
           <a href="/privacy">Privacy</a>
           <a href="/terms">Terms</a>
           <a href="/status">Status</a>
           <a href="mailto:support@jump2share.com">Contact</a>
         </PolicyLinks>
+
         <Copyright>
           &copy; {new Date().getFullYear()} Jump2. All rights reserved.
         </Copyright>
       </FooterContainer>
+
       <BackToTop
         visible={showTop}
-        aria-label="Back to top"
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        aria-label="Back to top"
         tabIndex={showTop ? 0 : -1}
       >
         ↑ Top

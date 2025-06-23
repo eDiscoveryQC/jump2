@@ -1,4 +1,3 @@
-import Menu from "../components/Menu";
 import styled from "styled-components";
 
 const PageBg = styled.div`
@@ -49,7 +48,6 @@ const Link = styled.a`
 export default function PrivacyPage() {
   return (
     <PageBg>
-      <Menu />
       <Wrapper>
         <Title>Privacy Policy</Title>
         <p>

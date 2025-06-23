@@ -1,4 +1,3 @@
-import Menu from "../components/Menu";
 import styled from "styled-components";
 
 const PageBg = styled.div`
@@ -67,7 +66,6 @@ export default function StatusPage() {
   const status = "operational";
   return (
     <PageBg>
-      <Menu />
       <Wrapper>
         <Title>
           <StatusDot status={status} /> Jump2 System Status
