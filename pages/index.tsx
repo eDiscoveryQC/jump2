@@ -36,28 +36,40 @@ const Bg = styled.div`
   animation: ${fadeIn} 1s;
 `;
 
-// --- Animated Section Divider ---
-const Divider = styled.div`
-  width: 100%;
-  max-width: 820px;
-  margin: 2.5em auto 1.6em auto;
+// --- Main layout grid ---
+const WideGrid = styled.div`
   display: flex;
-  align-items: center;
-  gap: 0.8em;
+  max-width: 1100px;
+  gap: 2.5rem;
+  margin: 0 auto 2.7rem auto;
+  align-items: flex-start;
+  @media (max-width: 1100px) { padding: 0 1rem; }
+  @media (max-width: 900px) { flex-direction: column; gap: 1.4rem; }
+`;
+
+const Card = styled.div<{ tight?: boolean }>`
+  background: rgba(16,23,45,0.97);
+  border-radius: 1.15em;
+  box-shadow: 0 8px 32px 0 #1e293b33,0 0 0 2.5px #2563eb77;
+  padding: ${({ tight }) => (tight ? "1.2em 1.2em 1em" : "2.1em 1.7em 2em")};
+  animation: ${fadeIn} 0.7s;
+  position: relative;
+  flex: 1 1 0%;
+  min-width: 0;
+  @media (max-width: 900px) { margin-bottom: 1.5em; }
+`;
+
+const DividerHeader = styled.div`
+  width: 100%;
   text-align: center;
-  font-weight: 800;
+  margin: 1.7em 0 1.1em 0;
   color: #93b4e9;
-  letter-spacing: 0.07em;
-  font-size: 1.13em;
-  text-shadow: 0 1px 10px #1e293b24;
-  &:before, &:after {
-    content: '';
-    flex: 1;
-    height: 2px;
-    border-radius: 2px;
-    background: linear-gradient(90deg, #22427e33 50%, #7dd3fc33 100%);
-    animation: ${gradient} 3.5s linear infinite alternate;
-  }
+  font-size: 1.18em;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  border-bottom: 2px solid #1e293b33;
+  line-height: 1.1;
+  padding-bottom: 0.1em;
 `;
 
 // --- Top Bar ---
@@ -115,14 +127,17 @@ const TopNav = styled.nav`
 `;
 
 // --- Hero & Branding ---
-const Hero = styled.section`
+const HeroRow = styled.div`
+  max-width: 1020px;
+  margin: 3.2em auto 2.3em auto;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin: 2.5em auto 2.5em auto;
-  max-width: 820px;
-  width: 100%;
-  @media (max-width: 600px) { margin: 1.4em auto 1.2em auto; align-items: center;}
+  align-items: flex-end;
+  gap: 2.3em;
+  @media (max-width: 900px) { flex-direction: column; align-items: center; margin-top: 2em; gap: 0.9em;}
+`;
+const HeroTextCol = styled.div`
+  flex: 1.4;
+  min-width: 0;
 `;
 const LogoRow = styled.h1`
   display: flex;
@@ -198,34 +213,7 @@ const TrustLogo = styled.img`
   border-radius: 4px;
 `;
 
-// --- Card ---
-const Card = styled.div`
-  background: rgba(16,23,45,0.97);
-  border-radius: 1.15em;
-  box-shadow: 0 8px 32px 0 #1e293b33,0 0 0 2.5px #2563eb77;
-  padding: 2.1em 1.7em 2em;
-  animation: ${fadeIn} 0.7s;
-  position: relative;
-  margin: 0 auto 2em auto;
-  max-width: 570px;
-  width: 100%;
-  @media (max-width: 700px) { padding: 1.07em 0.3em 1.3em; }
-`;
-
-const SectionHeader = styled.div`
-  font-size: 1.17em;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: #93b4e9;
-  margin: 0 auto 1.13em auto;
-  border-bottom: 2px solid #22427e44;
-  width: fit-content;
-  padding-bottom: 0.22em;
-  font-family: 'JetBrains Mono', monospace;
-  text-align: center;
-`;
-
+// --- Input, ShareBar, Preview, etc. ---
 const InputRow = styled.form`
   display: flex;
   flex-direction: column;
@@ -303,7 +291,6 @@ const HowItWorks = styled.div`
   }
 `;
 
-// --- Share Bar ---
 const ShareBarWrapper = styled.div`
   width: 100%;
   display: flex;
@@ -403,7 +390,6 @@ const Skeleton = styled.div`
   animation: ${gradient} 1.3s linear infinite;
 `;
 
-// --- Preview ---
 const PreviewCard = styled(Card)`
   min-height: 420px;
   max-height: 79vh;
@@ -848,196 +834,197 @@ export default function Home() {
           <a href="/contact">Contact</a>
         </TopNav>
       </TopBar>
-
-      <Hero>
-        <LogoRow>
-          <LogoText>Jump</LogoText>
-          <LogoTwo>2</LogoTwo>
-        </LogoRow>
-        <Slogan>
-          The world’s crispest way to jump to the best.
-        </Slogan>
-        <HeroDesc>
-          Instantly link anyone to the <strong>exact spot</strong> in any article or video.<br />
-          <span style={{color:"#ffe066", fontWeight:600}}>No sign-ups. No friction. Just highlight. Just share.</span>
-        </HeroDesc>
-        <TrustBar>
-          <span>
-            <svg height="19" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#60a5fa" /><text x="10" y="15" textAnchor="middle" fontSize="12" fill="#fff">✓</text></svg>
-            Trusted by teams & creators worldwide
-          </span>
-          <span>
-            <TrustLogo src="/trusted-logo1.png" alt="Trusted brand 1" />
-            <TrustLogo src="/trusted-logo2.png" alt="Trusted brand 2" />
-            <TrustLogo src="/trusted-logo3.png" alt="Trusted brand 3" />
-            <span style={{color:"#60a5fa", fontWeight:600}}>and more…</span>
-          </span>
-        </TrustBar>
-      </Hero>
-
-      <Divider>Anchor & Share</Divider>
-      <Card>
-        <SectionHeader>Paste your link</SectionHeader>
-        <InputRow onSubmit={handleSubmit}>
-          <Input
-            type="url"
-            required
-            placeholder="Paste article or YouTube URL…"
-            value={link}
-            onChange={e => setLink(e.target.value)}
-            autoFocus
-            aria-label="Paste article or YouTube URL"
-          />
-          <Button type="submit" primary>Preview</Button>
-        </InputRow>
-        <Tip>
-          <b>Tip:</b> Works for news, blogs, Wikipedia, YouTube, and more!
-        </Tip>
-        <ExampleLinks>
-          Examples:&nbsp;
-          {EXAMPLES.map(({ url, text }, i) => (
-            <a key={i} onClick={() => { setLink(url); setAnchor(text); setShowPreview(false); setTimeout(() => setShowPreview(true), 75); }}>
-              {url.replace(/^https?:\/\//, '').split("/")[0]}
-            </a>
-          ))}
-        </ExampleLinks>
-        <HowItWorks>
-          <b>How it works:</b>
-          <ul>
-            <li>Paste a link above (“Paste” or drag & drop!)</li>
-            <li>Preview loads. Find the spot to anchor: search a phrase, or select text.</li>
-            <li>Click <b>Share</b> and copy your Jump2 link!</li>
-          </ul>
-        </HowItWorks>
-      </Card>
-      <Divider>Preview & Highlight</Divider>
-      <ShareBarWrapper>
-        <ShareBar>
-          <ShareInput
-            type="text"
-            readOnly
-            tabIndex={0}
-            value={shortUrl ? shortUrl : "Your Jump2 link appears here…"}
-            aria-label="Jump2 shareable link"
-            style={{minWidth: 200, flexBasis: "40%"}}
-            onFocus={e => e.target.select()}
-          />
-          <ShareActions>
-            <CopyBtn
-              ref={copyBtnRef}
-              type="button"
-              onClick={shortUrl ? handleCopy : handleShare}
-              aria-label={shortUrl ? "Copy jump link to clipboard" : "Generate jump link"}
-            >
-              {shortUrl ? "Copy" : "Share"}
-            </CopyBtn>
-            {shortUrl &&
-              <a href={shortUrl} target="_blank" rel="noopener noreferrer" tabIndex={0}
-                style={{color:"#3b82f6", fontWeight:700, textDecoration:"none"}}>
-                Open ↗
+      <HeroRow>
+        <HeroTextCol>
+          <LogoRow>
+            <LogoText>Jump</LogoText>
+            <LogoTwo>2</LogoTwo>
+          </LogoRow>
+          <Slogan>
+            The world’s crispest way to jump to the best.
+          </Slogan>
+          <HeroDesc>
+            Instantly link anyone to the <strong>exact spot</strong> in any article or video.<br />
+            <span style={{color:"#ffe066", fontWeight:600}}>No sign-ups. No friction. Just highlight. Just share.</span>
+          </HeroDesc>
+          <TrustBar>
+            <span>
+              <svg height="19" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#60a5fa" /><text x="10" y="15" textAnchor="middle" fontSize="12" fill="#fff">✓</text></svg>
+              Trusted by teams & creators worldwide
+            </span>
+            <span>
+              <TrustLogo src="/trusted-logo1.png" alt="Trusted brand 1" />
+              <TrustLogo src="/trusted-logo2.png" alt="Trusted brand 2" />
+              <TrustLogo src="/trusted-logo3.png" alt="Trusted brand 3" />
+              <span style={{color:"#60a5fa", fontWeight:600}}>and more…</span>
+            </span>
+          </TrustBar>
+        </HeroTextCol>
+      </HeroRow>
+      <DividerHeader>Jump2 in Action</DividerHeader>
+      <WideGrid>
+        {/* LEFT: Paste, anchor, how-to */}
+        <Card tight>
+          <InputRow onSubmit={handleSubmit}>
+            <Input
+              type="url"
+              required
+              placeholder="Paste article or YouTube URL…"
+              value={link}
+              onChange={e => setLink(e.target.value)}
+              autoFocus
+              aria-label="Paste article or YouTube URL"
+            />
+            <Button type="submit" primary>Preview</Button>
+          </InputRow>
+          <Tip>
+            <b>Tip:</b> Works for news, blogs, Wikipedia, YouTube, and more!
+          </Tip>
+          <ExampleLinks>
+            Examples:&nbsp;
+            {EXAMPLES.map(({ url, text }, i) => (
+              <a key={i} onClick={() => { setLink(url); setAnchor(text); setShowPreview(false); setTimeout(() => setShowPreview(true), 75); }}>
+                {url.replace(/^https?:\/\//, '').split("/")[0]}
               </a>
-            }
-          </ShareActions>
-          {debouncedAnchor && (
-            <>
-              <span style={{
-                background:"rgba(255,224,102,0.20)",
-                color:"#ffe066",
-                borderRadius:6,
-                padding:"0.15em 0.5em",
-                fontWeight:800,
-                marginLeft:"0.8em",
-                fontSize:"1.03em",
-                fontFamily: "'JetBrains Mono', monospace"
-              }}>
-                Anchor: {debouncedAnchor}
-              </span>
-              <Button style={{
-                marginLeft: "0.8em",
-                background: "#172554",
-                color: "#ffe066",
-                fontWeight: 700,
-                padding: "0.45em 1.1em",
-                borderRadius: "0.3em",
-                fontSize: "0.98em"
-              }} onClick={handleClearAnchor} type="button" aria-label="Clear anchor">
+            ))}
+          </ExampleLinks>
+          <HowItWorks>
+            <b>How it works:</b>
+            <ul>
+              <li>Paste a link (“Paste” or drag & drop!)</li>
+              <li>Preview loads. Highlight or search for a phrase.</li>
+              <li>Click <b>Share</b> and copy your Jump2 link!</li>
+            </ul>
+          </HowItWorks>
+        </Card>
+        {/* RIGHT: Share bar, search/anchor, preview */}
+        <div style={{flex: 1.6, minWidth:0}}>
+          <ShareBarWrapper>
+            <ShareBar>
+              <ShareInput
+                type="text"
+                readOnly
+                tabIndex={0}
+                value={shortUrl ? shortUrl : "Your Jump2 link appears here…"}
+                aria-label="Jump2 shareable link"
+                style={{minWidth: 200, flexBasis: "40%"}}
+                onFocus={e => e.target.select()}
+              />
+              <ShareActions>
+                <CopyBtn
+                  ref={copyBtnRef}
+                  type="button"
+                  onClick={shortUrl ? handleCopy : handleShare}
+                  aria-label={shortUrl ? "Copy jump link to clipboard" : "Generate jump link"}
+                >
+                  {shortUrl ? "Copy" : "Share"}
+                </CopyBtn>
+                {shortUrl &&
+                  <a href={shortUrl} target="_blank" rel="noopener noreferrer" tabIndex={0}
+                    style={{color:"#3b82f6", fontWeight:700, textDecoration:"none"}}>
+                    Open ↗
+                  </a>
+                }
+              </ShareActions>
+              {debouncedAnchor && (
+                <>
+                  <span style={{
+                    background:"rgba(255,224,102,0.20)",
+                    color:"#ffe066",
+                    borderRadius:6,
+                    padding:"0.15em 0.5em",
+                    fontWeight:800,
+                    marginLeft:"0.8em",
+                    fontSize:"1.03em",
+                    fontFamily: "'JetBrains Mono', monospace"
+                  }}>
+                    Anchor: {debouncedAnchor}
+                  </span>
+                  <Button style={{
+                    marginLeft: "0.8em",
+                    background: "#172554",
+                    color: "#ffe066",
+                    fontWeight: 700,
+                    padding: "0.45em 1.1em",
+                    borderRadius: "0.3em",
+                    fontSize: "0.98em"
+                  }} onClick={handleClearAnchor} type="button" aria-label="Clear anchor">
+                    Clear
+                  </Button>
+                </>
+              )}
+            </ShareBar>
+          </ShareBarWrapper>
+          <form
+            onSubmit={e => {e.preventDefault(); setAnchor(searchPhrase.trim());}}
+            style={{marginBottom:"1em", display:"flex", gap:"0.6em", alignItems:"center"}}
+            aria-label="Anchor phrase search"
+          >
+            <Input
+              type="text"
+              placeholder="Search or type a phrase to anchor/highlight…"
+              value={searchPhrase}
+              onChange={e => {
+                setSearchPhrase(e.target.value);
+                setAnchor(e.target.value.trim());
+              }}
+              aria-label="Search phrase to anchor"
+              style={{flex:"1 1 0%", fontSize:"0.95em"}}
+            />
+            {searchPhrase && (
+              <Button type="button" onClick={handleClearAnchor}>
                 Clear
               </Button>
-            </>
-          )}
-        </ShareBar>
-      </ShareBarWrapper>
-      <div style={{position:"relative", maxWidth:820, margin:"0 auto"}}>
-        <form
-          onSubmit={e => {e.preventDefault(); setAnchor(searchPhrase.trim());}}
-          style={{marginBottom:"1.2em", display:"flex", gap:"0.6em", alignItems:"center"}}
-          aria-label="Anchor phrase search"
-        >
-          <Input
-            type="text"
-            placeholder="Search or type a phrase to anchor/highlight…"
-            value={searchPhrase}
-            onChange={e => {
-              setSearchPhrase(e.target.value);
-              setAnchor(e.target.value.trim());
-            }}
-            aria-label="Search phrase to anchor"
-            style={{flex:"1 1 0%", fontSize:"1.07em"}}
-          />
-          {searchPhrase && (
-            <Button type="button" onClick={handleClearAnchor}>
-              Clear
-            </Button>
-          )}
-        </form>
-        <PreviewCard>
-          {/* Article/video preview */}
-          {loadingPreview && <Loader />}
-          {!loadingPreview && (() => {
-            try {
-              const urlObj = new URL(link);
-              if (isYouTubeUrl(urlObj)) {
+            )}
+          </form>
+          <PreviewCard>
+            {loadingPreview && <Loader />}
+            {!loadingPreview && (() => {
+              try {
+                const urlObj = new URL(link);
+                if (isYouTubeUrl(urlObj)) {
+                  return (
+                    <>
+                      <YouTubePlayer url={link} startSeconds={parsedSeconds} />
+                      <div style={{marginTop:"1em", color:"#b5c7e4", fontSize:"0.96em"}}>
+                        Enter a timestamp (e.g. <b>1:23</b>) above to create a Jump2 link to that moment.
+                      </div>
+                    </>
+                  );
+                }
+              } catch {}
+              if (error) {
+                return <div style={{ color: "#f87171", fontWeight: 600, marginTop: "1.3em" }}>{error}</div>;
+              }
+              if (!articleContent && !error) {
                 return (
                   <>
-                    <YouTubePlayer url={link} startSeconds={parsedSeconds} />
-                    <div style={{marginTop:"1.5em", color:"#b5c7e4", fontSize:"1.08em"}}>
-                      Enter a timestamp (e.g. <b>1:23</b>) above to create a Jump2 link to that moment.
-                    </div>
+                    <Skeleton style={{width:"95%"}} />
+                    <Skeleton style={{width:"85%"}} />
+                    <Skeleton style={{width:"65%"}} />
                   </>
                 );
               }
-            } catch {}
-            if (error) {
-              return <div style={{ color: "#f87171", fontWeight: 600, marginTop: "2.1em" }}>{error}</div>;
-            }
-            if (!articleContent && !error) {
-              return (
-                <>
-                  <Skeleton style={{width:"95%"}} />
-                  <Skeleton style={{width:"85%"}} />
-                  <Skeleton style={{width:"65%"}} />
-                </>
-              );
-            }
-            let html = articleContent;
-            if (html && debouncedAnchor) {
-              html = highlightHtml(html, debouncedAnchor);
-            }
-            if (html) {
-              return (
-                <div
-                  ref={previewRef}
-                  tabIndex={0}
-                  style={{outline:"none", cursor:"text", userSelect:"text"}}
-                  dangerouslySetInnerHTML={{ __html: html }}
-                  aria-label="Article preview"
-                />
-              );
-            }
-            return null;
-          })()}
-        </PreviewCard>
-      </div>
+              let html = articleContent;
+              if (html && debouncedAnchor) {
+                html = highlightHtml(html, debouncedAnchor);
+              }
+              if (html) {
+                return (
+                  <div
+                    ref={previewRef}
+                    tabIndex={0}
+                    style={{outline:"none", cursor:"text", userSelect:"text"}}
+                    dangerouslySetInnerHTML={{ __html: html }}
+                    aria-label="Article preview"
+                  />
+                );
+              }
+              return null;
+            })()}
+          </PreviewCard>
+        </div>
+      </WideGrid>
       {showToast && (
         <ShareToast>
           Link copied!
@@ -1064,7 +1051,6 @@ export default function Home() {
           100% { box-shadow: 0 0 0 0 rgba(255,209,0,0);}
         }
       `}</style>
-      {/* Lightbox modal for first-time users */}
       {showLightbox && (
         <LightboxOverlay>
           <LightboxCard>
