@@ -1,10 +1,18 @@
+import Menu from "../components/Menu";
 import styled from "styled-components";
+
+const PageBg = styled.div`
+  min-height: 100vh;
+  background: #0e1a2b;
+  display: flex;
+  flex-direction: column;
+`;
 
 const Wrapper = styled.div`
   background: rgba(16,23,45,0.97);
   border-radius: 1.15em;
   max-width: 780px;
-  margin: 2em auto;
+  margin: 3.5em auto 2em;
   padding: 2.8em 2em 2.2em 2em;
   box-shadow: 0 8px 32px 0 #1e293b33, 0 0 0 2.5px #2563eb77;
 `;
@@ -53,36 +61,39 @@ const SocialLinks = styled.div`
 
 export default function About() {
   return (
-    <Wrapper>
-      <Headline>We’re Building the Future of Smart Sharing</Headline>
-      <Para>
-        Jump2 is a content sharing technology platform that helps people extract, highlight, and share exactly what matters — instantly.
-      </Para>
-      <Para>
-        We believe in a more thoughtful internet. One where links take you to ideas, not just pages.
-      </Para>
-      <SectionTitle>Our Mission:</SectionTitle>
-      <Para>
-        To make sharing knowledge as easy as highlighting a word.
-      </Para>
-      <SectionTitle>Built For:</SectionTitle>
-      <ul>
-        <li>Everyday readers</li>
-        <li>Journalists &amp; content creators</li>
-        <li>Developers building with precision</li>
-        <li>Educators, researchers, and lifelong learners</li>
-      </ul>
-      <FounderNote>
-        <b>Founder’s Note:</b><br />
-        We created Jump2 because we were tired of hunting through long pages just to find one line. Now, with smart links and shareable highlights, we hope to make every conversation clearer, faster, and more meaningful.<br /><br />
-        Want to work with us?<br />
-        Contact us or follow our journey on LinkedIn or Twitter.
-      </FounderNote>
-      <SocialLinks>
-        <a href="mailto:support@jump2share.com">Contact</a>
-        <a href="https://linkedin.com/company/jump2share" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-        <a href="https://x.com/jump2share" target="_blank" rel="noopener noreferrer">Twitter</a>
-      </SocialLinks>
-    </Wrapper>
+    <PageBg>
+      <Menu />
+      <Wrapper>
+        <Headline>We’re Building the Future of Smart Sharing</Headline>
+        <Para>
+          Jump2 is a content sharing technology platform that helps people extract, highlight, and share exactly what matters — instantly.
+        </Para>
+        <Para>
+          We believe in a more thoughtful internet. One where links take you to ideas, not just pages.
+        </Para>
+        <SectionTitle>Our Mission:</SectionTitle>
+        <Para>
+          To make sharing knowledge as easy as highlighting a word.
+        </Para>
+        <SectionTitle>Built For:</SectionTitle>
+        <ul>
+          <li>Everyday readers</li>
+          <li>Journalists &amp; content creators</li>
+          <li>Developers building with precision</li>
+          <li>Educators, researchers, and lifelong learners</li>
+        </ul>
+        <FounderNote>
+          <b>Founder’s Note:</b><br />
+          We created Jump2 because we were tired of hunting through long pages just to find one line. Now, with smart links and shareable highlights, we hope to make every conversation clearer, faster, and more meaningful.<br /><br />
+          Want to work with us?<br />
+          Contact us or follow our journey on LinkedIn or Twitter.
+        </FounderNote>
+        <SocialLinks>
+          <a href="mailto:hello@jump2.sh">Contact</a>
+          <a href="https://linkedin.com/company/jump2share" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+          <a href="https://x.com/jump2share" target="_blank" rel="noopener noreferrer">Twitter</a>
+        </SocialLinks>
+      </Wrapper>
+    </PageBg>
   );
 }

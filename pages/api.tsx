@@ -1,10 +1,18 @@
+import Menu from "../components/Menu";
 import styled from "styled-components";
+
+const PageBg = styled.div`
+  min-height: 100vh;
+  background: #0e1a2b;
+  display: flex;
+  flex-direction: column;
+`;
 
 const Wrapper = styled.div`
   background: rgba(16,23,45,0.97);
   border-radius: 1.15em;
   max-width: 780px;
-  margin: 2em auto;
+  margin: 3.5em auto 2em;
   padding: 2.7em 2em 2.3em 2em;
   box-shadow: 0 8px 32px 0 #1e293b33, 0 0 0 2.5px #2563eb77;
 `;
@@ -54,24 +62,29 @@ const CTAButton = styled.a`
 
 export default function ApiPage() {
   return (
-    <Wrapper>
-      <Title>Jump2 API</Title>
-      <p>
-        Power up your platform by integrating Jump2’s smart content highlights. Our API makes it easy to extract, clip, and share key moments from articles, videos (including YouTube!), documents, and more.
-      </p>
-      <SubTitle>What You Can Do:</SubTitle>
-      <List>
-        <li>Extract highlights and generate shareable links via REST</li>
-        <li>Retrieve user-generated clips from any article or video</li>
-        <li>Embed Jump2’s magic into your apps and workflows</li>
-      </List>
-      <SubTitle>Get Started</SubTitle>
-      <p>
-        Ready to build? Check out our <a href="mailto:support@jump2.sh" style={{color:'#ffe066', fontWeight:700}}>developer docs</a> or email us for API access.
-      </p>
-      <CTAButton href="mailto:support@jump2.sh">
-        Request API Access
-      </CTAButton>
-    </Wrapper>
+    <PageBg>
+      <Menu />
+      <Wrapper>
+        <Title>Jump2 API</Title>
+        <p>
+          Power up your platform by integrating Jump2’s smart content highlights. Our API makes it easy to extract, clip, and share key moments from articles, videos (including YouTube!), documents, and more.
+        </p>
+        <SubTitle>What You Can Do:</SubTitle>
+        <List>
+          <li>Extract highlights and generate shareable links via REST</li>
+          <li>Retrieve user-generated clips from any article or video</li>
+          <li>Embed Jump2’s magic into your apps and workflows</li>
+        </List>
+        <SubTitle>Get Started</SubTitle>
+        <p>
+          Ready to build? Check out our{" "}
+          <a href="mailto:hello@jump2.sh" style={{color:'#ffe066', fontWeight:700}}>developer docs</a>
+          {" "}or email us for API access.
+        </p>
+        <CTAButton href="mailto:hello@jump2.sh">
+          Request API Access
+        </CTAButton>
+      </Wrapper>
+    </PageBg>
   );
 }
