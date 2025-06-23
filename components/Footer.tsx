@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { useEffect, useState } from "react";
 
 const FooterBar = styled.footer.attrs({ role: "contentinfo" })`
   width: 100%;
@@ -114,8 +115,6 @@ const BackToTop = styled.button`
   }
 `;
 
-import { useEffect, useState } from "react";
-
 export default function Footer() {
   const [showTop, setShowTop] = useState(false);
 
@@ -143,10 +142,10 @@ export default function Footer() {
           </a>
         </SocialLinks>
         <PolicyLinks>
-          <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a>
-          <a href="/terms" target="_blank" rel="noopener noreferrer">Terms</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+          <a href="/status">Status</a>
           <a href="mailto:support@jump2share.com">Contact</a>
-          <a href="https://status.jump2share.com" target="_blank" rel="noopener noreferrer">Status</a>
         </PolicyLinks>
         <Copyright>
           &copy; {new Date().getFullYear()} Jump2. All rights reserved.
