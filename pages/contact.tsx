@@ -98,7 +98,6 @@ export default function ContactPage() {
           We respond fast!
         </Para>
       </Wrapper>
-      <Footer />
     </PageBg>
   );
 }

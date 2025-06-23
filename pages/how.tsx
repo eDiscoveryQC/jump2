@@ -96,7 +96,6 @@ export default function HowItWorks() {
         </Section>
         <CTA href="/upload">Try Jump2 Now</CTA>
       </Wrapper>
-      <Footer />
     </PageBg>
   );
 }
