@@ -1,136 +1,72 @@
 import styled from "styled-components";
-import { useLayoutEffect, useRef } from "react";
 
-// Elite color palette
-const blue = "#1546ef";
-const blueLight = "#2f6cf6";
-const gold = "#ffd700";
+// Bold, energetic blue gradient
+const gradA = "#2439ff";
+const gradB = "#20e1ff";
+const accent = "#ffb300"; // elite gold
 
-// Ultra-tight, elite logo wrapper
-const LogoWrap = styled.h1`
-  font-family: 'Inter', 'JetBrains Mono', ui-sans-serif, system-ui, sans-serif;
+const LogoWrap = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  user-select: none;
+`;
+
+const Wordmark = styled.span`
+  font-family: "Geist", "Inter", "Plus Jakarta Sans", "ui-sans-serif", "system-ui", sans-serif;
   font-weight: 900;
-  font-size: clamp(1.25rem, 3.6vw, 2.2rem);
-  color: ${blue};
-  margin: 0;
+  font-size: 2.08em;
+  color: ${gradA};
+  letter-spacing: -0.012em;
+  line-height: 1;
   display: flex;
   align-items: flex-end;
-  gap: 0.07em;
-  user-select: none;
-  position: relative;
-  line-height: 1.08;
+  > sup {
+    font-size: 0.60em;
+    color: ${accent};
+    font-weight: 900;
+    margin-left: 0.13em;
+    margin-bottom: 0.21em;
+    letter-spacing: 0.03em;
+  }
 `;
 
-const JContainer = styled.span`
-  position: relative;
-  display: inline-block;
-  min-width: 1.08em;
-`;
+// Icon: Abstract "J" + sharing rays + content node
+const Icon = () => (
+  <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+    <defs>
+      <linearGradient id="j2g1" x1="9" y1="8" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+        <stop stopColor={gradA}/>
+        <stop offset="1" stopColor={gradB}/>
+      </linearGradient>
+      <linearGradient id="j2g2" x1="35" y1="18" x2="28" y2="38" gradientUnits="userSpaceOnUse">
+        <stop stopColor={accent}/>
+        <stop offset="1" stopColor={gradB}/>
+      </linearGradient>
+    </defs>
+    {/* Iconic J with energy beams/rays */}
+    <path
+      d="M12 9 Q12 34 29 36 Q39 37 37 21 Q36 13 19 13"
+      stroke="url(#j2g1)"
+      strokeWidth="5.2"
+      strokeLinecap="round"
+      fill="none"
+    />
+    {/* Sharing/content node */}
+    <circle cx="37" cy="21" r="4.1" fill="url(#j2g2)" />
+    {/* Subtle "sharing rays" (optional for extra energy/brand identity) */}
+    <path d="M37 21 L40 16" stroke="url(#j2g2)" strokeWidth="2.2" strokeLinecap="round" />
+    <path d="M37 21 L42 25" stroke="url(#j2g2)" strokeWidth="2.2" strokeLinecap="round" />
+  </svg>
+);
 
-// SVG ball animation: smooth, elite parabola from J to 2 and back
-const BallSVG = styled.svg`
-  position: absolute;
-  left: 0.46em;
-  top: -1.13em;
-  width: 0.98em;
-  height: 1.1em;
-  pointer-events: none;
-  overflow: visible;
-`;
-
-const BallCircle = styled.circle`
-  fill: url(#ballGradientElite);
-  filter: drop-shadow(0 1px 5px ${blueLight}29);
-  transition: transform 0.08s cubic-bezier(.42,0,.58,1.27);
-`;
-
-const Jump = styled.span`
-  color: ${blue};
-  letter-spacing: -0.01em;
-  display: inline-block;
-`;
-
-const Num = styled.sup`
-  color: ${gold};
-  font-size: 0.59em;
-  font-weight: 900;
-  margin-left: 0.08em;
-  margin-bottom: 0.04em;
-  font-family: inherit;
-  text-shadow: 0 1px 3px #ffe06633;
-  position: relative;
-  z-index: 1;
-  min-width: 0.7em;
-  letter-spacing: 0.01em;
-`;
-
-// Elite, physically-plausible bounce with gentle squash
-function useBallEliteBounce(ballRef, pathRef) {
-  useLayoutEffect(() => {
-    const ball = ballRef.current;
-    const path = pathRef.current;
-    if (!ball || !path) return;
-    let t = 0;
-    let forward = true;
-    let raf;
-    function animate() {
-      t += (forward ? 1 : -1) * 0.012;
-      if (t > 1) {
-        t = 1;
-        forward = false;
-      } else if (t < 0) {
-        t = 0;
-        forward = true;
-      }
-      const len = path.getTotalLength();
-      const pos = path.getPointAtLength(len * t);
-      ball.setAttribute("cx", pos.x.toString());
-      ball.setAttribute("cy", pos.y.toString());
-
-      // Subtle, elite squash (never silly)
-      let scale = 1;
-      if (Math.abs(t - 0.57) < 0.10) scale = 1.10 - 0.15 * Math.abs((t - 0.57) * 10);
-      if (Math.abs(t - 1) < 0.07) scale = 1.13 - 1.1 * Math.abs((t - 1) * 14);
-      ball.setAttribute("transform", `scale(${scale},${2 - scale})`);
-      raf = requestAnimationFrame(animate);
-    }
-    raf = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(raf);
-  }, [ballRef, pathRef]);
-}
-
-const Jump2Logo = () => {
-  const ballRef = useRef(null);
-  const pathRef = useRef(null);
-  // Parabola: from above J (6,25) to above 2 (36,7)
-  const parabola = "M 6 25 Q 19 0 36 7";
-  useBallEliteBounce(ballRef, pathRef);
-
-  return (
-    <LogoWrap>
-      <JContainer>
-        <BallSVG viewBox="0 0 42 32">
-          <defs>
-            <radialGradient id="ballGradientElite" cx="62%" cy="36%" r="80%">
-              <stop offset="0%" stopColor="#fff" />
-              <stop offset="70%" stopColor={gold} />
-              <stop offset="100%" stopColor={blueLight} />
-            </radialGradient>
-          </defs>
-          <path d={parabola} ref={pathRef} fill="none" stroke="none"/>
-          <BallCircle
-            ref={ballRef}
-            r="3.3"
-            cx="6"
-            cy="25"
-          />
-        </BallSVG>
-        <Jump>J</Jump>
-      </JContainer>
-      <Jump>UMP</Jump>
-      <Num>2</Num>
-    </LogoWrap>
-  );
-};
+const Jump2Logo = () => (
+  <LogoWrap>
+    <Icon />
+    <Wordmark>
+      Jump<sup>2</sup>
+    </Wordmark>
+  </LogoWrap>
+);
 
 export default Jump2Logo;
