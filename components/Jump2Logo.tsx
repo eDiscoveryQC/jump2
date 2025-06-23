@@ -1,96 +1,151 @@
-import styled, { keyframes } from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
-const logoGradient = "linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)";
+// --- Brand colors
+const blue1 = "#2563eb";
+const blue2 = "#3b82f6";
 const gold = "#ffd100";
 const goldShadow = "#ffe066";
-const blueShadow = "#2563eb";
 const white = "#fff";
 
-const arrowAnim = keyframes`
-  0% { transform: translateY(0) scale(1); opacity: 0.7;}
-  50% { transform: translateY(-8px) scale(1.13); opacity: 1;}
-  80% { transform: translateY(1px) scale(0.97); opacity: 0.88;}
-  100% { transform: translateY(0) scale(1); opacity: 0.7;}
-`;
-
-const glow = keyframes`
-  0% { text-shadow: 0 0 7px ${blueShadow}33, 0 0 3px ${goldShadow}22; }
-  100% { text-shadow: 0 0 18px ${blueShadow}88, 0 0 8px ${goldShadow}66; }
-`;
-
-const LogoWrap = styled.h1.attrs(() => ({
-  'aria-label': 'Jump2 logo',
-  role: 'img'
-}))`
+// --- Layout
+const LogoWrap = styled.div`
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+  margin-bottom: 0.2em;
+  width: 100%;
+`;
+
+const Icon = styled.div`
+  margin-bottom: 0.32em;
+`;
+
+// --- SVG Icon Mark: Stylized "J" with dynamic "2"
+const JMark = () => (
+  <svg
+    width="56"
+    height="56"
+    viewBox="0 0 56 56"
+    fill="none"
+    aria-hidden="true"
+    style={{display: "block"}}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <defs>
+      <linearGradient id="j2g" x1="6" y1="8" x2="50" y2="48" gradientUnits="userSpaceOnUse">
+        <stop stopColor={blue1} />
+        <stop offset="1" stopColor={blue2} />
+      </linearGradient>
+      <filter id="shadow" x="0" y="0" width="56" height="56" filterUnits="userSpaceOnUse">
+        <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#2563eb33" />
+      </filter>
+    </defs>
+    <circle
+      cx="28"
+      cy="28"
+      r="26"
+      fill="url(#j2g)"
+      stroke={blue2}
+      strokeWidth="2.5"
+      filter="url(#shadow)"
+    />
+    {/* Stylized J - geometric, with upward arc */}
+    <path
+      d="M35 16v13c0 5-3.5 8-7 8s-7-2-7-7"
+      stroke={white}
+      strokeWidth="3.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    {/* Superscript "2" at jump apex */}
+    <text
+      x="34"
+      y="14"
+      fontFamily="'JetBrains Mono', 'Inter', monospace"
+      fontWeight="900"
+      fontSize="12"
+      fill={gold}
+      stroke={goldShadow}
+      strokeWidth="0.5"
+      textAnchor="middle"
+      dominantBaseline="middle"
+      style={{
+        filter: "drop-shadow(0 0 3px #ffe06699)",
+        paintOrder: "stroke fill"
+      }}
+    >
+      2
+    </text>
+  </svg>
+);
+
+const Wordmark = styled.h1`
   font-family: 'Inter', 'JetBrains Mono', ui-sans-serif, system-ui, sans-serif;
   font-weight: 900;
-  font-size: clamp(2rem, 6vw, 4.3rem); /* slightly smaller min for mobile */
-  letter-spacing: -0.04em;
-  user-select: none;
+  font-size: clamp(2.1rem, 6vw, 3.1rem);
+  letter-spacing: -0.03em;
   color: ${white};
-  margin: 1.1em 0 0.1em 0;
-  line-height: 1;
-  touch-action: manipulation;
-
-  @media (max-width: 500px) {
-    font-size: clamp(1.6rem, 9vw, 2.3rem);
-    margin-top: 0.6em;
-  }
-
-  @media (hover: none) and (pointer: coarse) {
-    &:active {
-      filter: brightness(1.05) drop-shadow(0 2px 8px #2563eb88);
-      transform: scale(0.97);
-      transition: filter 0.12s, transform 0.12s;
-    }
+  margin: 0;
+  line-height: 1.04;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.09em;
+  @media (max-width: 600px) {
+    font-size: clamp(1.3rem, 7vw, 2rem);
   }
 `;
 
-const JumpText = styled.span`
-  background: ${logoGradient};
+const Jump = styled.span`
+  background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 2px 12px #3b82f655, 0 1.5px 0 #ffe06633;
-  animation: ${glow} 2.8s ease-in-out infinite alternate;
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-  }
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  display: inline-block;
 `;
 
-const Num = styled.span`
+const Sup = styled.sup`
   color: ${gold};
+  font-size: 0.65em;
+  font-weight: 900;
   margin-left: 0.08em;
-  font-weight: 900;
-  text-shadow: 0 0 18px #3b82f6aa, 0 0.5px 0 #ffd10044;
-  display: inline-block;
+  margin-top: 0.22em;
+  text-shadow: 0 0 7px ${goldShadow}55;
+  font-family: inherit;
+  line-height: 1;
 `;
 
-const Arrow = styled.span`
-  color: ${gold};
-  margin-left: 0.13em;
-  font-size: 1.14em;
-  font-weight: 900;
-  text-shadow: 0 0 12px ${gold}80, 0 0 6px ${blueShadow}60;
-  animation: ${arrowAnim} 2.6s cubic-bezier(.7,-0.13,.3,1.08) infinite;
-  will-change: transform, opacity;
-  display: inline-block;
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
+const Tagline = styled.div`
+  font-family: 'Inter', 'JetBrains Mono', ui-sans-serif, system-ui, sans-serif;
+  color: #b9d3ff;
+  font-size: 1.05em;
+  font-weight: 600;
+  margin-top: 0.24em;
+  letter-spacing: 0.01em;
+  opacity: 0.82;
+  text-align: center;
+  @media (max-width: 600px) {
+    font-size: 0.98em;
   }
 `;
 
 const Jump2Logo = () => (
   <LogoWrap>
-    <JumpText>Jump</JumpText>
-    <Num>2</Num>
-    <Arrow>➤</Arrow>
+    <Icon>
+      <JMark />
+    </Icon>
+    <Wordmark>
+      <Jump>JUMP</Jump>
+      <Sup>2</Sup>
+    </Wordmark>
+    <Tagline>
+      Instantly. Precisely. Anywhere.
+    </Tagline>
   </LogoWrap>
 );
 
