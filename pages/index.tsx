@@ -78,281 +78,6 @@ const DividerHeader = styled.div`
   padding-bottom: 0.1em;
 `;
 
-// --- Hero & Branding ---
-const HeroRow = styled.div`
-  max-width: 1020px;
-  margin: 3.2em auto 2.3em auto;
-  display: flex;
-  align-items: flex-end;
-  gap: 2.3em;
-  @media (max-width: 900px) { flex-direction: column; align-items: center; margin-top: 2em; gap: 0.9em;}
-`;
-const HeroTextCol = styled.div`
-  flex: 1.4;
-  min-width: 0;
-`;
-const LogoRow = styled.h1`
-  display: flex;
-  align-items: center;
-  gap: 0.22em;
-  font-size: clamp(2.5rem, 7vw, 4.3rem);
-  font-weight: 900;
-  letter-spacing: -1.6px;
-  user-select: none;
-  margin: 0 0 0.13em;
-  font-family: 'JetBrains Mono', monospace;
-  background: none;
-`;
-const LogoText = styled.span`
-  background: linear-gradient(90deg, #6ee7ff 10%, #3b82f6 90%, #60a5fa 100%);
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: ${gradient} 3.9s alternate infinite, ${bounce} 3.3s cubic-bezier(0.32, 0.72, 0.52, 1.5) infinite;
-  font-weight: 900;
-  display: inline-block;
-  letter-spacing: -0.07em;
-`;
-const LogoTwo = styled.span`
-  color: #ffd100;
-  font-size: 1.1em;
-  font-weight: 900;
-  margin-left: 0.08em;
-  text-shadow: 0 0 18px #3b82f6aa;
-  animation: ${bounce} 2.8s cubic-bezier(.46,1.58,.47,.86) infinite;
-  display: inline-block;
-`;
-const Slogan = styled.div`
-  font-size: 1.22em;
-  color: #e6eaff;
-  font-weight: 700;
-  margin-bottom: 0.7em;
-  text-shadow: 0 1px 10px #224, 0 0px 3px #2563eb33;
-  font-family: 'Inter', sans-serif;
-`;
-const HeroDesc = styled.div`
-  color: #b5c7e4;
-  font-size: 1.09em;
-  margin-bottom: 1.3em;
-  font-weight: 500;
-  max-width: 490px;
-  font-family: 'Inter', sans-serif;
-`;
-
-const TrustBar = styled.div`
-  display: flex;
-  gap: 1.3em;
-  align-items: center;
-  margin-bottom: 2em;
-  margin-top: 1.2em;
-  font-size: 1.07em;
-  color: #78bdfd;
-  font-weight: 700;
-  flex-wrap: wrap;
-  svg {
-    margin-right: 0.38em;
-    color: #60a5fa;
-    vertical-align: middle;
-  }
-`;
-
-const TrustLogo = styled.img`
-  height: 26px;
-  margin-right: 0.35em;
-  opacity: 0.82;
-  filter: grayscale(0.33);
-  vertical-align: middle;
-  border-radius: 4px;
-`;
-
-// --- Input, ShareBar, Preview, etc. ---
-const InputRow = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 1em;
-  margin-bottom: 1.5em;
-  position: relative;
-`;
-const Input = styled.input`
-  font-size: 1.12em;
-  border-radius: 0.8em;
-  padding: 0.77em 1.1em;
-  border: 2px solid #223a5d;
-  background: #101a2f;
-  color: #eaf0fa;
-  font-weight: 500;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  font-family: 'Inter', sans-serif;
-  &:focus { border-color: #3b82f6; background: #17233a; outline: none; box-shadow: 0 2px 16px #3b82f633;}
-  &::placeholder { color: #86a2bb; }
-`;
-const Button = styled.button<{ primary?: boolean }>`
-  font-size: 1.09em;
-  border-radius: 0.6em;
-  padding: 0.7em 2em;
-  font-weight: 800;
-  border: none;
-  margin-top: 0.2em;
-  color: #fff;
-  background: ${({primary}) =>
-    primary ? "linear-gradient(90deg, #3b82f6 10%, #2563eb 90%)" : "#1e293b"};
-  box-shadow: ${({primary}) =>
-    primary ? "0 3px 16px #2563eb66" : "none"};
-  cursor: pointer;
-  transition: background 0.13s, box-shadow 0.13s, transform 0.12s;
-  letter-spacing: 0.01em;
-  &:hover, &:focus {
-    background: ${({primary}) =>
-      primary ? "linear-gradient(90deg, #2563eb 10%, #3b82f6 90%)" : "#334155"};
-    transform: scale(1.04);
-    outline: none;
-  }
-  &:active {
-    background: ${({primary}) =>
-      primary ? "linear-gradient(90deg, #1e293b 10%, #2563eb 90%)" : "#1e293b"};
-  }
-`;
-const ExampleLinks = styled.div`
-  margin: 0.1em 0 1.1em 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.8em;
-  a {
-    color: #3b82f6;
-    cursor: pointer;
-    text-decoration: underline dotted;
-    font-size: 0.97em;
-    font-weight: 500;
-    &:hover { text-decoration: underline solid; }
-  }
-`;
-const Tip = styled.div`
-  font-size: 0.96em;
-  color: #8ba8d8;
-  margin-bottom: 0.7em;
-  margin-top: -0.4em;
-`;
-const HowItWorks = styled.div`
-  margin-top: 1.5em;
-  color: #b9d3ff;
-  font-size: 1.02em;
-  ul {
-    margin: 0.7em 0 0 1.4em;
-    padding: 0;
-    li {margin-bottom: 0.2em;}
-  }
-`;
-
-const ShareBarWrapper = styled.div`
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  margin: 0 auto 2.2em auto;
-  @media (max-width: 900px) {
-    margin-bottom: 1.5em;
-    padding: 0 0.4em;
-  }
-`;
-const ShareBar = styled.div`
-  background: linear-gradient(90deg, #1b2336 70%, #25406a 100%);
-  border-radius: 1em;
-  box-shadow: 0 4px 18px #3b82f633;
-  padding: 1em 2em;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 1.1em;
-  min-height: 3.2em;
-  width: 100%;
-  max-width: 650px;
-  position: relative;
-  z-index: 20;
-  @media (max-width: 600px) {
-    padding: 0.95em 0.5em;
-    border-radius: 0.7em;
-    gap: 0.6em;
-    min-height: 2.6em;
-  }
-`;
-
-const ShareInput = styled.input`
-  font-size: 1.11em;
-  border-radius: 0.6em;
-  border: 1.5px solid #334155;
-  background: #0d1423;
-  color: #eaf0fa;
-  font-weight: 600;
-  padding: 0.68em 1.2em;
-  flex: 1 1 0%;
-  outline: none;
-  min-width: 0;
-  font-family: 'JetBrains Mono', monospace;
-`;
-
-const CopyBtn = styled(Button)`
-  font-size: 1em;
-  font-weight: 700;
-  padding: 0.7em 1.5em;
-  margin: 0;
-  background: #2563eb;
-  border-radius: 0.5em;
-  transition: background 0.13s, transform 0.11s;
-  &:hover {background: #3b82f6;}
-`;
-
-const ShareActions = styled.div`
-  display: flex;
-  gap: 0.7em;
-  align-items: center;
-`;
-
-const ShareToast = styled.div`
-  position: fixed;
-  bottom: 2.6em;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #2563eb;
-  color: #fff;
-  font-size: 1.1em;
-  font-weight: 700;
-  border-radius: 0.6em;
-  padding: 0.7em 2em;
-  box-shadow: 0 4px 18px #2563eb44;
-  z-index: 2000;
-  animation: ${pop} 0.5s;
-`;
-
-// --- Loader & Skeletons ---
-const Loader = styled.div`
-  width: 32px; height: 32px;
-  border-radius: 50%;
-  border: 4px solid #3b82f688;
-  border-top: 4px solid #3b82f6;
-  animation: spin 0.85s linear infinite;
-  margin: 3em auto 2em auto;
-  @keyframes spin {to {transform: rotate(360deg);}}
-`;
-const Skeleton = styled.div`
-  height: 18px;
-  width: 80%;
-  margin: 0.5em 0;
-  background: linear-gradient(90deg, #24304a 40%, #334155 60%, #24304a 100%);
-  background-size: 200% 100%;
-  border-radius: 0.5em;
-  animation: ${gradient} 1.3s linear infinite;
-`;
-
-const PreviewCard = styled(Card)`
-  min-height: 420px;
-  max-height: 79vh;
-  overflow-y: auto;
-  font-size: 1rem;
-  color: #eaf0fa;
-  padding: 2.1em 2.3em 2em;
-  position: relative;
-  @media (max-width: 900px) { padding: 1.1em 0.6em 1.7em; }
-`;
-
 // --- Lightbox/Welcome Modal ---
 const LightboxOverlay = styled.div`
   position: fixed;
@@ -543,7 +268,194 @@ function useDebouncedValue<T>(value: T, delay: number): T {
   return debounced;
 }
 
-// --- Main ---
+// --- Input, ShareBar, Preview, etc. ---
+const InputRow = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  margin-bottom: 1.5em;
+  position: relative;
+`;
+const Input = styled.input`
+  font-size: 1.12em;
+  border-radius: 0.8em;
+  padding: 0.77em 1.1em;
+  border: 2px solid #223a5d;
+  background: #101a2f;
+  color: #eaf0fa;
+  font-weight: 500;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: 'Inter', sans-serif;
+  &:focus { border-color: #3b82f6; background: #17233a; outline: none; box-shadow: 0 2px 16px #3b82f633;}
+  &::placeholder { color: #86a2bb; }
+`;
+const Button = styled.button<{ primary?: boolean }>`
+  font-size: 1.09em;
+  border-radius: 0.6em;
+  padding: 0.7em 2em;
+  font-weight: 800;
+  border: none;
+  margin-top: 0.2em;
+  color: #fff;
+  background: ${({primary}) =>
+    primary ? "linear-gradient(90deg, #3b82f6 10%, #2563eb 90%)" : "#1e293b"};
+  box-shadow: ${({primary}) =>
+    primary ? "0 3px 16px #2563eb66" : "none"};
+  cursor: pointer;
+  transition: background 0.13s, box-shadow 0.13s, transform 0.12s;
+  letter-spacing: 0.01em;
+  &:hover, &:focus {
+    background: ${({primary}) =>
+      primary ? "linear-gradient(90deg, #2563eb 10%, #3b82f6 90%)" : "#334155"};
+    transform: scale(1.04);
+    outline: none;
+  }
+  &:active {
+    background: ${({primary}) =>
+      primary ? "linear-gradient(90deg, #1e293b 10%, #2563eb 90%)" : "#1e293b"};
+  }
+`;
+const ExampleLinks = styled.div`
+  margin: 0.1em 0 1.1em 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8em;
+  a {
+    color: #3b82f6;
+    cursor: pointer;
+    text-decoration: underline dotted;
+    font-size: 0.97em;
+    font-weight: 500;
+    &:hover { text-decoration: underline solid; }
+  }
+`;
+const Tip = styled.div`
+  font-size: 0.96em;
+  color: #8ba8d8;
+  margin-bottom: 0.7em;
+  margin-top: -0.4em;
+`;
+const HowItWorks = styled.div`
+  margin-top: 1.5em;
+  color: #b9d3ff;
+  font-size: 1.02em;
+  ul {
+    margin: 0.7em 0 0 1.4em;
+    padding: 0;
+    li {margin-bottom: 0.2em;}
+  }
+`;
+
+const ShareBarWrapper = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 2.2em auto;
+  @media (max-width: 900px) {
+    margin-bottom: 1.5em;
+    padding: 0 0.4em;
+  }
+`;
+const ShareBar = styled.div`
+  background: linear-gradient(90deg, #1b2336 70%, #25406a 100%);
+  border-radius: 1em;
+  box-shadow: 0 4px 18px #3b82f633;
+  padding: 1em 2em;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.1em;
+  min-height: 3.2em;
+  width: 100%;
+  max-width: 650px;
+  position: relative;
+  z-index: 20;
+  @media (max-width: 600px) {
+    padding: 0.95em 0.5em;
+    border-radius: 0.7em;
+    gap: 0.6em;
+    min-height: 2.6em;
+  }
+`;
+
+const ShareInput = styled.input`
+  font-size: 1.11em;
+  border-radius: 0.6em;
+  border: 1.5px solid #334155;
+  background: #0d1423;
+  color: #eaf0fa;
+  font-weight: 600;
+  padding: 0.68em 1.2em;
+  flex: 1 1 0%;
+  outline: none;
+  min-width: 0;
+  font-family: 'JetBrains Mono', monospace;
+`;
+
+const CopyBtn = styled(Button)`
+  font-size: 1em;
+  font-weight: 700;
+  padding: 0.7em 1.5em;
+  margin: 0;
+  background: #2563eb;
+  border-radius: 0.5em;
+  transition: background 0.13s, transform 0.11s;
+  &:hover {background: #3b82f6;}
+`;
+
+const ShareActions = styled.div`
+  display: flex;
+  gap: 0.7em;
+  align-items: center;
+`;
+
+const ShareToast = styled.div`
+  position: fixed;
+  bottom: 2.6em;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2563eb;
+  color: #fff;
+  font-size: 1.1em;
+  font-weight: 700;
+  border-radius: 0.6em;
+  padding: 0.7em 2em;
+  box-shadow: 0 4px 18px #2563eb44;
+  z-index: 2000;
+  animation: ${pop} 0.5s;
+`;
+
+// --- Loader & Skeletons ---
+const Loader = styled.div`
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 4px solid #3b82f688;
+  border-top: 4px solid #3b82f6;
+  animation: spin 0.85s linear infinite;
+  margin: 3em auto 2em auto;
+  @keyframes spin {to {transform: rotate(360deg);}}
+`;
+const Skeleton = styled.div`
+  height: 18px;
+  width: 80%;
+  margin: 0.5em 0;
+  background: linear-gradient(90deg, #24304a 40%, #334155 60%, #24304a 100%);
+  background-size: 200% 100%;
+  border-radius: 0.5em;
+  animation: ${gradient} 1.3s linear infinite;
+`;
+
+const PreviewCard = styled(Card)`
+  min-height: 420px;
+  max-height: 79vh;
+  overflow-y: auto;
+  font-size: 1rem;
+  color: #eaf0fa;
+  padding: 2.1em 2.3em 2em;
+  position: relative;
+  @media (max-width: 900px) { padding: 1.1em 0.6em 1.7em; }
+`;
+
 export default function Home() {
   // --- State ---
   const [link, setLink] = useState("");
@@ -760,33 +672,29 @@ export default function Home() {
   return (
     <Bg>
       <Menu />
-      <HeroRow>
-        <HeroTextCol>
-          <LogoRow>
-            <LogoText>Jump</LogoText>
-            <LogoTwo>2</LogoTwo>
-          </LogoRow>
-          <Slogan>
-            The world’s crispest way to jump to the best.
-          </Slogan>
-          <HeroDesc>
-            Instantly link anyone to the <strong>exact spot</strong> in any article or video.<br />
-            <span style={{color:"#ffe066", fontWeight:600}}>No sign-ups. No friction. Just highlight. Just share.</span>
-          </HeroDesc>
-          <TrustBar>
-            <span>
-              <svg height="19" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#60a5fa" /><text x="10" y="15" textAnchor="middle" fontSize="12" fill="#fff">✓</text></svg>
-              Trusted by teams & creators worldwide
-            </span>
-            <span>
-              <TrustLogo src="/trusted-logo1.png" alt="Trusted brand 1" />
-              <TrustLogo src="/trusted-logo2.png" alt="Trusted brand 2" />
-              <TrustLogo src="/trusted-logo3.png" alt="Trusted brand 3" />
-              <span style={{color:"#60a5fa", fontWeight:600}}>and more…</span>
-            </span>
-          </TrustBar>
-        </HeroTextCol>
-      </HeroRow>
+      {/* Lightbox */}
+      {showLightbox && (
+        <LightboxOverlay>
+          <LightboxCard>
+            <LightboxLogo>
+              <span style={{background: "linear-gradient(90deg, #6ee7ff 10%, #3b82f6 90%, #60a5fa 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 900}}>Share. Jump. Win.</span>
+            </LightboxLogo>
+            <LightboxSlogan>
+              Welcome! Ready to make sharing smarter?
+            </LightboxSlogan>
+            <LightboxDesc>
+              Instantly guide your audience to the <b>best moment</b> of any article, blog, or video.<br/>
+              Paste a link, <b>highlight what matters</b>, and create a short link that lands others right there.
+              <br/><br/>
+              <b>No more scrolling, searching, or confusion.</b> Just clarity, impact, and speed.
+            </LightboxDesc>
+            <LightboxButton onClick={handleCloseLightbox}>Get Started</LightboxButton>
+            <LightboxContact href="mailto:support@jump2share.com">
+              Contact us
+            </LightboxContact>
+          </LightboxCard>
+        </LightboxOverlay>
+      )}
       <DividerHeader>Jump2 in Action</DividerHeader>
       <WideGrid>
         {/* LEFT: Paste, anchor, how-to */}
@@ -968,32 +876,6 @@ export default function Home() {
           100% { box-shadow: 0 0 0 0 rgba(255,209,0,0);}
         }
       `}</style>
-      {showLightbox && (
-        <LightboxOverlay>
-          <LightboxCard>
-            <LightboxLogo>
-              <LogoText>Jump</LogoText>
-              <LogoTwo>2</LogoTwo>
-            </LightboxLogo>
-            <LightboxSlogan>
-              Welcome to Jump2!
-            </LightboxSlogan>
-            <LightboxDesc>
-              Instantly share the <b>best part</b> of any article, blog, or video.<br/>
-              <br/>
-              <b>Jump2</b> lets you paste a link, <b>highlight a phrase or time</b>, and create a short link that lands others right there.<br/>
-              <br/>
-              No more scrolling, searching, or "where is it?" — just highlight, jump, and share.
-              <br/><br/>
-              <b>Save time. Guide your audience. Share better.</b>
-            </LightboxDesc>
-            <LightboxButton onClick={handleCloseLightbox}>Let's go!</LightboxButton>
-            <LightboxContact href="mailto:support@jump2share.com">
-              Contact us
-            </LightboxContact>
-          </LightboxCard>
-        </LightboxOverlay>
-      )}
       <Footer />
     </Bg>
   );
