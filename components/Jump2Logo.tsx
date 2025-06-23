@@ -1,89 +1,136 @@
-import styled, { keyframes } from "styled-components";
+import styled from "styled-components";
+import { useLayoutEffect, useRef } from "react";
 
-const blue = "#2563eb";
-const blueLight = "#3b82f6";
-const gold = "#ffd100";
+// Elite color palette
+const blue = "#1546ef";
+const blueLight = "#2f6cf6";
+const gold = "#ffd700";
 
-// Keyframes for the ball's jump, bounce off "2", and settle above "J"
-const ballBounce = keyframes`
-  0%   { transform: translate(0, 0) scale(1);}
-  10%  { transform: translate(0, -1.8em) scale(1.1, 0.9);}
-  18%  { transform: translate(2.3em, -2.3em) scale(0.92,1.07);}
-  23%  { transform: translate(2.9em, -0.8em) scale(1.12,0.88);}
-  28%  { transform: translate(2.1em, -1.7em) scale(0.92,1.08);}
-  32%  { transform: translate(1.2em, -1.05em) scale(1.04,1);}
-  36%  { transform: translate(0.7em, -1.4em);}
-  44%  { transform: translate(0, -1.1em);}
-  56%  { transform: translate(0, -0.7em);}
-  65%  { transform: translate(0, -0.4em);}
-  75%  { transform: translate(0, -0.2em);}
-  100% { transform: translate(0, 0) scale(1);}
-`;
-
+// Ultra-tight, elite logo wrapper
 const LogoWrap = styled.h1`
   font-family: 'Inter', 'JetBrains Mono', ui-sans-serif, system-ui, sans-serif;
   font-weight: 900;
-  font-size: clamp(2.3rem, 8vw, 4.2rem);
+  font-size: clamp(1.25rem, 3.6vw, 2.2rem);
   color: ${blue};
   margin: 0;
   display: flex;
   align-items: flex-end;
-  justify-content: center;
-  gap: 0.09em;
+  gap: 0.07em;
   user-select: none;
   position: relative;
+  line-height: 1.08;
 `;
 
 const JContainer = styled.span`
   position: relative;
   display: inline-block;
-  margin-right: 0.06em;
+  min-width: 1.08em;
 `;
 
-const AnimatedBall = styled.span`
+// SVG ball animation: smooth, elite parabola from J to 2 and back
+const BallSVG = styled.svg`
   position: absolute;
-  left: 50%;
-  top: -0.78em;
-  transform: translate(-50%, 0);
-  width: 0.42em;
-  height: 0.42em;
-  background: radial-gradient(circle at 60% 38%, #fff 0%, ${gold} 62%, ${blueLight} 100%);
-  border-radius: 50%;
-  box-shadow: 0 2px 12px ${blueLight}66;
-  z-index: 2;
-  animation: ${ballBounce} 2.3s cubic-bezier(.42,0,.38,1.3) infinite;
-  will-change: transform;
+  left: 0.46em;
+  top: -1.13em;
+  width: 0.98em;
+  height: 1.1em;
+  pointer-events: none;
+  overflow: visible;
+`;
+
+const BallCircle = styled.circle`
+  fill: url(#ballGradientElite);
+  filter: drop-shadow(0 1px 5px ${blueLight}29);
+  transition: transform 0.08s cubic-bezier(.42,0,.58,1.27);
 `;
 
 const Jump = styled.span`
   color: ${blue};
   letter-spacing: -0.01em;
   display: inline-block;
-  font-variation-settings: "wght" 900;
-  text-shadow: 0 2px 12px ${blueLight}2a;
 `;
 
 const Num = styled.sup`
   color: ${gold};
-  font-size: 0.68em;
+  font-size: 0.59em;
   font-weight: 900;
-  margin-left: 0.12em;
-  margin-bottom: 0.11em;
+  margin-left: 0.08em;
+  margin-bottom: 0.04em;
   font-family: inherit;
-  text-shadow: 0 2px 8px #ffe06688;
+  text-shadow: 0 1px 3px #ffe06633;
   position: relative;
   z-index: 1;
+  min-width: 0.7em;
+  letter-spacing: 0.01em;
 `;
 
-const Jump2Logo = () => (
-  <LogoWrap>
-    <JContainer>
-      <AnimatedBall />
-      <Jump>J</Jump>
-    </JContainer>
-    <Jump>UMP</Jump>
-    <Num>2</Num>
-  </LogoWrap>
-);
+// Elite, physically-plausible bounce with gentle squash
+function useBallEliteBounce(ballRef, pathRef) {
+  useLayoutEffect(() => {
+    const ball = ballRef.current;
+    const path = pathRef.current;
+    if (!ball || !path) return;
+    let t = 0;
+    let forward = true;
+    let raf;
+    function animate() {
+      t += (forward ? 1 : -1) * 0.012;
+      if (t > 1) {
+        t = 1;
+        forward = false;
+      } else if (t < 0) {
+        t = 0;
+        forward = true;
+      }
+      const len = path.getTotalLength();
+      const pos = path.getPointAtLength(len * t);
+      ball.setAttribute("cx", pos.x.toString());
+      ball.setAttribute("cy", pos.y.toString());
+
+      // Subtle, elite squash (never silly)
+      let scale = 1;
+      if (Math.abs(t - 0.57) < 0.10) scale = 1.10 - 0.15 * Math.abs((t - 0.57) * 10);
+      if (Math.abs(t - 1) < 0.07) scale = 1.13 - 1.1 * Math.abs((t - 1) * 14);
+      ball.setAttribute("transform", `scale(${scale},${2 - scale})`);
+      raf = requestAnimationFrame(animate);
+    }
+    raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
+  }, [ballRef, pathRef]);
+}
+
+const Jump2Logo = () => {
+  const ballRef = useRef(null);
+  const pathRef = useRef(null);
+  // Parabola: from above J (6,25) to above 2 (36,7)
+  const parabola = "M 6 25 Q 19 0 36 7";
+  useBallEliteBounce(ballRef, pathRef);
+
+  return (
+    <LogoWrap>
+      <JContainer>
+        <BallSVG viewBox="0 0 42 32">
+          <defs>
+            <radialGradient id="ballGradientElite" cx="62%" cy="36%" r="80%">
+              <stop offset="0%" stopColor="#fff" />
+              <stop offset="70%" stopColor={gold} />
+              <stop offset="100%" stopColor={blueLight} />
+            </radialGradient>
+          </defs>
+          <path d={parabola} ref={pathRef} fill="none" stroke="none"/>
+          <BallCircle
+            ref={ballRef}
+            r="3.3"
+            cx="6"
+            cy="25"
+          />
+        </BallSVG>
+        <Jump>J</Jump>
+      </JContainer>
+      <Jump>UMP</Jump>
+      <Num>2</Num>
+    </LogoWrap>
+  );
+};
 
 export default Jump2Logo;
