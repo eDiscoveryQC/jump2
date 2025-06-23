@@ -40,7 +40,6 @@ const Bg = styled.div`
   flex-direction: column;
 `;
 
-// --- Main layout grid ---
 const WideGrid = styled.div`
   display: flex;
   max-width: 1100px;
@@ -78,195 +77,64 @@ const DividerHeader = styled.div`
   padding-bottom: 0.1em;
 `;
 
-// --- Lightbox/Welcome Modal ---
-const LightboxOverlay = styled.div`
-  position: fixed;
-  z-index: 20000;
-  top: 0; left: 0; right: 0; bottom: 0;
-  width: 100vw; height: 100vh;
-  background: rgba(17,24,39,0.92);
+const LogoRow = styled.h1`
   display: flex;
   align-items: center;
-  justify-content: center;
-  animation: ${fadeIn} 0.25s;
-`;
-const LightboxCard = styled.div`
-  background: #202940;
-  border-radius: 1.2em;
-  box-shadow: 0 8px 32px 0 #1e293b99;
-  max-width: 98vw;
-  width: 400px;
-  padding: 2.3em 1.7em 2.1em;
-  color: #eaf0fa;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-  @media (max-width: 500px) {
-    width: 97vw;
-    padding: 1.3em 0.7em 1.4em;
-  }
-`;
-const LightboxLogo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.19em;
-  font-size: 2.5rem;
+  gap: 0.22em;
+  font-size: clamp(2.5rem, 7vw, 4.3rem);
   font-weight: 900;
-  margin-bottom: 0.35em;
+  letter-spacing: -1.6px;
   user-select: none;
+  margin: 1.1em 0 0.13em 0;
+  font-family: 'JetBrains Mono', monospace;
+  background: none;
+  justify-content: center;
 `;
-const LightboxSlogan = styled.div`
-  font-size: 1.13em;
-  color: #ffe066;
-  font-weight: 700;
-  margin-bottom: 0.6em;
-  text-align: center;
+
+const LogoText = styled.span`
+  background: linear-gradient(90deg, #6ee7ff 10%, #3b82f6 90%, #60a5fa 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: ${gradient} 3.9s alternate infinite, ${bounce} 3.3s cubic-bezier(0.32, 0.72, 0.52, 1.5) infinite;
+  font-weight: 900;
+  display: inline-block;
+  letter-spacing: -0.07em;
 `;
-const LightboxDesc = styled.div`
-  color: #c5d6fa;
-  font-size: 1.09em;
-  font-weight: 400;
-  margin-bottom: 1.3em;
-  text-align: center;
-  line-height: 1.65;
+const LogoTwo = styled.span`
+  color: #ffd100;
+  font-size: 1.1em;
+  font-weight: 900;
+  margin-left: 0.08em;
+  text-shadow: 0 0 18px #3b82f6aa;
+  animation: ${bounce} 2.8s cubic-bezier(.46,1.58,.47,.86) infinite;
+  display: inline-block;
 `;
-const LightboxButton = styled.button`
-  font-size: 1.09em;
-  border-radius: 0.6em;
-  padding: 0.78em 2.1em;
-  font-weight: 700;
-  border: none;
+
+// --- Feedback Button ---
+const Fab = styled.a`
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
   color: #fff;
-  background: linear-gradient(90deg, #3b82f6 10%, #2563eb 90%);
-  box-shadow: 0 3px 16px #2563eb66;
-  cursor: pointer;
-  transition: background 0.13s, box-shadow 0.13s, transform 0.12s;
+  font-size: 1.09em;
+  font-weight: 800;
+  padding: 0.7em 1.3em;
+  border-radius: 9999px;
+  box-shadow: 0 3px 14px #2563eb44;
+  z-index: 9999;
+  text-decoration: none;
+  opacity: 0.93;
+  transition: background 0.14s, opacity 0.16s, box-shadow 0.16s;
   &:hover, &:focus {
-    background: linear-gradient(90deg, #2563eb 10%, #3b82f6 90%);
-    transform: scale(1.04);
+    background: linear-gradient(90deg, #ffd100 0%, #3b82f6 100%);
+    color: #223050;
+    opacity: 1;
+    box-shadow: 0 6px 32px #2563eb55;
     outline: none;
   }
 `;
-const LightboxContact = styled.a`
-  color: #ffd100;
-  font-size: 1.01em;
-  font-weight: 600;
-  margin-top: 1.15em;
-  text-decoration: underline dotted;
-  &:hover {text-decoration: underline solid;}
-`;
-
-// --- YouTube helpers and highlight utility ---
-const isYouTubeUrl = (url: URL) =>
-  ["www.youtube.com", "youtube.com", "youtu.be"].includes(url.hostname);
-function parseTimestamp(input: string): number {
-  if (!input) return 0;
-  const parts = input.trim().split(":").map(Number);
-  if (parts.some(isNaN)) return NaN;
-  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
-  if (parts.length === 2) return parts[0] * 60 + parts[1];
-  if (parts.length === 1) return parts[0];
-  return 0;
-}
-function formatTimestamp(seconds: number) {
-  if (seconds < 0) return "";
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: number }) => {
-  const videoId = React.useMemo(() => {
-    try {
-      const u = new URL(url);
-      if (u.hostname === "youtu.be") return u.pathname.slice(1);
-      return u.searchParams.get("v") || "";
-    } catch {
-      return "";
-    }
-  }, [url]);
-  const src = React.useMemo(
-    () =>
-      `https://www.youtube.com/embed/${videoId}?start=${startSeconds}&autoplay=0&modestbranding=1&rel=0`,
-    [videoId, startSeconds]
-  );
-  return (
-    <div style={{
-      margin: "1.1rem auto 2rem",
-      maxWidth: 420,
-      borderRadius: 12,
-      overflow: "hidden",
-      boxShadow: "0 8px 20px #131c2b55",
-      position: "relative"
-    }}>
-      <iframe
-        width="100%"
-        height="220"
-        src={src}
-        title="YouTube video player"
-        frameBorder={0}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-      />
-      {startSeconds > 0 && (
-        <div style={{
-          position: "absolute",
-          top: 8,
-          right: 12,
-          background: "rgba(0, 0, 0, 0.65)",
-          color: "#fff",
-          fontWeight: 600,
-          padding: "4px 10px",
-          borderRadius: 9999,
-          fontFamily: "monospace",
-          fontSize: "0.95em",
-          userSelect: "none",
-          pointerEvents: "none",
-          textShadow: "0 0 8px #000c"
-        }}>
-          ▶ {formatTimestamp(startSeconds)}
-        </div>
-      )}
-    </div>
-  );
-};
-function highlightHtml(rawHtml: string, highlight: string): string {
-  if (!rawHtml || !highlight) return rawHtml;
-  const phrase = highlight.trim();
-  if (!phrase) return rawHtml;
-  const regex = new RegExp(
-    "(" +
-      phrase
-        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-        .replace(/\s+/g, "\\s+")
-      + ")",
-    "gi"
-  );
-  let found = false;
-  return rawHtml.replace(/(<[^>]+>)|([^<]+)/g, (m, tag, text) => {
-    if (tag) return tag;
-    if (text) {
-      return text.replace(regex, matched => {
-        if (!found) {
-          found = true;
-          return `<mark id="jump2-highlight-anchor" style="background: linear-gradient(90deg, #ffe066 70%, #ffd100 100%); color: #334155; padding: 0 0.15em; border-radius: 0.33em; font-weight: 700; box-decoration-break: clone;">${matched}</mark>`;
-        }
-        return `<mark style="background: linear-gradient(90deg, #ffe066 70%, #ffd100 100%); color: #334155; padding: 0 0.15em; border-radius: 0.33em; font-weight: 700; box-decoration-break: clone;">${matched}</mark>`;
-      });
-    }
-    return m;
-  });
-}
-function useDebouncedValue<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const handle = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(handle);
-  }, [value, delay]);
-  return debounced;
-}
 
 // --- Input, ShareBar, Preview, etc. ---
 const InputRow = styled.form`
@@ -456,6 +324,118 @@ const PreviewCard = styled(Card)`
   @media (max-width: 900px) { padding: 1.1em 0.6em 1.7em; }
 `;
 
+// --- YouTube helpers and highlight utility ---
+const isYouTubeUrl = (url: URL) =>
+  ["www.youtube.com", "youtube.com", "youtu.be"].includes(url.hostname);
+function parseTimestamp(input: string): number {
+  if (!input) return 0;
+  const parts = input.trim().split(":").map(Number);
+  if (parts.some(isNaN)) return NaN;
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  if (parts.length === 1) return parts[0];
+  return 0;
+}
+function formatTimestamp(seconds: number) {
+  if (seconds < 0) return "";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: number }) => {
+  const videoId = React.useMemo(() => {
+    try {
+      const u = new URL(url);
+      if (u.hostname === "youtu.be") return u.pathname.slice(1);
+      return u.searchParams.get("v") || "";
+    } catch {
+      return "";
+    }
+  }, [url]);
+  const src = React.useMemo(
+    () =>
+      `https://www.youtube.com/embed/${videoId}?start=${startSeconds}&autoplay=0&modestbranding=1&rel=0`,
+    [videoId, startSeconds]
+  );
+  return (
+    <div style={{
+      margin: "1.1rem auto 2rem",
+      maxWidth: 420,
+      borderRadius: 12,
+      overflow: "hidden",
+      boxShadow: "0 8px 20px #131c2b55",
+      position: "relative"
+    }}>
+      <iframe
+        width="100%"
+        height="220"
+        src={src}
+        title="YouTube video player"
+        frameBorder={0}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+      {startSeconds > 0 && (
+        <div style={{
+          position: "absolute",
+          top: 8,
+          right: 12,
+          background: "rgba(0, 0, 0, 0.65)",
+          color: "#fff",
+          fontWeight: 600,
+          padding: "4px 10px",
+          borderRadius: 9999,
+          fontFamily: "monospace",
+          fontSize: "0.95em",
+          userSelect: "none",
+          pointerEvents: "none",
+          textShadow: "0 0 8px #000c"
+        }}>
+          ▶ {formatTimestamp(startSeconds)}
+        </div>
+      )}
+    </div>
+  );
+};
+function highlightHtml(rawHtml: string, highlight: string): string {
+  if (!rawHtml || !highlight) return rawHtml;
+  const phrase = highlight.trim();
+  if (!phrase) return rawHtml;
+  const regex = new RegExp(
+    "(" +
+      phrase
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+        .replace(/\s+/g, "\\s+")
+      + ")",
+    "gi"
+  );
+  let found = false;
+  return rawHtml.replace(/(<[^>]+>)|([^<]+)/g, (m, tag, text) => {
+    if (tag) return tag;
+    if (text) {
+      return text.replace(regex, matched => {
+        if (!found) {
+          found = true;
+          return `<mark id="jump2-highlight-anchor" style="background: linear-gradient(90deg, #ffe066 70%, #ffd100 100%); color: #334155; padding: 0 0.15em; border-radius: 0.33em; font-weight: 700; box-decoration-break: clone;">${matched}</mark>`;
+        }
+        return `<mark style="background: linear-gradient(90deg, #ffe066 70%, #ffd100 100%); color: #334155; padding: 0 0.15em; border-radius: 0.33em; font-weight: 700; box-decoration-break: clone;">${matched}</mark>`;
+      });
+    }
+    return m;
+  });
+}
+function useDebouncedValue<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const handle = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(handle);
+  }, [value, delay]);
+  return debounced;
+}
+
+// --- Main ---
 export default function Home() {
   // --- State ---
   const [link, setLink] = useState("");
@@ -672,29 +652,12 @@ export default function Home() {
   return (
     <Bg>
       <Menu />
-      {/* Lightbox */}
-      {showLightbox && (
-        <LightboxOverlay>
-          <LightboxCard>
-            <LightboxLogo>
-              <span style={{background: "linear-gradient(90deg, #6ee7ff 10%, #3b82f6 90%, #60a5fa 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 900}}>Share. Jump. Win.</span>
-            </LightboxLogo>
-            <LightboxSlogan>
-              Welcome! Ready to make sharing smarter?
-            </LightboxSlogan>
-            <LightboxDesc>
-              Instantly guide your audience to the <b>best moment</b> of any article, blog, or video.<br/>
-              Paste a link, <b>highlight what matters</b>, and create a short link that lands others right there.
-              <br/><br/>
-              <b>No more scrolling, searching, or confusion.</b> Just clarity, impact, and speed.
-            </LightboxDesc>
-            <LightboxButton onClick={handleCloseLightbox}>Get Started</LightboxButton>
-            <LightboxContact href="mailto:support@jump2share.com">
-              Contact us
-            </LightboxContact>
-          </LightboxCard>
-        </LightboxOverlay>
-      )}
+
+      <LogoRow>
+        <LogoText>Jump</LogoText>
+        <LogoTwo>2</LogoTwo>
+      </LogoRow>
+
       <DividerHeader>Jump2 in Action</DividerHeader>
       <WideGrid>
         {/* LEFT: Paste, anchor, how-to */}
@@ -876,6 +839,13 @@ export default function Home() {
           100% { box-shadow: 0 0 0 0 rgba(255,209,0,0);}
         }
       `}</style>
+      <Fab
+        href="mailto:support@jump2share.com?subject=Jump2%20Feedback"
+        aria-label="Send Feedback"
+        title="Send Feedback"
+      >
+        🗨️ Feedback
+      </Fab>
       <Footer />
     </Bg>
   );
