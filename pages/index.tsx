@@ -10,6 +10,14 @@ const fadeIn = keyframes`
   from { opacity: 0;}
   to { opacity: 1;}
 `;
+const bounce = keyframes`
+  0%, 100% { transform: translateY(0);}
+  13% { transform: translateY(-18%);}
+  20% { transform: translateY(0);}
+  23% { transform: translateY(-11%);}
+  28% { transform: translateY(0);}
+  100% { transform: translateY(0);}
+`;
 const pop = keyframes`
   0% { transform: scale(0.9);}
   70% { transform: scale(1.05);}
@@ -17,179 +25,202 @@ const pop = keyframes`
 `;
 
 // --- Layout ---
-const TopNav = styled.header`
-  background: #f8fafc;
-  border-bottom: 1px solid #e4e7ec;
-  padding: 0.66em 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 58px;
-  box-shadow: 0 3px 16px #e0e7ef13;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+const Bg = styled.div`
+  min-height: 100vh;
+  background: radial-gradient(circle at 60% 20%, #25406a 0%, #0d1423 100%);
+  padding: 0;
+  position: relative;
 `;
 
-const Brand = styled.a`
+const MainWrap = styled.div`
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 3.5rem 1rem 2.5rem;
   display: flex;
-  align-items: center;
-  gap: 0.43em;
-  font-size: 1.43em;
-  font-weight: 900;
-  letter-spacing: -1.1px;
-  color: #2563eb;
-  margin-left: 1.5em;
-  text-decoration: none;
-  img {
-    height: 28px;
-    margin-right: 0.5em;
-    border-radius: 6px;
-    box-shadow: 0 2px 10px #2563eb18;
-    background: #fff;
+  flex-direction: column;
+  gap: 2.8rem;
+
+  @media (max-width: 900px) {
+    padding: 1.1rem 0.1rem 1.5rem;
+    gap: 2rem;
   }
 `;
 
-const Nav = styled.nav`
+const TopBar = styled.header`
+  width: 100%;
+  background: rgba(16,22,36,0.98);
   display: flex;
   align-items: center;
-  gap: 2em;
-  margin-right: 2.2em;
-  font-size: 1.07em;
+  justify-content: space-between;
+  padding: 1rem 1.2rem 0.6rem 1.2rem;
+  border-bottom: 1.5px solid #223050;
+  box-shadow: 0 3px 16px #1e293b44;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  @media (max-width: 600px) {
+    flex-direction: column;
+    gap: .3em;
+    padding: 0.8rem 0.3rem 0.4rem 0.3rem;
+  }
+`;
+const Brand = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.32em;
+  font-size: 1.35em;
+  font-weight: 900;
+  letter-spacing: -1.1px;
+  color: #60a5fa;
+  img { height: 28px; border-radius: 8px; margin-right: 0.5em;}
+  text-shadow: 0 2px 12px #3b82f6cc;
+  background: none;
+`;
+
+const TopNav = styled.nav`
+  display: flex;
+  gap: 1.3em;
+  align-items: center;
+  font-size: 1em;
   a, button {
-    color: #222e3a;
+    color: #b5c7e4;
     border: none;
     background: none;
     font-weight: 700;
     text-decoration: none;
     cursor: pointer;
-    padding: 0.22em 0.73em;
+    padding: 0.22em 0.79em;
     border-radius: 0.6em;
     transition: background 0.12s;
     &:hover {
-      background: #e0e7ff;
-      color: #1e293b;
+      background: #23386b;
+      color: #fff;
     }
   }
-`;
-
-const Bg = styled.div`
-  min-height: 100vh;
-  background: linear-gradient(115deg, #e0edfb 80%, #dbeafe 100%);
-  padding: 0;
-  position: relative;
-`;
-
-const Centered = styled.div`
-  max-width: 1200px;
-  margin: 3.2rem auto 0 auto;
-  padding: 0 1.4rem 3rem;
-  animation: ${fadeIn} 0.6s;
-`;
-
-const Hero = styled.section`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  margin-bottom: 2.5em;
-`;
-
-const LogoRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.23em;
-  font-size: clamp(2.7rem, 7vw, 4.6rem);
-  font-weight: 900;
-  color: #14314d;
-  margin: 0 0 0.1em 0;
-  letter-spacing: -1.4px;
-  background: linear-gradient(90deg, #2563eb 10%, #60a5fa 90%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-`;
-
-const LogoTwo = styled.span`
-  color: #ffd100;
-  font-size: 1.1em;
-  font-weight: 900;
-  margin-left: 0.05em;
-  text-shadow: 0 0 18px #3b82f6aa;
-`;
-
-const HeroSlogan = styled.div`
-  font-size: 1.36em;
-  color: #374151;
-  font-weight: 700;
-  margin-bottom: 1em;
-  text-shadow: 0 1px 4px #b6c6e533;
-`;
-
-const HeroDesc = styled.div`
-  color: #64748b;
-  font-size: 1.18em;
-  margin-bottom: 1.8em;
-  font-weight: 500;
-  max-width: 540px;
+  @media (max-width: 600px) { gap: 0.7em; }
 `;
 
 const TrustBar = styled.div`
   display: flex;
-  gap: 1.85em;
+  gap: 1em;
   align-items: center;
-  margin-bottom: 2.6em;
-  font-size: 1.09em;
-  color: #64748b;
+  margin-bottom: 1.4em;
+  margin-top: 1em;
+  font-size: 1em;
+  color: #8ba8d8;
   font-weight: 600;
+  flex-wrap: wrap;
   svg {
-    margin-right: 0.38em;
-    color: #6d28d9;
+    margin-right: 0.23em;
+    color: #60a5fa;
     vertical-align: middle;
   }
 `;
 
 const TrustLogo = styled.img`
   height: 22px;
-  margin-right: 0.45em;
-  opacity: 0.85;
-  filter: grayscale(0.28);
+  margin-right: 0.32em;
+  opacity: 0.76;
+  filter: grayscale(0.33);
   vertical-align: middle;
 `;
 
+// --- Hero & Branding ---
+const Hero = styled.section`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 170px;
+  margin-bottom: 0.7em;
+  width: 100%;
+  @media (max-width: 600px) {
+    margin-top: 0.7em;
+    min-height: 0;
+    align-items: center;
+  }
+`;
+const LogoRow = styled.h1`
+  display: flex;
+  align-items: center;
+  gap: 0.18em;
+  font-size: clamp(2.2rem, 9vw, 3.3rem);
+  font-weight: 900;
+  letter-spacing: -1.6px;
+  user-select: none;
+  margin: 0 0 0.13em;
+  background: none;
+  @media (max-width: 600px) { font-size: 2.1rem; }
+`;
+const LogoText = styled.span`
+  background: linear-gradient(90deg, #60a5fa 10%, #3b82f6 90%, #60a5fa 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: ${gradient} 2.8s alternate infinite, ${bounce} 3.5s cubic-bezier(0.32, 0.72, 0.52, 1.5) infinite;
+  font-weight: 900;
+  display: inline-block;
+`;
+const LogoTwo = styled.span`
+  color: #ffd100;
+  font-size: 1.14em;
+  font-weight: 900;
+  margin-left: 0.08em;
+  text-shadow: 0 0 18px #3b82f6aa;
+  animation: ${bounce} 3.5s cubic-bezier(.46,1.58,.47,.86) infinite;
+  display: inline-block;
+`;
+const Slogan = styled.div`
+  font-size: 1.11em;
+  color: #e6eaff;
+  font-weight: 600;
+  margin-bottom: 0.5em;
+  text-shadow: 0 1px 10px #224, 0 0px 3px #2563eb33;
+  @media (max-width: 600px) { text-align: center; }
+`;
+const HeroDesc = styled.div`
+  color: #b5c7e4;
+  font-size: 1em;
+  margin-bottom: 1.05em;
+  font-weight: 400;
+  max-width: 430px;
+  @media (max-width: 600px) { text-align: center; }
+`;
+
+// --- Card ---
 const Card = styled.div`
-  background: #fff;
+  background: rgba(20,28,45,0.97);
   border-radius: 1.25em;
-  box-shadow: 0 8px 36px 0 #1e293b18, 0 0 0 2px #2563eb11;
+  box-shadow: 0 8px 32px 0 #1e293b33,0 0 0 1.5px #2563eb99;
   padding: 2.3em 1.6em 2.1em;
   animation: ${fadeIn} 0.5s;
   position: relative;
-  margin-bottom: 2.1em;
-  @media (max-width: 900px) { padding: 1.2em 0.6em 1.7em; }
+  margin-bottom: 1.7em;
+  @media (max-width: 600px) { padding: 1.05em 0.3em 1.35em; }
 `;
 
 const InputRow = styled.form`
   display: flex;
   flex-direction: column;
   gap: 1em;
-  margin-bottom: 1.5em;
+  margin-bottom: 1.2em;
   position: relative;
 `;
 const Input = styled.input`
-  font-size: 1.15em;
+  font-size: 1.09em;
   border-radius: 0.8em;
-  padding: 0.8em 1.1em;
-  border: 1.7px solid #283755;
-  background: #f3f6fa;
-  color: #243151;
+  padding: 0.7em 1em;
+  border: 1.5px solid #283755;
+  background: #0d1423;
+  color: #eaf0fa;
   font-weight: 500;
   transition: border-color 0.15s;
-  &:focus { border-color: #3b82f6; background: #e0e7ff; outline: none; }
+  &:focus { border-color: #3b82f6; background: #18243a; outline: none; }
   &::placeholder { color: #7b8ba9; }
 `;
 const Button = styled.button<{ primary?: boolean }>`
-  font-size: 1.09em;
+  font-size: 1.04em;
   border-radius: 0.6em;
-  padding: 0.78em 2.1em;
+  padding: 0.7em 1.7em;
   font-weight: 700;
   border: none;
   margin-top: 0.2em;
@@ -212,45 +243,45 @@ const Button = styled.button<{ primary?: boolean }>`
   }
 `;
 const ExampleLinks = styled.div`
-  margin: 0.1em 0 1.1em 0;
+  margin: 0.1em 0 1em 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.8em;
+  gap: 0.7em;
   a {
     color: #3b82f6;
     cursor: pointer;
     text-decoration: underline dotted;
-    font-size: 0.97em;
+    font-size: 0.95em;
     font-weight: 500;
     &:hover { text-decoration: underline solid; }
   }
 `;
 const Tip = styled.div`
-  font-size: 0.99em;
+  font-size: 0.96em;
   color: #8ba8d8;
-  margin-bottom: 0.7em;
+  margin-bottom: 0.5em;
   margin-top: -0.4em;
 `;
-
 const HowItWorks = styled.div`
-  margin-top: 1.5em;
+  margin-top: 1.2em;
   color: #b9d3ff;
-  font-size: 1.05em;
+  font-size: 0.97em;
   ul {
-    margin: 0.7em 0 0 1.4em;
+    margin: 0.6em 0 0 1.1em;
     padding: 0;
-    li {margin-bottom: 0.2em;}
+    li {margin-bottom: 0.18em;}
   }
 `;
 
+// --- Share Bar ---
 const ShareBarWrapper = styled.div`
   width: 100%;
   display: flex;
   justify-content: center;
-  margin: 0 auto 2.2em auto;
-  @media (max-width: 900px) {
-    margin-bottom: 1.5em;
-    padding: 0 0.4em;
+  margin: 0 auto 1.4em auto;
+  @media (max-width: 600px) {
+    margin-bottom: 1em;
+    padding: 0 0.1em;
   }
 `;
 
@@ -258,18 +289,18 @@ const ShareBar = styled.div`
   background: linear-gradient(90deg, #1b2336 70%, #25406a 100%);
   border-radius: 1em;
   box-shadow: 0 4px 18px #3b82f633;
-  padding: 1em 2em;
+  padding: 1em 1.1em;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 1.1em;
+  gap: 0.8em;
   min-height: 3.2em;
   width: 100%;
   max-width: 650px;
   position: relative;
   z-index: 20;
   @media (max-width: 600px) {
-    padding: 0.95em 0.5em;
+    padding: 0.7em 0.3em;
     border-radius: 0.7em;
     gap: 0.6em;
     min-height: 2.6em;
@@ -277,22 +308,22 @@ const ShareBar = styled.div`
 `;
 
 const ShareInput = styled.input`
-  font-size: 1.11em;
+  font-size: 1.07em;
   border-radius: 0.6em;
-  border: 1.5px solid #334155;
-  background: #f3f6fa;
-  color: #1e293b;
+  border: 1.3px solid #334155;
+  background: #0d1423;
+  color: #eaf0fa;
   font-weight: 600;
-  padding: 0.68em 1.2em;
+  padding: 0.5em 1em;
   flex: 1 1 0%;
   outline: none;
   min-width: 0;
 `;
 
 const CopyBtn = styled(Button)`
-  font-size: 1em;
+  font-size: 0.99em;
   font-weight: 700;
-  padding: 0.7em 1.5em;
+  padding: 0.6em 1.3em;
   margin: 0;
   background: #2563eb;
   border-radius: 0.5em;
@@ -302,18 +333,18 @@ const CopyBtn = styled(Button)`
 
 const ShareActions = styled.div`
   display: flex;
-  gap: 0.7em;
+  gap: 0.6em;
   align-items: center;
 `;
 
 const ShareToast = styled.div`
   position: fixed;
-  bottom: 2.6em;
+  bottom: 2.1em;
   left: 50%;
   transform: translateX(-50%);
   background: #2563eb;
   color: #fff;
-  font-size: 1.1em;
+  font-size: 1em;
   font-weight: 700;
   border-radius: 0.6em;
   padding: 0.7em 2em;
@@ -322,46 +353,128 @@ const ShareToast = styled.div`
   animation: ${pop} 0.5s;
 `;
 
+// --- Loader & Skeletons ---
 const Loader = styled.div`
-  width: 32px; height: 32px;
+  width: 28px; height: 28px;
   border-radius: 50%;
   border: 4px solid #3b82f688;
   border-top: 4px solid #3b82f6;
   animation: spin 0.85s linear infinite;
-  margin: 3em auto 2em auto;
+  margin: 2em auto 1.5em auto;
   @keyframes spin {to {transform: rotate(360deg);}}
 `;
 const Skeleton = styled.div`
-  height: 18px;
+  height: 15px;
   width: 80%;
-  margin: 0.5em 0;
+  margin: 0.4em 0;
   background: linear-gradient(90deg, #24304a 40%, #334155 60%, #24304a 100%);
   background-size: 200% 100%;
   border-radius: 0.5em;
   animation: ${gradient} 1.3s linear infinite;
 `;
 
+// --- Preview ---
 const PreviewCard = styled(Card)`
-  min-height: 420px;
-  max-height: 79vh;
+  min-height: 320px;
+  max-height: 60vh;
   overflow-y: auto;
-  font-size: 1rem;
-  color: #334155;
-  padding: 2.1em 2.3em 2em;
+  font-size: 0.98rem;
+  color: #eaf0fa;
+  padding: 1.4em 1em 1.2em;
   position: relative;
-  @media (max-width: 900px) { padding: 1.1em 0.6em 1.7em; }
+  @media (max-width: 600px) { padding: 0.7em 0.2em 1em; min-height: 170px;}
 `;
 
-const Footer = styled.footer`
-  margin: 4em auto 1.2em auto;
-  color: #64748b;
+// --- Lightbox/Welcome Modal ---
+const LightboxOverlay = styled.div`
+  position: fixed;
+  z-index: 20000;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(17,24,39,0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: ${fadeIn} 0.25s;
+`;
+const LightboxCard = styled.div`
+  background: #202940;
+  border-radius: 1.2em;
+  box-shadow: 0 8px 32px 0 #1e293b99;
+  max-width: 98vw;
+  width: 340px;
+  padding: 2em 1.1em 1.4em;
+  color: #eaf0fa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  @media (max-width: 500px) {
+    width: 96vw;
+    padding: 1.1em 0.3em 1.2em;
+  }
+`;
+const LightboxLogo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.19em;
+  font-size: 2rem;
+  font-weight: 900;
+  margin-bottom: 0.32em;
+  user-select: none;
+`;
+const LightboxSlogan = styled.div`
+  font-size: 1.05em;
+  color: #ffe066;
+  font-weight: 700;
+  margin-bottom: 0.45em;
   text-align: center;
-  font-size: 1.09em;
-  opacity: 0.97;
+`;
+const LightboxDesc = styled.div`
+  color: #c5d6fa;
+  font-size: 0.97em;
+  font-weight: 400;
+  margin-bottom: 1em;
+  text-align: center;
+  line-height: 1.55;
+`;
+const LightboxButton = styled.button`
+  font-size: 1.03em;
+  border-radius: 0.6em;
+  padding: 0.7em 1.5em;
+  font-weight: 700;
+  border: none;
+  color: #fff;
+  background: linear-gradient(90deg, #3b82f6 10%, #2563eb 90%);
+  box-shadow: 0 3px 16px #2563eb66;
+  cursor: pointer;
+  transition: background 0.13s, box-shadow 0.13s, transform 0.12s;
+  &:hover, &:focus {
+    background: linear-gradient(90deg, #2563eb 10%, #3b82f6 90%);
+    transform: scale(1.04);
+    outline: none;
+  }
+`;
+const LightboxContact = styled.a`
+  color: #ffd100;
+  font-size: 0.98em;
+  font-weight: 600;
+  margin-top: 0.9em;
+  text-decoration: underline dotted;
+  &:hover {text-decoration: underline solid;}
+`;
+
+// --- Footer ---
+const Footer = styled.footer`
+  margin: 2.1em auto 1em auto;
+  color: #b5c7e4;
+  text-align: center;
+  font-size: 0.96em;
+  opacity: 0.95;
   @media (max-width: 600px) {
-    margin: 2.1em auto 1.2em auto;
-    font-size: 0.93em;
-    padding: 0 0.7em;
+    margin: 1.2em auto 1em auto;
+    font-size: 0.9em;
+    padding: 0 0.2em;
   }
 `;
 
@@ -402,8 +515,8 @@ const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: numbe
   );
   return (
     <div style={{
-      margin: "2rem auto 3rem",
-      maxWidth: 640,
+      margin: "1.1rem auto 2rem",
+      maxWidth: 420,
       borderRadius: 12,
       overflow: "hidden",
       boxShadow: "0 8px 20px #131c2b55",
@@ -411,7 +524,7 @@ const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: numbe
     }}>
       <iframe
         width="100%"
-        height="360"
+        height="220"
         src={src}
         title="YouTube video player"
         frameBorder={0}
@@ -690,39 +803,38 @@ export default function Home() {
     setSearchPhrase("");
   }, []);
 
+  // --- Render ---
   return (
     <Bg>
-      <TopNav>
-        <Brand href="/">
+      <TopBar>
+        <Brand>
           <img src="/favicon.ico" alt="Jump2" />
           Jump2
         </Brand>
-        <Nav>
-          <a href="/solutions">Solutions</a>
-          <a href="/teams">For Teams</a>
+        <TopNav>
+          <a href="/about">About</a>
+          <a href="/how">How it works</a>
           <a href="/api">API</a>
-          <a href="/help">Help</a>
           <a href="/contact">Contact</a>
-          <a href="/login">Sign in</a>
-        </Nav>
-      </TopNav>
-      <Centered>
+        </TopNav>
+      </TopBar>
+      <MainWrap>
         <Hero>
           <LogoRow>
-            Jump<LogoTwo>2</LogoTwo>
+            <LogoText>Jump</LogoText>
+            <LogoTwo>2</LogoTwo>
           </LogoRow>
-          <HeroSlogan>
-            Powering the world's smartest deep links.<br/>
-            <span style={{ color: "#2563eb", fontSize: "0.85em" }}>Jump to the best. Share with the rest.</span>
-          </HeroSlogan>
+          <Slogan>
+            The world’s easiest way to share the best part of any content.
+          </Slogan>
           <HeroDesc>
-            Instantly create deep links that jump users to the exact text or moment in any article, blog, or video.<br/>
-            <b>Trusted by teams, educators, and content pros worldwide.</b>
+            Paste an article, blog, or YouTube link below. Highlight the part you want to share. Instantly get a link that jumps others right to it. <br />
+            <span style={{color:"#ffe066", fontWeight:600}}>No accounts. No friction. Just fast, magical sharing.</span>
           </HeroDesc>
           <TrustBar>
             <span>
-              <svg height="19" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#60a5fa" /><text x="10" y="15" textAnchor="middle" fontSize="12" fill="#fff">✓</text></svg>
-              Used by 1,200+ teams
+              <svg height="17" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#60a5fa" /><text x="10" y="15" textAnchor="middle" fontSize="12" fill="#fff">✓</text></svg>
+              Trusted by teams and creators worldwide
             </span>
             <span>
               <TrustLogo src="/trusted-logo1.png" alt="Trusted brand 1" />
@@ -746,7 +858,7 @@ export default function Home() {
             <Button type="submit" primary>Preview</Button>
           </InputRow>
           <Tip>
-            <b>Tip:</b> Works for news, blogs, research, Wikipedia, YouTube and more. <span style={{color:"#2563eb"}}>Try it now!</span>
+            <b>Tip:</b> Try with any news, blog, or YouTube link. Paste, preview, and anchor!
           </Tip>
           <ExampleLinks>
             Examples:&nbsp;
@@ -773,7 +885,7 @@ export default function Home() {
               tabIndex={0}
               value={shortUrl ? shortUrl : "Your Jump2 link appears here…"}
               aria-label="Jump2 shareable link"
-              style={{minWidth: 200, flexBasis: "40%"}}
+              style={{minWidth: 160, flexBasis: "40%"}}
               onFocus={e => e.target.select()}
             />
             <ShareActions>
@@ -795,24 +907,24 @@ export default function Home() {
             {debouncedAnchor && (
               <>
                 <span style={{
-                  background:"rgba(255,224,102,0.20)",
+                  background:"rgba(255,224,102,0.17)",
                   color:"#ffe066",
                   borderRadius:6,
-                  padding:"0.15em 0.5em",
+                  padding:"0.13em 0.4em",
                   fontWeight:800,
-                  marginLeft:"0.8em",
-                  fontSize:"1.03em"
+                  marginLeft:"0.5em",
+                  fontSize:"0.98em"
                 }}>
                   Anchor: {debouncedAnchor}
                 </span>
                 <Button style={{
-                  marginLeft: "0.8em",
+                  marginLeft: "0.6em",
                   background: "#172554",
                   color: "#ffe066",
                   fontWeight: 700,
-                  padding: "0.45em 1.1em",
+                  padding: "0.43em 1em",
                   borderRadius: "0.3em",
-                  fontSize: "0.98em"
+                  fontSize: "0.92em"
                 }} onClick={handleClearAnchor} type="button" aria-label="Clear anchor">
                   Clear
                 </Button>
@@ -824,7 +936,7 @@ export default function Home() {
           {/* Search-to-highlight (anchor set on change, no Set Anchor btn) */}
           <form
             onSubmit={e => {e.preventDefault(); setAnchor(searchPhrase.trim());}}
-            style={{marginBottom:"1.2em", display:"flex", gap:"0.6em", alignItems:"center"}}
+            style={{marginBottom:"1em", display:"flex", gap:"0.6em", alignItems:"center"}}
             aria-label="Anchor phrase search"
           >
             <Input
@@ -836,7 +948,7 @@ export default function Home() {
                 setAnchor(e.target.value.trim());
               }}
               aria-label="Search phrase to anchor"
-              style={{flex:"1 1 0%", fontSize:"1.07em"}}
+              style={{flex:"1 1 0%", fontSize:"0.95em"}}
             />
             {searchPhrase && (
               <Button type="button" onClick={handleClearAnchor}>
@@ -854,7 +966,7 @@ export default function Home() {
                   return (
                     <>
                       <YouTubePlayer url={link} startSeconds={parsedSeconds} />
-                      <div style={{marginTop:"1.5em", color:"#64748b", fontSize:"1.08em"}}>
+                      <div style={{marginTop:"1em", color:"#b5c7e4", fontSize:"0.96em"}}>
                         Enter a timestamp (e.g. <b>1:23</b>) above to create a Jump2 link to that moment.
                       </div>
                     </>
@@ -862,7 +974,7 @@ export default function Home() {
                 }
               } catch {}
               if (error) {
-                return <div style={{ color: "#f87171", fontWeight: 600, marginTop: "2.1em" }}>{error}</div>;
+                return <div style={{ color: "#f87171", fontWeight: 600, marginTop: "1.3em" }}>{error}</div>;
               }
               if (!articleContent && !error) {
                 return (
@@ -892,7 +1004,7 @@ export default function Home() {
             })()}
           </PreviewCard>
         </div>
-      </Centered>
+      </MainWrap>
       {showToast && (
         <ShareToast>
           Link copied!
@@ -900,15 +1012,17 @@ export default function Home() {
       )}
       <Footer>
         <div>
-          <b>Jump2</b> &mdash; The #1 way to jump to the best.<br />
-          <span style={{color:"#2563eb"}}>Built for teams. Trusted by educators. Open source. Privacy-first.</span>
+          <b>Jump2</b> — Share the best, skip the rest.<br />
+          <span style={{color:"#3b82f6"}}>Open source. Privacy-first. No sign-ups. </span>
         </div>
-        <div style={{marginTop:"0.5em", opacity:0.82}}>
-          © {new Date().getFullYear()} Jump2, Inc. &nbsp; | &nbsp; <a href="/privacy" style={{color:"#2563eb"}}>Privacy</a> &nbsp;|&nbsp; <a href="/terms" style={{color:"#2563eb"}}>Terms</a>
-          <br/>
-          <span>Questions or feedback? <a style={{color:"#3b82f6"}} href="mailto:support@jump2share.com">Contact us</a></span>
+        <div style={{marginTop:"0.5em"}}>
+          Questions or feedback?{" "}
+          <a style={{color:"#3b82f6"}} href="mailto:support@jump2share.com">
+            Contact us
+          </a>
         </div>
       </Footer>
+      {/* Highlight pulse effect */}
       <style>{`
         .jump2-highlight-pulse {
           animation: jump2-pulse 1.1s cubic-bezier(.4,1.7,.5,1.2) 1;
@@ -920,50 +1034,32 @@ export default function Home() {
           100% { box-shadow: 0 0 0 0 rgba(255,209,0,0);}
         }
       `}</style>
+      {/* Lightbox modal for first-time users */}
       {showLightbox && (
-        <div style={{
-          position: "fixed", zIndex: 20000, top: 0, left: 0, right: 0, bottom: 0,
-          width: "100vw", height: "100vh", background: "rgba(17,24,39,0.92)",
-          display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeIn 0.25s"
-        }}>
-          <div style={{
-            background: "#202940", borderRadius: "1.2em", boxShadow: "0 8px 32px 0 #1e293b99",
-            maxWidth: "98vw", width: 400, padding: "2.3em 1.7em 2.1em", color: "#eaf0fa",
-            display: "flex", flexDirection: "column", alignItems: "center", position: "relative"
-          }}>
-            <LogoRow style={{fontSize:"2.2rem",marginBottom:"0.4em"}}>
-              Jump<LogoTwo>2</LogoTwo>
-            </LogoRow>
-            <div style={{
-              fontSize:"1.09em", color:"#ffe066", fontWeight:700, marginBottom:"0.6em", textAlign:"center"
-            }}>
+        <LightboxOverlay>
+          <LightboxCard>
+            <LightboxLogo>
+              <LogoText>Jump</LogoText>
+              <LogoTwo>2</LogoTwo>
+            </LightboxLogo>
+            <LightboxSlogan>
               Welcome to Jump2!
-            </div>
-            <div style={{
-              color: "#c5d6fa", fontSize: "1.09em", fontWeight: 400, marginBottom: "1.3em", textAlign: "center", lineHeight: 1.65
-            }}>
-              Instantly share the <b>best part</b> of any article, blog, or video.
-              <br/><br/>
+            </LightboxSlogan>
+            <LightboxDesc>
+              Instantly share the <b>best part</b> of any article, blog, or video.<br/>
+              <br/>
               <b>Jump2</b> lets you paste a link, <b>highlight a phrase or time</b>, and create a short link that lands others right there.<br/>
               <br/>
               No more scrolling, searching, or "where is it?" — just highlight, jump, and share.
               <br/><br/>
               <b>Save time. Guide your audience. Share better.</b>
-            </div>
-            <button style={{
-              fontSize: "1.09em", borderRadius: "0.6em", padding: "0.78em 2.1em", fontWeight: 700,
-              border: "none", color: "#fff", background: "linear-gradient(90deg, #3b82f6 10%, #2563eb 90%)",
-              boxShadow: "0 3px 16px #2563eb66", cursor: "pointer",
-              transition: "background 0.13s, box-shadow 0.13s, transform 0.12s"
-            }} onClick={handleCloseLightbox}>Let's go!</button>
-            <a href="mailto:support@jump2share.com" style={{
-              color: "#ffd100", fontSize: "1.01em", fontWeight: 600,
-              marginTop: "1.15em", textDecoration: "underline dotted"
-            }}>
+            </LightboxDesc>
+            <LightboxButton onClick={handleCloseLightbox}>Let's go!</LightboxButton>
+            <LightboxContact href="mailto:support@jump2share.com">
               Contact us
-            </a>
-          </div>
-        </div>
+            </LightboxContact>
+          </LightboxCard>
+        </LightboxOverlay>
       )}
     </Bg>
   );
