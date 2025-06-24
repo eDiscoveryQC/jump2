@@ -29,6 +29,7 @@ const ModalBox = styled.div`
   max-width: 600px;
   width: 90%;
   position: relative;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 `;
 
 const CloseButton = styled.button`
@@ -39,6 +40,18 @@ const CloseButton = styled.button`
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
+  color: #333;
+`;
+
+const ExportButton = styled.button`
+  padding: 0.6em 1.2em;
+  background-color: #1e3af2;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 1.5rem;
 `;
 
 const MemeModal: React.FC<MemeModalProps> = ({ highlightText, articleUrl, onClose }) => {
@@ -48,20 +61,8 @@ const MemeModal: React.FC<MemeModalProps> = ({ highlightText, articleUrl, onClos
         <CloseButton onClick={onClose}>✖</CloseButton>
         <h2 style={{ marginBottom: "1rem" }}>Your Meme Preview</h2>
         <MemeGenerator highlightText={highlightText} articleUrl={articleUrl} />
-        <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
-          <button
-            onClick={() => window.print()}
-            style={{
-              padding: "0.6em 1.2em",
-              backgroundColor: "#1e3af2",
-              color: "#fff",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-            }}
-          >
-            Export Meme
-          </button>
+        <div style={{ textAlign: "center" }}>
+          <ExportButton onClick={() => window.print()}>Export Meme</ExportButton>
         </div>
       </ModalBox>
     </Overlay>
