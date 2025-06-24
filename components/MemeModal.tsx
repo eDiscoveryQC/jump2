@@ -1,4 +1,3 @@
-// components/MemeModal.tsx
 import React from "react";
 import styled from "styled-components";
 import MemeGenerator from "./MemeGenerator";
@@ -60,7 +59,11 @@ const MemeModal: React.FC<MemeModalProps> = ({ highlightText, articleUrl, onClos
       <ModalBox onClick={(e) => e.stopPropagation()}>
         <CloseButton onClick={onClose}>✖</CloseButton>
         <h2 style={{ marginBottom: "1rem" }}>Your Meme Preview</h2>
-        <MemeGenerator highlightText={highlightText} articleUrl={articleUrl} />
+        <MemeGenerator
+          highlightText={highlightText}
+          articleUrl={articleUrl}
+          onClose={onClose}
+        />
         <div style={{ textAlign: "center" }}>
           <ExportButton onClick={() => window.print()}>Export Meme</ExportButton>
         </div>
