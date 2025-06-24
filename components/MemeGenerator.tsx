@@ -1,6 +1,7 @@
 // components/MemeGenerator.tsx
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import styled from "styled-components";
+import { toPng } from "html-to-image";
 
 interface MemeModalProps {
   highlightText: string;
@@ -47,9 +48,24 @@ const LinkBox = styled.div`
 
 const MemeGenerator = ({ highlightText, articleUrl }: MemeModalProps) => {
   const [generated, setGenerated] = useState(false);
+  const memeRef = useRef<HTMLDivElement>(null);
 
   const handleGenerate = () => {
     setGenerated(true);
+  };
+
+  const handleExport = async () => {
+    if (!memeRef.current) return;
+
+    try {
+      const dataUrl = await toPng(memeRef.current, { cacheBust: true });
+      const link = document.createElement("a");
+      link.download = "jump2-meme.png";
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error("Failed to export meme:", err);
+    }
   };
 
   return (
@@ -71,27 +87,47 @@ const MemeGenerator = ({ highlightText, articleUrl }: MemeModalProps) => {
         </button>
       ) : (
         <>
-          <MemeImage>
-            <div style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              fontSize: "1.2rem",
-              color: "#333",
-              padding: "1em",
-              background: "rgba(255,255,255,0.85)",
-              borderRadius: "8px",
-              textAlign: "center",
-              maxWidth: "90%",
-              fontWeight: 500,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-            }}>
-              “{highlightText}”
-            </div>
-          </MemeImage>
-          <MemeText>Jumped from:</MemeText>
-          <LinkBox>{articleUrl}</LinkBox>
+          <div ref={memeRef} style={{ width: "100%" }}>
+            <MemeImage>
+              <div
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  fontSize: "1.2rem",
+                  color: "#333",
+                  padding: "1em",
+                  background: "rgba(255,255,255,0.85)",
+                  borderRadius: "8px",
+                  textAlign: "center",
+                  maxWidth: "90%",
+                  fontWeight: 500,
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                }}
+              >
+                “{highlightText}”
+              </div>
+            </MemeImage>
+            <MemeText>Jumped from:</MemeText>
+            <LinkBox>{articleUrl}</LinkBox>
+          </div>
+
+          <button
+            onClick={handleExport}
+            style={{
+              marginTop: "1rem",
+              padding: "0.6em 1.2em",
+              background: "#10b981",
+              color: "#fff",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontWeight: 600,
+            }}
+          >
+            ⬇️ Download Meme
+          </button>
         </>
       )}
     </MemeWrapper>
