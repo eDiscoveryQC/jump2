@@ -1,7 +1,7 @@
 // pages/api/meme.ts
 
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { createCanvas, loadImage, registerFont } from 'canvas'
+import { createCanvas, loadImage, registerFont, CanvasRenderingContext2D } from 'canvas'
 import { parse } from 'url'
 
 registerFont('./public/fonts/Inter-Bold.ttf', { family: 'Inter' })
