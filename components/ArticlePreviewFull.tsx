@@ -3,6 +3,8 @@ import styled, { keyframes } from "styled-components";
 import ArticleError from "./ArticleError";
 import HighlightEditor, { Highlight } from "./HighlightEditor";
 import DOMPurify from "dompurify";
+import MemeGenerator from "./MemeGenerator";
+import Footer from "./Footer";
 
 // Emoji-based icons to avoid react-icons dependency
 const FaCopy = () => (
@@ -18,7 +20,7 @@ const FaLink = () => (
   <span role="img" aria-label="Link" style={{ fontSize: "1.1em" }}>🔗</span>
 );
 const FaQr = () => (
-  <span role="img" aria-label="QR Code" style={{ fontSize: "1.15em" }}>� QR</span>
+  <span role="img" aria-label="QR Code" style={{ fontSize: "1.15em" }}>🧾</span>
 );
 
 // --- Animations & Styles ---
@@ -555,11 +557,20 @@ export default function ArticlePreviewFull({
             sharing={sharing}
             readOnly={false}
           />
+
+          {/* --- MEME GENERATOR --- */}
+          <div style={{ marginTop: "2.5rem" }}>
+            <h3 style={{ fontSize: "1.4rem", fontWeight: 700, marginBottom: "0.5em" }}>🖼️ Auto Meme Generator</h3>
+            <MemeGenerator highlightText={anchor || (highlights[0]?.text ?? "") } articleUrl={url} />
+          </div>
         </>
       )}
       {!loading && !error && !articleHtml && (
         <Message>No preview available for this link.</Message>
       )}
+
+      <Footer />
+
       <footer
         style={{
           marginTop: "2.2rem",
