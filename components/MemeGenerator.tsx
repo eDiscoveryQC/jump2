@@ -1,128 +1,101 @@
-import React, { useEffect, useState } from 'react'
-import styled from 'styled-components'
+// components/MemeGenerator.tsx
+import React, { useState } from "react";
+import styled from "styled-components";
 
-interface MemeGeneratorProps {
-  highlightText: string
-  articleUrl: string
-  onClose: () => void
+interface MemeModalProps {
+  highlightText: string;
+  articleUrl: string;
 }
 
-const MemeGenerator: React.FC<MemeGeneratorProps> = ({ highlightText, articleUrl, onClose }) => {
-  const [memeSrc, setMemeSrc] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+const MemeWrapper = styled.div`
+  border: 2px dashed #ccc;
+  padding: 1.2rem;
+  border-radius: 10px;
+  background: #fefefe;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 600px;
+  margin: 0 auto;
+`;
 
-  useEffect(() => {
-    const generateMeme = async () => {
-      setLoading(true)
-      try {
-        const res = await fetch('/api/meme', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: highlightText, sourceUrl: articleUrl }),
-        })
+const MemeImage = styled.div`
+  width: 100%;
+  padding-top: 56.25%;
+  background: #e0e0e0;
+  position: relative;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+`;
 
-        const blob = await res.blob()
-        const url = URL.createObjectURL(blob)
-        setMemeSrc(url)
-      } catch (err) {
-        console.error('Error generating meme:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
+const MemeText = styled.div`
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  color: #222;
+`;
 
-    generateMeme()
-  }, [highlightText, articleUrl])
+const LinkBox = styled.div`
+  font-size: 0.9rem;
+  color: #555;
+  background: #f4f4f4;
+  padding: 0.4em 0.8em;
+  border-radius: 6px;
+  word-break: break-all;
+`;
 
-  const downloadImage = () => {
-    if (!memeSrc) return
-    const link = document.createElement('a')
-    link.href = memeSrc
-    link.download = 'jump2-meme.png'
-    link.click()
-  }
+const MemeGenerator = ({ highlightText, articleUrl }: MemeModalProps) => {
+  const [generated, setGenerated] = useState(false);
+
+  const handleGenerate = () => {
+    setGenerated(true);
+  };
 
   return (
-    <Overlay>
-      <Modal>
-        <Header>
-          <h2>🎉 Meme Ready</h2>
-          <CloseBtn onClick={onClose}>×</CloseBtn>
-        </Header>
-        {loading ? (
-          <p>Generating your meme...</p>
-        ) : memeSrc ? (
-          <>
-            <ImagePreview src={memeSrc} alt="Generated Meme" />
-            <Actions>
-              <Button onClick={downloadImage}>Download</Button>
-              <Button onClick={onClose}>Close</Button>
-            </Actions>
-          </>
-        ) : (
-          <p>Error generating meme.</p>
-        )}
-      </Modal>
-    </Overlay>
-  )
-}
+    <MemeWrapper>
+      {!generated ? (
+        <button
+          onClick={handleGenerate}
+          style={{
+            padding: "0.6em 1.2em",
+            fontSize: "1rem",
+            background: "#1e3af2",
+            color: "#fff",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+          }}
+        >
+          🚀 Generate Meme
+        </button>
+      ) : (
+        <>
+          <MemeImage>
+            <div style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              fontSize: "1.2rem",
+              color: "#333",
+              padding: "1em",
+              background: "rgba(255,255,255,0.85)",
+              borderRadius: "8px",
+              textAlign: "center",
+              maxWidth: "90%",
+              fontWeight: 500,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+            }}>
+              “{highlightText}”
+            </div>
+          </MemeImage>
+          <MemeText>Jumped from:</MemeText>
+          <LinkBox>{articleUrl}</LinkBox>
+        </>
+      )}
+    </MemeWrapper>
+  );
+};
 
-export default MemeGenerator
-
-const Overlay = styled.div`
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-`
-
-const Modal = styled.div`
-  background: #111;
-  border-radius: 16px;
-  padding: 2rem;
-  width: 90%;
-  max-width: 640px;
-  color: white;
-  text-align: center;
-`
-
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`
-
-const CloseBtn = styled.button`
-  background: none;
-  border: none;
-  font-size: 1.8rem;
-  color: white;
-  cursor: pointer;
-`
-
-const ImagePreview = styled.img`
-  margin-top: 1rem;
-  max-width: 100%;
-  border-radius: 8px;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
-`
-
-const Actions = styled.div`
-  margin-top: 1.5rem;
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-`
-
-const Button = styled.button`
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  background: #1e3af2;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-`
+export default MemeGenerator;
