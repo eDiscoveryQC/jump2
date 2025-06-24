@@ -213,6 +213,9 @@ export default function ArticlePreviewFull({
   const previewRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // --- Meme modal state ---
+  const [showMemeModal, setShowMemeModal] = useState(false);
+
   // --- Fetch Article with timeout, abort, and detailed error ---
   useEffect(() => {
     if (!url) return;
@@ -558,10 +561,33 @@ export default function ArticlePreviewFull({
             readOnly={false}
           />
 
-          {/* --- MEME GENERATOR --- */}
+          {/* --- MEME GENERATOR PATCHED: Button & Modal --- */}
           <div style={{ marginTop: "2.5rem" }}>
             <h3 style={{ fontSize: "1.4rem", fontWeight: 700, marginBottom: "0.5em" }}>🖼️ Auto Meme Generator</h3>
-            <MemeGenerator highlightText={anchor || (highlights[0]?.text ?? "") } articleUrl={url} />
+            <button
+              style={{
+                fontWeight: 700,
+                fontSize: "1.1em",
+                color: "#17456b",
+                background: "#ffe066",
+                border: "none",
+                borderRadius: 7,
+                padding: "0.37em 1.25em",
+                cursor: "pointer",
+                boxShadow: "0 0 6px #ffe06655",
+                marginBottom: "1em"
+              }}
+              onClick={() => setShowMemeModal(true)}
+            >
+              Generate Meme from Highlight
+            </button>
+            {showMemeModal && (
+              <MemeGenerator
+                highlightText={anchor || (highlights[0]?.text ?? "")}
+                articleUrl={url}
+                onClose={() => setShowMemeModal(false)}
+              />
+            )}
           </div>
         </>
       )}

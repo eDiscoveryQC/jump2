@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 
-interface MemeModalProps {
-  text: string
-  sourceUrl: string
+interface MemeGeneratorProps {
+  highlightText: string
+  articleUrl: string
   onClose: () => void
 }
 
-const MemeModal: React.FC<MemeModalProps> = ({ text, sourceUrl, onClose }) => {
+const MemeGenerator: React.FC<MemeGeneratorProps> = ({ highlightText, articleUrl, onClose }) => {
   const [memeSrc, setMemeSrc] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -18,7 +18,7 @@ const MemeModal: React.FC<MemeModalProps> = ({ text, sourceUrl, onClose }) => {
         const res = await fetch('/api/meme', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, sourceUrl }),
+          body: JSON.stringify({ text: highlightText, sourceUrl: articleUrl }),
         })
 
         const blob = await res.blob()
@@ -32,7 +32,7 @@ const MemeModal: React.FC<MemeModalProps> = ({ text, sourceUrl, onClose }) => {
     }
 
     generateMeme()
-  }, [text, sourceUrl])
+  }, [highlightText, articleUrl])
 
   const downloadImage = () => {
     if (!memeSrc) return
@@ -49,7 +49,6 @@ const MemeModal: React.FC<MemeModalProps> = ({ text, sourceUrl, onClose }) => {
           <h2>🎉 Meme Ready</h2>
           <CloseBtn onClick={onClose}>×</CloseBtn>
         </Header>
-
         {loading ? (
           <p>Generating your meme...</p>
         ) : memeSrc ? (
@@ -68,9 +67,8 @@ const MemeModal: React.FC<MemeModalProps> = ({ text, sourceUrl, onClose }) => {
   )
 }
 
-export default MemeModal
+export default MemeGenerator
 
-// Styled Components
 const Overlay = styled.div`
   position: fixed;
   inset: 0;
@@ -128,4 +126,3 @@ const Button = styled.button`
   border-radius: 8px;
   cursor: pointer;
 `
-
