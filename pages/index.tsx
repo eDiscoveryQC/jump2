@@ -86,13 +86,13 @@ const Section = styled.section`
 const SectionTitle = styled.h3`
   font-size: 2.4rem;
   font-weight: 800;
-  color: #0f172a;
+  color: #f8fafc;
   margin-bottom: 1.6rem;
 `;
 
 const Paragraph = styled.p`
   font-size: 1.25rem;
-  color: #475569;
+  color: #cbd5e1;
   line-height: 1.8;
   max-width: 780px;
   margin: 0 auto;
@@ -106,14 +106,14 @@ const ToolsGrid = styled.div`
 `;
 
 const ToolCard = styled.div`
-  background: #f8fafc;
+  background: #1e293b;
   border-radius: 0.95rem;
   padding: 2rem;
-  box-shadow: 0 6px 20px #e2e8f033;
+  box-shadow: 0 6px 20px #0f172a66;
   transition: all 0.3s ease;
 
   &:hover {
-    box-shadow: 0 12px 28px #94a3b855;
+    box-shadow: 0 12px 28px #0f172a88;
     transform: translateY(-5px);
   }
 
@@ -121,12 +121,12 @@ const ToolCard = styled.div`
     font-size: 1.4rem;
     font-weight: 700;
     margin-bottom: 0.8rem;
-    color: #0f172a;
+    color: #f8fafc;
   }
 
   p {
     font-size: 1.05rem;
-    color: #475569;
+    color: #cbd5e1;
   }
 `;
 
