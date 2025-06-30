@@ -1,7 +1,13 @@
 import Link from "next/link";
-import styled, { css } from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 import { useRouter } from "next/router";
 import { useState, useEffect, useRef } from "react";
+
+const pulseGlow = keyframes`
+  0% { box-shadow: 0 0 0px #facc15; }
+  50% { box-shadow: 0 0 14px #facc15cc; }
+  100% { box-shadow: 0 0 0px #facc15; }
+`;
 
 const SkipToContent = styled.a`
   position: absolute;
@@ -35,28 +41,31 @@ const Nav = styled.nav`
   top: 0;
   z-index: 999;
   box-shadow: 0 2px 18px #0ea5e980;
+  backdrop-filter: blur(16px);
 `;
 
 const Container = styled.div`
-  max-width: 1200px;
+  max-width: 1300px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: relative;
+  padding: 0 1rem;
 `;
 
 const Logo = styled.a`
   font-weight: 900;
-  font-size: 2rem;
+  font-size: 2.2rem;
   color: #facc15;
   letter-spacing: -1px;
-  text-shadow: 0 1px 0 #0ea5e9;
+  text-shadow: 0 2px 0 #0ea5e9;
   text-decoration: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5em;
+  animation: ${pulseGlow} 3.2s infinite;
   &:focus { outline: 2px solid #facc15; }
 `;
 
@@ -101,7 +110,7 @@ const Hamburger = styled.button<{ open: boolean }>`
 
 const MenuLinks = styled.div<{ open?: boolean }>`
   display: flex;
-  gap: 2.5rem;
+  gap: 2.8rem;
   align-items: center;
 
   @media (max-width: 700px) {
@@ -109,14 +118,14 @@ const MenuLinks = styled.div<{ open?: boolean }>`
     top: 60px;
     left: 0;
     right: 0;
-    background: #0f172aee;
-    box-shadow: 0 4px 24px #0ea5e94c;
+    background: #0f172ad8;
+    box-shadow: 0 6px 30px #0ea5e94c;
     flex-direction: column;
-    gap: 1.2rem;
-    padding: 1.5rem 0 1.2rem 0;
-    border-radius: 0 0 1.2em 1.2em;
-    transition: max-height 0.33s cubic-bezier(.4,1.7,.5,1.2), opacity 0.23s;
-    max-height: ${({ open }) => (open ? "350px" : "0")};
+    gap: 1.5rem;
+    padding: 1.8rem 0 1.5rem 0;
+    border-radius: 0 0 1.5em 1.5em;
+    transition: max-height 0.33s ease, opacity 0.23s;
+    max-height: ${({ open }) => (open ? "400px" : "0")};
     opacity: ${({ open }) => (open ? "1" : "0")};
     pointer-events: ${({ open }) => (open ? "all" : "none")};
     overflow: hidden;
@@ -129,21 +138,22 @@ const MenuLink = styled.a<{ active?: boolean }>`
   font-weight: 600;
   font-size: 1.1rem;
   text-decoration: none;
-  transition: color 0.18s;
+  transition: color 0.18s, text-shadow 0.25s;
   position: relative;
-  padding: 0.3em 0.8em;
+  padding: 0.4em 0.9em;
   border-radius: 0.5em;
   cursor: pointer;
   &:hover,
   &:focus {
     color: #facc15;
     background: #1e293b;
+    text-shadow: 0 0 6px #facc15;
   }
   &::after {
     content: "";
     display: ${({ active }) => (active ? "block" : "none")};
     position: absolute;
-    left: 0; right: 0; bottom: -2px;
+    left: 0; right: 0; bottom: -3px;
     height: 3px;
     background: linear-gradient(90deg, #facc15 0%, #3b82f6 100%);
     border-radius: 2px;
@@ -156,7 +166,7 @@ const Overlay = styled.div<{ open: boolean }>`
     display: ${({ open }) => (open ? "block" : "none")};
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(16, 23, 45, 0.6);
+    background: rgba(16, 23, 45, 0.7);
     z-index: 1000;
     animation: fadein 0.22s;
     @keyframes fadein {
@@ -184,8 +194,7 @@ export default function Menu() {
   useEffect(() => { setMenuOpen(false); }, [router.pathname]);
 
   useEffect(() => {
-    if (menuOpen) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
+    document.body.style.overflow = menuOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
