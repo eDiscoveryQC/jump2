@@ -75,14 +75,14 @@ export default function Share() {
       <PageWrapper>
         <Title>🔗 Create Your Jump2</Title>
         <Subtitle>
-          Paste any content. Clip the part that matters. Share it like a pro.
+          Paste any article or YouTube link. Select key content. Jump directly to the moment that matters.
         </Subtitle>
 
         <CTA>
-          🚀 Paste your link above, then highlight key content, add a meme, or timestamp — and we’ll generate a smart share link, ready to go viral.
+          🚀 Paste your link below, then highlight key text, timestamp a moment, or add a meme — Jump2 generates a smart, shareable link for instant impact.
         </CTA>
 
-        <ArticlePreviewFull url="https://techcrunch.com/sample-article" />
+        <ArticlePreviewFull scrapeEngine="scrapingbee" enableYouTubeTimestamp supportArticles supportMemes />
 
         <Divider />
 
