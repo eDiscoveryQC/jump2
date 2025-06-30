@@ -2,14 +2,12 @@ import React from "react";
 import styled, { keyframes } from "styled-components";
 import Head from "next/head";
 
-// 🔥 Glow animation for the Jump2 logo
 const pulseGlow = keyframes`
   0% { box-shadow: 0 0 0px #facc15; }
   50% { box-shadow: 0 0 12px #facc1588; }
   100% { box-shadow: 0 0 0px #facc15; }
 `;
 
-// 🎯 Hero Styling
 const HeroSection = styled.section`
   display: flex;
   flex-direction: column;
@@ -75,7 +73,6 @@ const CTAButtons = styled.div`
   }
 `;
 
-// 🌐 Section Styling
 const Section = styled.section`
   padding: 4.5rem 1.5rem;
   max-width: 1150px;
@@ -130,7 +127,39 @@ const ToolCard = styled.div`
   }
 `;
 
-// 🦾 Footer
+const CredStats = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  margin: 3rem auto 2rem;
+  font-size: 1.2rem;
+  color: #fef08a;
+  font-weight: 600;
+`;
+
+const JoinSection = styled.div`
+  background: #1e293b;
+  border-radius: 1.2rem;
+  padding: 3rem 2rem;
+  margin-top: 4rem;
+  text-align: center;
+  color: #fef08a;
+`;
+
+const JoinTitle = styled.h4`
+  font-size: 1.9rem;
+  font-weight: 800;
+  margin-bottom: 1.2rem;
+`;
+
+const JoinDesc = styled.p`
+  font-size: 1.15rem;
+  color: #e2e8f0;
+  max-width: 620px;
+  margin: 0 auto 2rem;
+`;
+
 const Footer = styled.footer`
   background: #0f172a;
   color: #cbd5e1;
@@ -162,8 +191,13 @@ export default function Home() {
       <Section>
         <SectionTitle>What is Share-Tech?</SectionTitle>
         <Paragraph>
-          Jump2 invented Share-Tech — a whole new layer of the internet designed to deliver context, clarity, and virality in every link. Whether it’s video, text, or sound, Jump2 lets you highlight what matters and share it precisely.
+          Jump2 invented Share-Tech — a new layer of the internet built for clarity and virality. Highlight videos, quotes, or songs and share exactly what matters.
         </Paragraph>
+        <CredStats>
+          <div>📈 1M+ Jump2 Links Shared</div>
+          <div>🌍 100+ Countries</div>
+          <div>💼 Backed by Top Creators & Investors</div>
+        </CredStats>
       </Section>
 
       <Section>
@@ -171,27 +205,27 @@ export default function Home() {
         <ToolsGrid>
           <ToolCard>
             <h4>🖍️ Highlight Editor</h4>
-            <p>Select text, create highlights, and generate focused shareable links.</p>
+            <p>Create precise links from articles with just a click.</p>
           </ToolCard>
           <ToolCard>
             <h4>🎯 Smart Timestamps</h4>
-            <p>Generate direct jumps into YouTube, TikTok, Spotify, and more.</p>
+            <p>Generate deep links into YouTube, TikTok, or podcasts.</p>
           </ToolCard>
           <ToolCard>
             <h4>🖼️ Meme Generator</h4>
-            <p>One-click memes from quotes, with branded watermarking and style presets.</p>
+            <p>Turn quotes into viral branded images in seconds.</p>
           </ToolCard>
           <ToolCard>
             <h4>⚡ Chrome Extension</h4>
-            <p>Highlight anything on any site → Right-click → Generate Jump2 link instantly.</p>
+            <p>Highlight on any site and instantly Jump2 it.</p>
           </ToolCard>
           <ToolCard>
             <h4>📊 Creator Dashboard</h4>
-            <p>Track engagement, organize links, optimize content strategy with insights.</p>
+            <p>Manage links, view engagement, and optimize shares.</p>
           </ToolCard>
           <ToolCard>
             <h4>🧪 Embed Toolkit</h4>
-            <p>Drop Jump2 previews inside Substack, Ghost, Webflow, and more.</p>
+            <p>Drop previews into Substack, Webflow, Ghost, and more.</p>
           </ToolCard>
         </ToolsGrid>
       </Section>
@@ -199,17 +233,19 @@ export default function Home() {
       <Section>
         <SectionTitle>Built to Go Viral</SectionTitle>
         <Paragraph>
-          Every Jump2 link is a growth loop. When your audience shares a Jump2, they amplify just the best part. Our smart links work on Slack, Discord, X, LinkedIn, and beyond — complete with previews, thumbnails, and reactions.
+          Every Jump2 is a growth loop. Shareable. Visual. Preloaded with context. Works on X, Slack, Discord, LinkedIn, and more.
         </Paragraph>
       </Section>
 
-      <Section>
-        <SectionTitle>Start Sharing Like It’s 2025</SectionTitle>
+      <JoinSection>
+        <JoinTitle>Join or Back Jump2</JoinTitle>
+        <JoinDesc>
+          Whether you're a creator, developer, or investor — we’re building a movement around clarity and precision online. Get in touch.
+        </JoinDesc>
         <CTAButtons>
-          <a href="/share" className="primary">Try Jump2 Free</a>
-          <a href="/contact" className="secondary">Become a Creator</a>
+          <a href="/contact" className="primary">Let’s Connect</a>
         </CTAButtons>
-      </Section>
+      </JoinSection>
 
       <Footer>
         <div><strong>Jump2 — The First Share-Tech Company</strong></div>

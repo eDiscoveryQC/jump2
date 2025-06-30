@@ -3,7 +3,6 @@ import styled, { css } from "styled-components";
 import { useRouter } from "next/router";
 import { useState, useEffect, useRef } from "react";
 
-// Accessibility: Skip to content link
 const SkipToContent = styled.a`
   position: absolute;
   left: -999px;
@@ -29,17 +28,17 @@ const SkipToContent = styled.a`
 
 const Nav = styled.nav`
   width: 100%;
-  background: #111827;
-  border-bottom: 1px solid #2563eb33;
-  padding: 0.8rem 0;
+  background: #0f172a;
+  border-bottom: 1px solid #334155;
+  padding: 1rem 0;
   position: sticky;
   top: 0;
   z-index: 999;
-  box-shadow: 0 1px 12px #0ea5e933;
+  box-shadow: 0 2px 18px #0ea5e980;
 `;
 
 const Container = styled.div`
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -49,8 +48,8 @@ const Container = styled.div`
 
 const Logo = styled.a`
   font-weight: 900;
-  font-size: 1.6rem;
-  color: #3b82f6;
+  font-size: 2rem;
+  color: #facc15;
   letter-spacing: -1px;
   text-shadow: 0 1px 0 #0ea5e9;
   text-decoration: none;
@@ -58,7 +57,7 @@ const Logo = styled.a`
   display: flex;
   align-items: center;
   gap: 0.5em;
-  &:focus { outline: 2px solid #3b82f6; }
+  &:focus { outline: 2px solid #facc15; }
 `;
 
 const Hamburger = styled.button<{ open: boolean }>`
@@ -71,7 +70,7 @@ const Hamburger = styled.button<{ open: boolean }>`
   margin-left: 0.5em;
   z-index: 1002;
   border-radius: 0.6em;
-  &:focus { outline: 2px solid #3b82f6; }
+  &:focus { outline: 2px solid #facc15; }
   @media (max-width: 700px) {
     display: flex;
     align-items: center;
@@ -81,7 +80,7 @@ const Hamburger = styled.button<{ open: boolean }>`
     width: 28px;
     height: 4px;
     margin: 5px 0;
-    background: #3b82f6;
+    background: #facc15;
     border-radius: 2px;
     transition: 0.26s;
     ${({ open }) =>
@@ -102,7 +101,7 @@ const Hamburger = styled.button<{ open: boolean }>`
 
 const MenuLinks = styled.div<{ open?: boolean }>`
   display: flex;
-  gap: 2rem;
+  gap: 2.5rem;
   align-items: center;
 
   @media (max-width: 700px) {
@@ -110,7 +109,7 @@ const MenuLinks = styled.div<{ open?: boolean }>`
     top: 60px;
     left: 0;
     right: 0;
-    background: #111827ee;
+    background: #0f172aee;
     box-shadow: 0 4px 24px #0ea5e94c;
     flex-direction: column;
     gap: 1.2rem;
@@ -126,42 +125,38 @@ const MenuLinks = styled.div<{ open?: boolean }>`
 `;
 
 const MenuLink = styled.a<{ active?: boolean }>`
-  color: ${({ active }) => (active ? "#3b82f6" : "#cbd5e1")};
+  color: ${({ active }) => (active ? "#facc15" : "#cbd5e1")};
   font-weight: 600;
-  font-size: 1.08rem;
+  font-size: 1.1rem;
   text-decoration: none;
   transition: color 0.18s;
   position: relative;
-  text-shadow: ${({ active }) => (active ? "0 0 5px #2563eb77" : "none")};
-  padding: 0.25em 0.6em;
+  padding: 0.3em 0.8em;
   border-radius: 0.5em;
   cursor: pointer;
   &:hover,
   &:focus {
-    color: #3b82f6;
-    text-shadow: 0 0 5px #2563eb77;
-    background: #22305044;
+    color: #facc15;
+    background: #1e293b;
   }
-  &:focus { outline: 2px solid #3b82f6; }
   &::after {
     content: "";
     display: ${({ active }) => (active ? "block" : "none")};
     position: absolute;
     left: 0; right: 0; bottom: -2px;
     height: 3px;
-    background: linear-gradient(90deg, #ffd100 0%, #3b82f6 100%);
+    background: linear-gradient(90deg, #facc15 0%, #3b82f6 100%);
     border-radius: 2px;
   }
 `;
 
-// Overlay for mobile menu
 const Overlay = styled.div<{ open: boolean }>`
   display: none;
   @media (max-width: 700px) {
     display: ${({ open }) => (open ? "block" : "none")};
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(16, 23, 45, 0.55);
+    background: rgba(16, 23, 45, 0.6);
     z-index: 1000;
     animation: fadein 0.22s;
     @keyframes fadein {
@@ -178,47 +173,34 @@ export default function Menu() {
 
   const links = [
     { href: "/", label: "Home" },
+    { href: "/share", label: "Create" },
+    { href: "/features", label: "Features" },
     { href: "/how", label: "How it Works" },
     { href: "/api", label: "API" },
     { href: "/about", label: "About" },
-    { href: "/contact", label: "Contact" },
+    { href: "/contact", label: "Contact" }
   ];
 
-  // Close menu on route change (SPA navigation)
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [router.pathname]);
+  useEffect(() => { setMenuOpen(false); }, [router.pathname]);
 
-  // Prevent scroll when menu is open on mobile
   useEffect(() => {
-    if (menuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    if (menuOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
-  // Accessibility: close menu on Escape key or clicking outside
   useEffect(() => {
     if (!menuOpen) return;
-
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") setMenuOpen(false);
     }
     function handleClick(e: MouseEvent) {
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(e.target as Node)
-      ) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpen(false);
       }
     }
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("mousedown", handleClick);
-
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("mousedown", handleClick);
