@@ -82,7 +82,7 @@ export default function Share() {
           🚀 Paste your link above, then highlight key content, add a meme, or timestamp — and we’ll generate a smart share link, ready to go viral.
         </CTA>
 
-        <ArticlePreviewFull />
+        <ArticlePreviewFull url="https://techcrunch.com/sample-article" />
 
         <Divider />
 
