@@ -1,12 +1,10 @@
-// components/ArticlePreviewFull.tsx
-
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import DOMPurify from "dompurify";
 
 import ArticleError from "./ArticleError";
 import HighlightEditor, { Highlight } from "./HighlightEditor";
-import MemeGenerator from "./MemeGenerator";
+import MemeModal from "./MemeModal";
 import Footer from "./Footer";
 
 // Emoji-based icons
@@ -15,7 +13,6 @@ const FaRedo = () => <span role="img" aria-label="Redo">🔄</span>;
 const FaCheckCircle = () => <span role="img" aria-label="Check" style={{ color: "#38a169" }}>✔️</span>;
 const FaQr = () => <span role="img" aria-label="QR">🧾</span>;
 
-// Animations
 const fadeIn = keyframes`
   from { opacity: 0; }
   to { opacity: 1; }
@@ -25,7 +22,6 @@ const highlightFlash = keyframes`
   40% { background: #ffb700; }
 `;
 
-// Styled Components
 const PageContainer = styled.div`
   max-width: 980px;
   margin: 2.7rem auto 3rem;
@@ -120,7 +116,6 @@ const PreviewContainer = styled.div`
   }
 `;
 
-// Highlight rendering
 function markHtmlWithHighlightsSafe(html: string, highlights: Highlight[]) {
   if (!highlights?.length) return DOMPurify.sanitize(html);
   const sorted = [...highlights]
@@ -137,7 +132,6 @@ function markHtmlWithHighlightsSafe(html: string, highlights: Highlight[]) {
   return result;
 }
 
-// Context snippet utility
 function getContextSnippet(text: string, anchor: string, n = 120) {
   if (!anchor) return { before: "", anchor: "", after: "" };
   const idx = text.toLowerCase().indexOf(anchor.toLowerCase());
@@ -155,12 +149,6 @@ type ArticlePreviewFullProps = {
   onAnchorEdit?: (anchor: string) => void;
 };
 
-const KNOWN_SUPPORTED = [
-  "nytimes.com", "bbc.co", "cnn.com", "yahoo.com", "npr.org",
-  "reuters.com", "theguardian.com", "wikipedia.org",
-  "substack.com", "medium.com",
-];
-
 export default function ArticlePreviewFull({
   url,
   initialHighlights = [],
@@ -176,7 +164,6 @@ export default function ArticlePreviewFull({
   const [sharing, setSharing] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
-  const [feedback, setFeedback] = useState<"up" | "down" | "">("");
   const [editAnchor, setEditAnchor] = useState(anchor);
   const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights);
   const [showHint, setShowHint] = useState(true);
@@ -186,7 +173,6 @@ export default function ArticlePreviewFull({
   const previewRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Fetch article content
   useEffect(() => {
     if (!url) return;
     setLoading(true);
@@ -221,7 +207,6 @@ export default function ArticlePreviewFull({
     };
   }, [url]);
 
-  // Scroll to highlight
   useEffect(() => {
     if (!articleHtml || !highlights.length) return;
     setTimeout(() => {
@@ -345,15 +330,14 @@ export default function ArticlePreviewFull({
           )}
           <HighlightEditor htmlContent={articleHtml} initialHighlights={highlights} onHighlightsChange={setHighlights} onShare={handleShare} sharing={sharing} readOnly={false} />
 
-          {/* Meme Generator */}
           <div style={{ marginTop: "2.5rem" }}>
             <h3 style={{ fontSize: "1.4rem", fontWeight: 700 }}>🖼️ Auto Meme Generator</h3>
             <button onClick={() => setShowMemeModal(true)} style={{ background: "#ffe066", padding: "0.37em 1.25em", fontWeight: 700, borderRadius: 7 }}>
               Generate Meme from Highlight
             </button>
             {showMemeModal && (
-              <MemeGenerator
-                highlightText={anchor || (highlights[0]?.text ?? "")}
+              <MemeModal
+                highlightText={anchor || highlights[0]?.text || ""}
                 articleUrl={url}
                 onClose={() => setShowMemeModal(false)}
               />
