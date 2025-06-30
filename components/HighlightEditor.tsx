@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled, { keyframes } from 'styled-components';
+import MemeModal from "./MemeModal";
 
 // --- UI Styles ---
 const flash = keyframes`
-  0%   { background: #ffe066; }
+  0% { background: #ffe066; }
   100% { background: inherit; }
 `;
 
@@ -79,7 +80,6 @@ const ColorInput = styled.input`
 `;
 
 const RemoveButton = styled.button`
-  margin-left: auto;
   background: transparent;
   border: none;
   color: #e55353;
@@ -88,20 +88,14 @@ const RemoveButton = styled.button`
 `;
 
 const Button = styled.button`
-  width: 100%;
-  padding: 12px;
   background: #1e4268;
   color: #fff;
   border: none;
   border-radius: 6px;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
-  margin-top: 1.5em;
-
-  &:disabled {
-    background: #64748b;
-    cursor: not-allowed;
-  }
+  padding: 8px 14px;
+  font-size: 0.95em;
 `;
 
 const UtilityBar = styled.div`
@@ -179,24 +173,22 @@ export default function HighlightEditor({
       ? JSON.parse(saved)
       : [];
   });
+
   const [activeHighlight, setActiveHighlight] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState<string | null>(null);
+  const [memeText, setMemeText] = useState<string | null>(null);
+  const [memeUrl, setMemeUrl] = useState<string | null>(null);
 
-  // Call onHighlightsChange whenever highlights change
   useEffect(() => {
-    if (onHighlightsChange) {
-      onHighlightsChange(highlights);
-    }
+    if (onHighlightsChange) onHighlightsChange(highlights);
   }, [highlights, onHighlightsChange]);
 
-  // --- Save to localStorage ---
   useEffect(() => {
     if (typeof window !== "undefined")
       localStorage.setItem('jump2-highlights', JSON.stringify(highlights));
   }, [highlights]);
 
-  // --- Scroll to highlightId if present ---
   useEffect(() => {
     if (!highlightId) return;
     const marker = document.querySelector<HTMLElement>(
@@ -210,7 +202,6 @@ export default function HighlightEditor({
     }
   }, [highlightId]);
 
-  // --- Add highlight from selection ---
   const addHighlight = useCallback(() => {
     if (readOnly) return;
     const sel = window.getSelection();
@@ -239,31 +230,26 @@ export default function HighlightEditor({
     setToast("Highlight added!");
   }, [htmlContent, highlights, readOnly]);
 
-  // --- Remove highlight ---
   const removeHighlight = (id: string) => {
     if (readOnly) return;
     setHighlights(highlights.filter(h => h.id !== id));
     setToast("Highlight removed");
   };
 
-  // --- Update highlight color ---
   const updateColor = (id: string, color: string) => {
     setHighlights(highlights.map(h => (h.id === id ? { ...h, color } : h)));
   };
 
-  // --- Copy highlight as quote to clipboard ---
   const copyQuote = (text: string) => {
     navigator.clipboard.writeText(text);
     setToast("Copied quote!");
   };
 
-  // --- Filtered highlights for sidebar search ---
   const filteredHighlights = useMemo(() => {
     if (!search.trim()) return highlights;
     return highlights.filter(h => h.text.toLowerCase().includes(search.toLowerCase()));
   }, [highlights, search]);
 
-  // --- Rendered article with highlights ---
   const rendered = useMemo(() => {
     if (!highlights.length) return htmlContent;
     const sorted = [...highlights].sort((a, b) => a.start - b.start);
@@ -294,7 +280,6 @@ export default function HighlightEditor({
     return parts;
   }, [htmlContent, highlights, activeHighlight]);
 
-  // --- Keyboard shortcut: Add highlight with Cmd/Ctrl+H ---
   useEffect(() => {
     if (readOnly) return;
     const handler = (e: KeyboardEvent) => {
@@ -307,7 +292,6 @@ export default function HighlightEditor({
     return () => window.removeEventListener('keydown', handler);
   }, [addHighlight, readOnly]);
 
-  // --- Toast auto-dismiss ---
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 2100);
@@ -334,12 +318,7 @@ export default function HighlightEditor({
             onChange={e => setSearch(e.target.value)}
           />
           {!readOnly && (
-            <Button
-              style={{ width: "auto", padding: "8px 14px", fontWeight: 400, fontSize: ".98em" }}
-              title="Add highlight from selected text (Cmd/Ctrl+H)"
-              onClick={addHighlight}
-              disabled={readOnly}
-            >
+            <Button title="Add highlight from selected text (Cmd/Ctrl+H)" onClick={addHighlight}>
               + Highlight
             </Button>
           )}
@@ -355,7 +334,7 @@ export default function HighlightEditor({
               setTimeout(() => {
                 const m = document.querySelector<HTMLElement>(`mark[data-highlight-id="${h.id}"]`);
                 m?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                if (m) m.classList.add('highlighted');
+                m?.classList.add('highlighted');
                 setTimeout(() => m?.classList.remove('highlighted'), 1500);
               }, 100);
             }}
@@ -369,11 +348,21 @@ export default function HighlightEditor({
             />
             <span style={{ marginLeft: 2, flex: 1, fontFamily: 'inherit' }}>{h.text}</span>
             <Button
-              style={{ width: 35, marginLeft: 6, fontWeight: 400, fontSize: "1em", padding: "0 0.35em" }}
+              style={{ width: 35, marginLeft: 6 }}
               title="Copy quote"
               onClick={e => { e.stopPropagation(); copyQuote(h.text); }}
               disabled={readOnly}
             >📋</Button>
+            <Button
+              style={{ width: 35, marginLeft: 6 }}
+              title="Make Meme"
+              onClick={e => {
+                e.stopPropagation();
+                setMemeText(h.text);
+                setMemeUrl(window.location.href);
+              }}
+              disabled={readOnly}
+            >🎨</Button>
             {!readOnly && (
               <RemoveButton
                 title="Remove highlight"
@@ -386,12 +375,24 @@ export default function HighlightEditor({
           <Button
             onClick={() => onShare?.(highlights)}
             disabled={sharing}
-            title="Generate a Jump2 link for these highlights"
+            style={{ width: '100%', marginTop: '1rem' }}
           >
             {sharing ? 'Generating link...' : 'Generate Share Link'}
           </Button>
         )}
       </Sidebar>
+
+      {memeText && memeUrl && (
+        <MemeModal
+          highlightText={memeText}
+          articleUrl={memeUrl}
+          onClose={() => {
+            setMemeText(null);
+            setMemeUrl(null);
+          }}
+        />
+      )}
+
       {toast && <Toast>{toast}</Toast>}
     </Container>
   );
