@@ -1,825 +1,218 @@
-import React, { useRef, useState, useEffect, useCallback, useLayoutEffect } from "react";
+import React from "react";
 import styled, { keyframes } from "styled-components";
-import Jump2Logo from "../components/Jump2Logo";
+import Head from "next/head";
 
-const fontStack = `'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'JetBrains Mono', monospace, sans-serif`;
-
-// --- Animations ---
-const gradient = keyframes`
-  0% { background-position: 0% 50%; }
-  100% { background-position: 100% 50%; }
-`;
-const pop = keyframes`
-  0% { transform: scale(0.9);}
-  70% { transform: scale(1.05);}
-  100% { transform: scale(1);}
-`;
-const fadeIn = keyframes`
-  from { opacity: 0;}
-  to { opacity: 1;}
+// 🔥 Glow animation for the Jump2 logo
+const pulseGlow = keyframes`
+  0% { box-shadow: 0 0 0px #facc15; }
+  50% { box-shadow: 0 0 20px #facc15aa; }
+  100% { box-shadow: 0 0 0px #facc15; }
 `;
 
-// --- Layout ---
-const Bg = styled.div`
-  min-height: 100vh;
-  background: linear-gradient(115deg, #101a2f 65%, #1c2c52 100%);
-  font-family: ${fontStack};
-  padding: 0;
-  position: relative;
-  animation: ${fadeIn} 1s;
+// 🎯 Hero Styling
+const HeroSection = styled.section`
   display: flex;
   flex-direction: column;
-`;
-
-const WideGrid = styled.div`
-  display: flex;
-  max-width: 1100px;
-  gap: 2.5rem;
-  margin: 0 auto 2.7rem auto;
-  align-items: flex-start;
-  flex: 1;
-  width: 100%;
-  @media (max-width: 1100px) { padding: 0 1rem; }
-  @media (max-width: 900px) { flex-direction: column; gap: 1.4rem; }
-`;
-
-const Card = styled.div<{ tight?: boolean }>`
-  background: rgba(16,23,45,0.97);
-  border-radius: 1.15em;
-  box-shadow: 0 8px 32px 0 #1e293b33,0 0 0 2.5px #2563eb77;
-  padding: ${({ tight }) => (tight ? "1.2em 1.2em 1em" : "2.1em 1.7em 2em")};
-  animation: ${fadeIn} 0.7s;
-  position: relative;
-  flex: 1 1 0%;
-  min-width: 0;
-  @media (max-width: 900px) { margin-bottom: 1.5em; }
-`;
-
-const DividerHeader = styled.div`
-  width: 100%;
-  text-align: center;
-  margin: 1.7em 0 1.1em 0;
-  color: #93b4e9;
-  font-size: 1.18em;
-  font-weight: 900;
-  letter-spacing: 0.03em;
-  border-bottom: 2px solid #1e293b33;
-  line-height: 1.1;
-  padding-bottom: 0.1em;
-`;
-
-// --- Feedback Button ---
-const Fab = styled.a`
-  position: fixed;
-  right: 18px;
-  bottom: 18px;
-  background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
-  color: #fff;
-  font-size: 1.09em;
-  font-weight: 800;
-  padding: 0.7em 1.3em;
-  border-radius: 9999px;
-  box-shadow: 0 3px 14px #2563eb44;
-  z-index: 9999;
-  text-decoration: none;
-  opacity: 0.93;
-  transition: background 0.14s, opacity 0.16s, box-shadow 0.16s;
-  &:hover, &:focus {
-    background: linear-gradient(90deg, #ffd100 0%, #3b82f6 100%);
-    color: #223050;
-    opacity: 1;
-    box-shadow: 0 6px 32px #2563eb55;
-    outline: none;
-  }
-`;
-
-// --- Input, ShareBar, Preview, etc. ---
-const InputRow = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 1em;
-  margin-bottom: 1.5em;
-  position: relative;
-`;
-const Input = styled.input`
-  font-size: 1.12em;
-  border-radius: 0.8em;
-  padding: 0.77em 1.1em;
-  border: 2px solid #223a5d;
-  background: #101a2f;
-  color: #eaf0fa;
-  font-weight: 500;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  font-family: 'Inter', sans-serif;
-  &:focus { border-color: #3b82f6; background: #17233a; outline: none; box-shadow: 0 2px 16px #3b82f633;}
-  &::placeholder { color: #86a2bb; }
-`;
-const Button = styled.button<{ primary?: boolean }>`
-  font-size: 1.09em;
-  border-radius: 0.6em;
-  padding: 0.7em 2em;
-  font-weight: 800;
-  border: none;
-  margin-top: 0.2em;
-  color: #fff;
-  background: ${({primary}) =>
-    primary ? "linear-gradient(90deg, #3b82f6 10%, #2563eb 90%)" : "#1e293b"};
-  box-shadow: ${({primary}) =>
-    primary ? "0 3px 16px #2563eb66" : "none"};
-  cursor: pointer;
-  transition: background 0.13s, box-shadow 0.13s, transform 0.12s;
-  letter-spacing: 0.01em;
-  &:hover, &:focus {
-    background: ${({primary}) =>
-      primary ? "linear-gradient(90deg, #2563eb 10%, #3b82f6 90%)" : "#334155"};
-    transform: scale(1.04);
-    outline: none;
-  }
-  &:active {
-    background: ${({primary}) =>
-      primary ? "linear-gradient(90deg, #1e293b 10%, #2563eb 90%)" : "#1e293b"};
-  }
-`;
-const ExampleLinks = styled.div`
-  margin: 0.1em 0 1.1em 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.8em;
-  a {
-    color: #3b82f6;
-    cursor: pointer;
-    text-decoration: underline dotted;
-    font-size: 0.97em;
-    font-weight: 500;
-    &:hover { text-decoration: underline solid; }
-  }
-`;
-const Tip = styled.div`
-  font-size: 0.96em;
-  color: #8ba8d8;
-  margin-bottom: 0.7em;
-  margin-top: -0.4em;
-`;
-const HowItWorks = styled.div`
-  margin-top: 1.5em;
-  color: #b9d3ff;
-  font-size: 1.02em;
-  ul {
-    margin: 0.7em 0 0 1.4em;
-    padding: 0;
-    li {margin-bottom: 0.2em;}
-  }
-`;
-
-const ShareBarWrapper = styled.div`
-  width: 100%;
-  display: flex;
+  align-items: center;
   justify-content: center;
-  margin: 0 auto 2.2em auto;
-  @media (max-width: 900px) {
-    margin-bottom: 1.5em;
-    padding: 0 0.4em;
-  }
+  text-align: center;
+  padding: 6rem 1.5rem 5rem;
+  background: linear-gradient(to right, #111827, #1e293b);
+  color: #ffffff;
 `;
-const ShareBar = styled.div`
-  background: linear-gradient(90deg, #1b2336 70%, #25406a 100%);
-  border-radius: 1em;
-  box-shadow: 0 4px 18px #3b82f633;
-  padding: 1em 2em;
+
+const Logo = styled.h1`
+  font-size: 3.4rem;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  margin-bottom: 1.4rem;
+  animation: ${pulseGlow} 3s infinite;
+  color: #facc15;
+`;
+
+const Tagline = styled.h2`
+  font-size: 1.85rem;
+  font-weight: 500;
+  max-width: 720px;
+  line-height: 1.6;
+  margin-bottom: 2.2rem;
+  color: #fef08a;
+`;
+
+const CTAButtons = styled.div`
   display: flex;
+  gap: 1rem;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 1.1em;
-  min-height: 3.2em;
-  width: 100%;
-  max-width: 650px;
-  position: relative;
-  z-index: 20;
-  @media (max-width: 600px) {
-    padding: 0.95em 0.5em;
-    border-radius: 0.7em;
-    gap: 0.6em;
-    min-height: 2.6em;
+  justify-content: center;
+  margin-bottom: 3rem;
+
+  a {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: 0.25s ease;
+  }
+
+  .primary {
+    background: #facc15;
+    color: #1a1f36;
+  }
+
+  .primary:hover {
+    background: #eab308;
+  }
+
+  .secondary {
+    border: 2px solid #facc15;
+    color: #facc15;
+  }
+
+  .secondary:hover {
+    background: #facc15;
+    color: #1a1f36;
   }
 `;
 
-const ShareInput = styled.input`
-  font-size: 1.11em;
-  border-radius: 0.6em;
-  border: 1.5px solid #334155;
-  background: #0d1423;
-  color: #eaf0fa;
-  font-weight: 600;
-  padding: 0.68em 1.2em;
-  flex: 1 1 0%;
-  outline: none;
-  min-width: 0;
-  font-family: 'JetBrains Mono', monospace;
+// 🌐 Section Styling
+const Section = styled.section`
+  padding: 4.5rem 2rem;
+  max-width: 1150px;
+  margin: 0 auto;
+  text-align: center;
 `;
 
-const CopyBtn = styled(Button)`
-  font-size: 1em;
-  font-weight: 700;
-  padding: 0.7em 1.5em;
-  margin: 0;
-  background: #2563eb;
-  border-radius: 0.5em;
-  transition: background 0.13s, transform 0.11s;
-  &:hover {background: #3b82f6;}
+const SectionTitle = styled.h3`
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 1.6rem;
 `;
 
-const ShareActions = styled.div`
-  display: flex;
-  gap: 0.7em;
-  align-items: center;
+const Paragraph = styled.p`
+  font-size: 1.25rem;
+  color: #475569;
+  line-height: 1.8;
+  max-width: 780px;
+  margin: 0 auto;
 `;
 
-const ShareToast = styled.div`
-  position: fixed;
-  bottom: 2.6em;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #2563eb;
-  color: #fff;
-  font-size: 1.1em;
-  font-weight: 700;
-  border-radius: 0.6em;
-  padding: 0.7em 2em;
-  box-shadow: 0 4px 18px #2563eb44;
-  z-index: 2000;
-  animation: ${pop} 0.5s;
+const ToolsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 2rem;
+  margin-top: 2.4rem;
 `;
 
-// --- Loader & Skeletons ---
-const Loader = styled.div`
-  width: 32px; height: 32px;
-  border-radius: 50%;
-  border: 4px solid #3b82f688;
-  border-top: 4px solid #3b82f6;
-  animation: spin 0.85s linear infinite;
-  margin: 3em auto 2em auto;
-  @keyframes spin {to {transform: rotate(360deg);}}
-`;
-const Skeleton = styled.div`
-  height: 18px;
-  width: 80%;
-  margin: 0.5em 0;
-  background: linear-gradient(90deg, #24304a 40%, #334155 60%, #24304a 100%);
-  background-size: 200% 100%;
-  border-radius: 0.5em;
-  animation: ${gradient} 1.3s linear infinite;
+const ToolCard = styled.div`
+  background: #f8fafc;
+  border-radius: 0.95rem;
+  padding: 2rem;
+  box-shadow: 0 6px 20px #e2e8f033;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 12px 28px #94a3b855;
+    transform: translateY(-5px);
+  }
+
+  h4 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+    color: #0f172a;
+  }
+
+  p {
+    font-size: 1.05rem;
+    color: #475569;
+  }
 `;
 
-const PreviewCard = styled(Card)`
-  min-height: 420px;
-  max-height: 79vh;
-  overflow-y: auto;
+// 🦾 Footer
+const Footer = styled.footer`
+  background: #0f172a;
+  color: #cbd5e1;
+  padding: 4rem 2rem;
+  text-align: center;
   font-size: 1rem;
-  color: #eaf0fa;
-  padding: 2.1em 2.3em 2em;
-  position: relative;
-  @media (max-width: 900px) { padding: 1.1em 0.6em 1.7em; }
 `;
 
-// --- YouTube helpers and highlight utility ---
-const isYouTubeUrl = (url: URL) =>
-  ["www.youtube.com", "youtube.com", "youtu.be"].includes(url.hostname);
-function parseTimestamp(input: string): number {
-  if (!input) return 0;
-  const parts = input.trim().split(":").map(Number);
-  if (parts.some(isNaN)) return NaN;
-  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
-  if (parts.length === 2) return parts[0] * 60 + parts[1];
-  if (parts.length === 1) return parts[0];
-  return 0;
-}
-function formatTimestamp(seconds: number) {
-  if (seconds < 0) return "";
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-const YouTubePlayer = ({ url, startSeconds }: { url: string; startSeconds: number }) => {
-  const videoId = React.useMemo(() => {
-    try {
-      const u = new URL(url);
-      if (u.hostname === "youtu.be") return u.pathname.slice(1);
-      return u.searchParams.get("v") || "";
-    } catch {
-      return "";
-    }
-  }, [url]);
-  const src = React.useMemo(
-    () =>
-      `https://www.youtube.com/embed/${videoId}?start=${startSeconds}&autoplay=0&modestbranding=1&rel=0`,
-    [videoId, startSeconds]
-  );
-  return (
-    <div style={{
-      margin: "1.1rem auto 2rem",
-      maxWidth: 420,
-      borderRadius: 12,
-      overflow: "hidden",
-      boxShadow: "0 8px 20px #131c2b55",
-      position: "relative"
-    }}>
-      <iframe
-        width="100%"
-        height="220"
-        src={src}
-        title="YouTube video player"
-        frameBorder={0}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-      />
-      {startSeconds > 0 && (
-        <div style={{
-          position: "absolute",
-          top: 8,
-          right: 12,
-          background: "rgba(0, 0, 0, 0.65)",
-          color: "#fff",
-          fontWeight: 600,
-          padding: "4px 10px",
-          borderRadius: 9999,
-          fontFamily: "monospace",
-          fontSize: "0.95em",
-          userSelect: "none",
-          pointerEvents: "none",
-          textShadow: "0 0 8px #000c"
-        }}>
-          ▶ {formatTimestamp(startSeconds)}
-        </div>
-      )}
-    </div>
-  );
-};
-function highlightHtml(rawHtml: string, highlight: string): string {
-  if (!rawHtml || !highlight) return rawHtml;
-  const phrase = highlight.trim();
-  if (!phrase) return rawHtml;
-  const regex = new RegExp(
-    "(" +
-      phrase
-        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-        .replace(/\s+/g, "\\s+")
-      + ")",
-    "gi"
-  );
-  let found = false;
-  return rawHtml.replace(/(<[^>]+>)|([^<]+)/g, (m, tag, text) => {
-    if (tag) return tag;
-    if (text) {
-      return text.replace(regex, matched => {
-        if (!found) {
-          found = true;
-          return `<mark id="jump2-highlight-anchor" style="background: linear-gradient(90deg, #ffe066 70%, #ffd100 100%); color: #334155; padding: 0 0.15em; border-radius: 0.33em; font-weight: 700; box-decoration-break: clone;">${matched}</mark>`;
-        }
-        return `<mark style="background: linear-gradient(90deg, #ffe066 70%, #ffd100 100%); color: #334155; padding: 0 0.15em; border-radius: 0.33em; font-weight: 700; box-decoration-break: clone;">${matched}</mark>`;
-      });
-    }
-    return m;
-  });
-}
-function useDebouncedValue<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const handle = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(handle);
-  }, [value, delay]);
-  return debounced;
-}
-
-// --- Main ---
 export default function Home() {
-  // --- State ---
-  const [link, setLink] = useState("");
-  const [anchor, setAnchor] = useState(""); // the anchor phrase
-  const [showPreview, setShowPreview] = useState(false);
-  const [parsedSeconds, setParsedSeconds] = useState(0);
-  const [error, setError] = useState("");
-  const [articleContent, setArticleContent] = useState("");
-  const [loadingPreview, setLoadingPreview] = useState(false);
-  const [shortUrl, setShortUrl] = useState("");
-  const [showToast, setShowToast] = useState(false);
-  const [searchPhrase, setSearchPhrase] = useState(""); // search bar above preview
-
-  // --- Lightbox (first-time visitor welcome) ---
-  const [showLightbox, setShowLightbox] = useState(false);
-  useEffect(() => {
-    if (typeof window !== "undefined" && localStorage.getItem("jump2_welcomed") !== "yes") {
-      setTimeout(() => setShowLightbox(true), 350);
-    }
-  }, []);
-  const handleCloseLightbox = useCallback(() => {
-    setShowLightbox(false);
-    localStorage.setItem("jump2_welcomed", "yes");
-  }, []);
-
-  // --- Onboarding examples ---
-  const EXAMPLES = [
-    { url: "https://www.bbc.com/news/world-us-canada-66159295", text: "democracy" },
-    { url: "https://www.nytimes.com/2024/06/20/technology/ai-future.html", text: "artificial intelligence" },
-    { url: "https://www.theguardian.com/environment/2025/jun/08/renewable-energy-breakthrough", text: "solar power" }
-  ];
-
-  // --- Debounced anchor for smooth highlight ---
-  const debouncedAnchor = useDebouncedValue(anchor, 120);
-
-  // --- Form/Preview Logic ---
-  useEffect(() => {
-    if (!link) {
-      setArticleContent("");
-      setError("");
-      setShowPreview(false);
-      setShortUrl("");
-      setAnchor("");
-      setSearchPhrase("");
-      return;
-    }
-    let url: URL;
-    try {
-      url = new URL(link);
-      if (isYouTubeUrl(url)) {
-        setArticleContent("");
-        setError("");
-        setShortUrl("");
-        setShowPreview(true);
-        return;
-      }
-    } catch {
-      setError("Invalid URL.");
-      setShowPreview(false);
-      setShortUrl("");
-      setAnchor("");
-      setSearchPhrase("");
-      return;
-    }
-    setLoadingPreview(true);
-    setError("");
-    setArticleContent("");
-    setShowPreview(true);
-    setShortUrl("");
-    setAnchor("");
-    setSearchPhrase("");
-    fetch(`/api/parse?url=${encodeURIComponent(link)}`)
-      .then(async res => {
-        if (!res.ok) throw new Error("Failed to fetch article preview.");
-        const json = await res.json();
-        if (json.article?.content) {
-          setArticleContent(json.article.content);
-        } else {
-          setError("No preview available for this link.");
-        }
-      })
-      .catch(() => setError("Failed to load preview. You can still create the jump link."))
-      .finally(() => setLoadingPreview(false));
-  }, [link, showPreview]);
-
-  // For YouTube timestamp input
-  useEffect(() => {
-    if (!link) {
-      setParsedSeconds(0);
-      return;
-    }
-    try {
-      const urlObj = new URL(link);
-      if (isYouTubeUrl(urlObj)) {
-        setParsedSeconds(parseTimestamp(anchor));
-      } else {
-        setParsedSeconds(0);
-      }
-    } catch {
-      setParsedSeconds(0);
-    }
-  }, [anchor, link]);
-
-  // --- Short URL logic ---
-  const handleShare = useCallback(async () => {
-    setShortUrl("");
-    setShowToast(false);
-    try {
-      let urlObj = new URL(link);
-      if (isYouTubeUrl(urlObj) && parsedSeconds > 0) {
-        urlObj.searchParams.set("t", parsedSeconds.toString());
-      }
-      if (debouncedAnchor && !isYouTubeUrl(urlObj)) {
-        urlObj.hash = `:~:text=${encodeURIComponent(debouncedAnchor)}`;
-      }
-      const res = await fetch("/api/links", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deepLink: urlObj.toString() }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Short URL generation failed");
-      setShortUrl(`${window.location.origin}/s/${data.shortCode || data.shortUrl || "demo"}`);
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 1800);
-    } catch (e: any) {
-      setError(e.message || "Failed to generate short URL");
-    }
-  }, [link, parsedSeconds, debouncedAnchor]);
-
-  // --- Clipboard (focus back to input after copy) ---
-  const copyBtnRef = useRef<HTMLButtonElement>(null);
-  const handleCopy = useCallback(() => {
-    if (!shortUrl) return;
-    navigator.clipboard.writeText(shortUrl).then(() => {
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 1400);
-      copyBtnRef.current?.focus();
-    });
-  }, [shortUrl]);
-
-  // --- Form
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!link.trim()) {
-      setError("Paste a valid link.");
-      return;
-    }
-    setShowPreview(true);
-  }
-
-  // --- Keyboard shortcut for anchor clear/copy ---
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.ctrlKey && e.key === "l") {
-        setAnchor("");
-        setSearchPhrase("");
-      }
-      if (e.ctrlKey && e.key === "c" && shortUrl) {
-        handleCopy();
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [shortUrl, handleCopy]);
-
-  // --- When user selects text in preview, set anchor ---
-  const previewRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const ref = previewRef.current;
-    if (!ref) return;
-    function handleSelection() {
-      const sel = window.getSelection();
-      if (sel && sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0);
-        if (!ref.contains(range.commonAncestorContainer)) {
-          return;
-        }
-        const selected = sel.toString().trim();
-        if (selected.length > 0) {
-          setAnchor(selected);
-          setSearchPhrase(selected);
-        }
-      }
-    }
-    ref.addEventListener("mouseup", handleSelection);
-    ref.addEventListener("touchend", handleSelection);
-    return () => {
-      ref.removeEventListener("mouseup", handleSelection);
-      ref.removeEventListener("touchend", handleSelection);
-    };
-  }, [articleContent, showPreview]);
-
-  // --- Scroll highlight into view after render ---
-  useLayoutEffect(() => {
-    if (debouncedAnchor && previewRef.current) {
-      setTimeout(() => {
-        const el = document.getElementById("jump2-highlight-anchor");
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-          el.classList.add("jump2-highlight-pulse");
-          setTimeout(() => el.classList.remove("jump2-highlight-pulse"), 1100);
-        }
-      }, 90);
-    }
-  }, [debouncedAnchor, articleContent, showPreview]);
-
-  // --- Clear Anchor ---
-  const handleClearAnchor = useCallback(() => {
-    setAnchor("");
-    setSearchPhrase("");
-  }, []);
-
   return (
-    <Bg>
-      {/* Lightbox Welcome */}
-      {showLightbox && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
-          background: "rgba(16,23,45,0.97)", color: "#fff", display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center", zIndex: 20000
-        }}>
-          <h2 style={{fontSize:"2.1em", marginBottom:"0.6em"}}>Welcome to Jump2!</h2>
-          <div style={{fontSize:"1.2em", maxWidth:430, textAlign:"center", marginBottom:"1.6em", color:"#cdd9f6"}}>
-            Paste any article, blog, Wikipedia, or <b>YouTube</b> link.<br />
-            Highlight a phrase, search a keyword, or for YouTube, enter a timestamp (e.g. <b>1:23</b>).<br/>
-            Share a direct Jump2 link with friends!
-          </div>
-          <button style={{marginTop: 32, fontSize: "1.2em", padding: "0.5em 1.3em", borderRadius: 9, background: "#2563eb", color: "#fff", fontWeight: 800, border: "none"}}
-            onClick={handleCloseLightbox}
-          >Start Using Jump2</button>
-        </div>
-      )}
+    <>
+      <Head>
+        <title>Jump2 — The First Share-Tech Company</title>
+        <meta name="description" content="Share the exact moment that matters from any content online. Jump2 lets you highlight, meme, or timestamp anything — and share it instantly." />
+      </Head>
 
-      {/* EXECUTIVE LOGO */}
-      <div style={{ display: "flex", justifyContent: "center", margin: "2.3em 0 1.2em 0" }}>
-        <Jump2Logo />
-      </div>
+      <HeroSection>
+        <Logo>Jump2</Logo>
+        <Tagline>Share the moment — not the mess. Welcome to Share-Tech.</Tagline>
+        <CTAButtons>
+          <a href="/share" className="primary">Create a Jump2 Link</a>
+          <a href="/demo" className="secondary">See Demo</a>
+        </CTAButtons>
+      </HeroSection>
 
-      <DividerHeader>Jump2 in Action</DividerHeader>
-      <WideGrid>
-        {/* LEFT: Paste, anchor, how-to */}
-        <Card tight>
-          <InputRow onSubmit={handleSubmit}>
-            <Input
-              type="url"
-              required
-              placeholder="Paste article or YouTube URL…"
-              value={link}
-              onChange={e => setLink(e.target.value)}
-              autoFocus
-              aria-label="Paste article or YouTube URL"
-            />
-            <Button type="submit" primary>Preview</Button>
-          </InputRow>
-          <Tip>
-            <b>Tip:</b> Works for news, blogs, Wikipedia, YouTube, and more!
-          </Tip>
-          <ExampleLinks>
-            Examples:&nbsp;
-            {EXAMPLES.map(({ url, text }, i) => (
-              <a key={i} onClick={() => { setLink(url); setAnchor(text); setShowPreview(false); setTimeout(() => setShowPreview(true), 75); }}>
-                {url.replace(/^https?:\/\//, '').split("/")[0]}
-              </a>
-            ))}
-          </ExampleLinks>
-          <HowItWorks>
-            <b>How it works:</b>
-            <ul>
-              <li>Paste any article, blog, Wikipedia, or <b>YouTube</b> link (paste or drag &amp; drop!)</li>
-              <li>Preview loads. Highlight a phrase, search a keyword, or for YouTube, enter a timestamp (e.g. <b>1:23</b>).</li>
-              <li>Click <b>Share</b> and copy your Jump2 link. Anyone with the link jumps right to what matters!</li>
-            </ul>
-          </HowItWorks>
-        </Card>
-        {/* RIGHT: Share bar, search/anchor, preview */}
-        <div style={{flex: 1.6, minWidth:0}}>
-          <ShareBarWrapper>
-            <ShareBar>
-              <ShareInput
-                type="text"
-                readOnly
-                tabIndex={0}
-                value={shortUrl ? shortUrl : "Your Jump2 link appears here…"}
-                aria-label="Jump2 shareable link"
-                style={{minWidth: 200, flexBasis: "40%"}}
-                onFocus={e => e.target.select()}
-              />
-              <ShareActions>
-                <CopyBtn
-                  ref={copyBtnRef}
-                  type="button"
-                  onClick={shortUrl ? handleCopy : handleShare}
-                  aria-label={shortUrl ? "Copy jump link to clipboard" : "Generate jump link"}
-                >
-                  {shortUrl ? "Copy" : "Share"}
-                </CopyBtn>
-                {shortUrl &&
-                  <a href={shortUrl} target="_blank" rel="noopener noreferrer" tabIndex={0}
-                    style={{color:"#3b82f6", fontWeight:700, textDecoration:"none"}}>
-                    Open ↗
-                  </a>
-                }
-              </ShareActions>
-              {debouncedAnchor && (
-                <>
-                  <span style={{
-                    background:"rgba(255,224,102,0.20)",
-                    color:"#ffe066",
-                    borderRadius:6,
-                    padding:"0.15em 0.5em",
-                    fontWeight:800,
-                    marginLeft:"0.8em",
-                    fontSize:"1.03em",
-                    fontFamily: "'JetBrains Mono', monospace"
-                  }}>
-                    Anchor: {debouncedAnchor}
-                  </span>
-                  <Button style={{
-                    marginLeft: "0.8em",
-                    background: "#172554",
-                    color: "#ffe066",
-                    fontWeight: 700,
-                    padding: "0.45em 1.1em",
-                    borderRadius: "0.3em",
-                    fontSize: "0.98em"
-                  }} onClick={handleClearAnchor} type="button" aria-label="Clear anchor">
-                    Clear
-                  </Button>
-                </>
-              )}
-            </ShareBar>
-          </ShareBarWrapper>
-          <form
-            onSubmit={e => {e.preventDefault(); setAnchor(searchPhrase.trim());}}
-            style={{marginBottom:"1em", display:"flex", gap:"0.6em", alignItems:"center"}}
-            aria-label="Anchor phrase search"
-          >
-            <Input
-              type="text"
-              placeholder="Search or type a phrase to anchor/highlight…"
-              value={searchPhrase}
-              onChange={e => {
-                setSearchPhrase(e.target.value);
-                setAnchor(e.target.value.trim());
-              }}
-              aria-label="Search phrase to anchor"
-              style={{flex:"1 1 0%", fontSize:"0.95em"}}
-            />
-            {searchPhrase && (
-              <Button type="button" onClick={handleClearAnchor}>
-                Clear
-              </Button>
-            )}
-          </form>
-          <PreviewCard>
-            {loadingPreview && <Loader />}
-            {!loadingPreview && (() => {
-              try {
-                const urlObj = new URL(link);
-                if (isYouTubeUrl(urlObj)) {
-                  return (
-                    <>
-                      <YouTubePlayer url={link} startSeconds={parsedSeconds} />
-                      <div style={{marginTop:"1em", color:"#b5c7e4", fontSize:"0.96em"}}>
-                        Enter a timestamp (e.g. <b>1:23</b>) above to create a Jump2 link to that moment.
-                      </div>
-                    </>
-                  );
-                }
-              } catch {}
-              if (error) {
-                return <div style={{ color: "#f87171", fontWeight: 600, marginTop: "1.3em" }}>{error}</div>;
-              }
-              if (!articleContent && !error) {
-                return (
-                  <>
-                    <Skeleton style={{width:"95%"}} />
-                    <Skeleton style={{width:"85%"}} />
-                    <Skeleton style={{width:"65%"}} />
-                  </>
-                );
-              }
-              let html = articleContent;
-              if (html && debouncedAnchor) {
-                html = highlightHtml(html, debouncedAnchor);
-              }
-              if (html) {
-                return (
-                  <div
-                    ref={previewRef}
-                    tabIndex={0}
-                    style={{outline:"none", cursor:"text", userSelect:"text"}}
-                    dangerouslySetInnerHTML={{ __html: html }}
-                    aria-label="Article preview"
-                  />
-                );
-              }
-              return null;
-            })()}
-          </PreviewCard>
-        </div>
-      </WideGrid>
-      {showToast && (
-        <ShareToast>
-          Link copied!
-        </ShareToast>
-      )}
-      {/* Highlight pulse effect */}
-      <style>{`
-        .jump2-highlight-pulse {
-          animation: jump2-pulse 1.1s cubic-bezier(.4,1.7,.5,1.2) 1;
-          outline: 2.5px solid #FFD100;
-        }
-        @keyframes jump2-pulse {
-          0% { box-shadow: 0 0 0 0 rgba(255,209,0,0.7);}
-          50% { box-shadow: 0 0 0 7px rgba(255,209,0,0.13);}
-          100% { box-shadow: 0 0 0 0 rgba(255,209,0,0);}
-        }
-      `}</style>
-      <Fab
-        href="mailto:support@jump2share.com?subject=Jump2%20Feedback"
-        aria-label="Send Feedback"
-        title="Send Feedback"
-      >
-        🗨️ Feedback
-      </Fab>
-    </Bg>
+      <Section>
+        <SectionTitle>🚀 What is Share-Tech?</SectionTitle>
+        <Paragraph>
+          Jump2 invented Share-Tech — a whole new layer of the internet designed to deliver context, clarity, and virality in every link. Whether it’s video, text, or sound, Jump2 lets you highlight what matters and share it precisely.
+        </Paragraph>
+      </Section>
+
+      <Section>
+        <SectionTitle>🧠 Tools Powered by Jump2</SectionTitle>
+        <ToolsGrid>
+          <ToolCard>
+            <h4>🖍️ Highlight Editor</h4>
+            <p>Select text, create highlights, and generate focused shareable links.</p>
+          </ToolCard>
+          <ToolCard>
+            <h4>🎯 Smart Timestamps</h4>
+            <p>Generate direct jumps into YouTube, TikTok, Spotify, and more.</p>
+          </ToolCard>
+          <ToolCard>
+            <h4>🖼️ Meme Generator</h4>
+            <p>One-click memes from quotes, with branded watermarking and style presets.</p>
+          </ToolCard>
+          <ToolCard>
+            <h4>⚡ Chrome Extension</h4>
+            <p>Highlight anything on any site → Right-click → Generate Jump2 link instantly.</p>
+          </ToolCard>
+          <ToolCard>
+            <h4>📊 Creator Dashboard</h4>
+            <p>Track engagement, organize links, optimize content strategy with insights.</p>
+          </ToolCard>
+          <ToolCard>
+            <h4>🧪 Embed Toolkit</h4>
+            <p>Drop Jump2 previews inside Substack, Ghost, Webflow, and more.</p>
+          </ToolCard>
+        </ToolsGrid>
+      </Section>
+
+      <Section>
+        <SectionTitle>🔁 Built to Go Viral</SectionTitle>
+        <Paragraph>
+          Every Jump2 link is a growth loop. When your audience shares a Jump2, they amplify just the best part. Our smart links work on Slack, Discord, X, LinkedIn, and beyond — complete with previews, thumbnails, and reactions.
+        </Paragraph>
+      </Section>
+
+      <Section>
+        <SectionTitle>🌐 Start Sharing Like It’s 2025</SectionTitle>
+        <CTAButtons>
+          <a href="/share" className="primary">Try Jump2 Free</a>
+          <a href="/contact" className="secondary">Become a Creator</a>
+        </CTAButtons>
+      </Section>
+
+      <Footer>
+        <div><strong>Jump2 — The First Share-Tech Company</strong></div>
+        <div style={{ marginTop: "0.8rem" }}>Crafted for clarity. Designed to go viral.</div>
+        <div style={{ marginTop: "0.5rem" }}>support@jump2.link | GitHub | Terms</div>
+      </Footer>
+    </>
   );
 }
