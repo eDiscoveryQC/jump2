@@ -5,7 +5,7 @@ import Head from "next/head";
 // 🔥 Glow animation for the Jump2 logo
 const pulseGlow = keyframes`
   0% { box-shadow: 0 0 0px #facc15; }
-  50% { box-shadow: 0 0 20px #facc15aa; }
+  50% { box-shadow: 0 0 12px #facc1588; }
   100% { box-shadow: 0 0 0px #facc15; }
 `;
 
@@ -16,8 +16,8 @@ const HeroSection = styled.section`
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 6rem 1.5rem 5rem;
-  background: linear-gradient(to right, #111827, #1e293b);
+  padding: 5rem 1.25rem 4rem;
+  background: linear-gradient(to right, #0f172a, #1e293b);
   color: #ffffff;
 `;
 
@@ -26,7 +26,7 @@ const Logo = styled.h1`
   font-weight: 900;
   letter-spacing: -1.5px;
   margin-bottom: 1.4rem;
-  animation: ${pulseGlow} 3s infinite;
+  animation: ${pulseGlow} 4s infinite;
   color: #facc15;
 `;
 
@@ -77,7 +77,7 @@ const CTAButtons = styled.div`
 
 // 🌐 Section Styling
 const Section = styled.section`
-  padding: 4.5rem 2rem;
+  padding: 4.5rem 1.5rem;
   max-width: 1150px;
   margin: 0 auto;
   text-align: center;
@@ -145,6 +145,10 @@ export default function Home() {
       <Head>
         <title>Jump2 — The First Share-Tech Company</title>
         <meta name="description" content="Share the exact moment that matters from any content online. Jump2 lets you highlight, meme, or timestamp anything — and share it instantly." />
+        <meta property="og:title" content="Jump2 — Share the Moment, Not the Mess" />
+        <meta property="og:image" content="https://jump2.link/og-image.jpg" />
+        <meta property="og:url" content="https://jump2.link" />
+        <meta property="og:description" content="Create viral links from quotes, timestamps, and memes — Jump2 is your toolkit for sharing smarter." />
       </Head>
 
       <HeroSection>
@@ -152,19 +156,18 @@ export default function Home() {
         <Tagline>Share the moment — not the mess. Welcome to Share-Tech.</Tagline>
         <CTAButtons>
           <a href="/share" className="primary">Create a Jump2 Link</a>
-          <a href="/demo" className="secondary">See Demo</a>
         </CTAButtons>
       </HeroSection>
 
       <Section>
-        <SectionTitle>🚀 What is Share-Tech?</SectionTitle>
+        <SectionTitle>What is Share-Tech?</SectionTitle>
         <Paragraph>
           Jump2 invented Share-Tech — a whole new layer of the internet designed to deliver context, clarity, and virality in every link. Whether it’s video, text, or sound, Jump2 lets you highlight what matters and share it precisely.
         </Paragraph>
       </Section>
 
       <Section>
-        <SectionTitle>🧠 Tools Powered by Jump2</SectionTitle>
+        <SectionTitle>Tools Powered by Jump2</SectionTitle>
         <ToolsGrid>
           <ToolCard>
             <h4>🖍️ Highlight Editor</h4>
@@ -194,14 +197,14 @@ export default function Home() {
       </Section>
 
       <Section>
-        <SectionTitle>🔁 Built to Go Viral</SectionTitle>
+        <SectionTitle>Built to Go Viral</SectionTitle>
         <Paragraph>
           Every Jump2 link is a growth loop. When your audience shares a Jump2, they amplify just the best part. Our smart links work on Slack, Discord, X, LinkedIn, and beyond — complete with previews, thumbnails, and reactions.
         </Paragraph>
       </Section>
 
       <Section>
-        <SectionTitle>🌐 Start Sharing Like It’s 2025</SectionTitle>
+        <SectionTitle>Start Sharing Like It’s 2025</SectionTitle>
         <CTAButtons>
           <a href="/share" className="primary">Try Jump2 Free</a>
           <a href="/contact" className="secondary">Become a Creator</a>
