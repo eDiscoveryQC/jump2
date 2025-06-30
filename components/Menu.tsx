@@ -185,8 +185,6 @@ export default function Menu() {
     { href: "/", label: "Home" },
     { href: "/share", label: "Create" },
     { href: "/features", label: "Features" },
-    { href: "/how", label: "How it Works" },
-    { href: "/api", label: "API" },
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" }
   ];
