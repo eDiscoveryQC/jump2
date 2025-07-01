@@ -82,7 +82,12 @@ export default function Share() {
           🚀 Paste your link below, then highlight key text, timestamp a moment, or add a meme — Jump2 generates a smart, shareable link for instant impact.
         </CTA>
 
-        <ArticlePreviewFull scrapeEngine="scrapingbee" enableYouTubeTimestamp supportArticles supportMemes />
+        <ArticlePreviewFull
+          scrapeEngine="scrapingbee"
+          enableYouTubeTimestamp
+          supportArticles
+          supportMemes
+        />
 
         <Divider />
 
