@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled, { keyframes } from 'styled-components';
 import MemeModal from "./MemeModal";
+import ShareCardGenerator from './ShareCardGenerator';
 
-// --- UI Styles ---
 const flash = keyframes`
   0% { background: #ffe066; }
   100% { background: inherit; }
@@ -134,7 +134,6 @@ const Toast = styled.div`
   }
 `;
 
-// --- Highlight Interface ---
 export interface Highlight {
   id: string;
   text: string;
@@ -153,7 +152,6 @@ interface Props {
   onHighlightsChange?: (highlights: Highlight[]) => void;
 }
 
-// --- Main Component ---
 export default function HighlightEditor({
   htmlContent,
   initialHighlights = [],
@@ -179,6 +177,7 @@ export default function HighlightEditor({
   const [toast, setToast] = useState<string | null>(null);
   const [memeText, setMemeText] = useState<string | null>(null);
   const [memeUrl, setMemeUrl] = useState<string | null>(null);
+  const [shareCardText, setShareCardText] = useState<string | null>(null);
 
   useEffect(() => {
     if (onHighlightsChange) onHighlightsChange(highlights);
@@ -206,14 +205,12 @@ export default function HighlightEditor({
     if (readOnly) return;
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return;
-
     const text = sel.toString().trim();
     if (text.length < 3) return;
 
     const start = htmlContent.indexOf(text);
     if (start === -1) return;
     const end = start + text.length;
-
     const existing = highlights.some(h => h.start === start && h.end === end);
     if (existing) return;
 
@@ -255,7 +252,6 @@ export default function HighlightEditor({
     const sorted = [...highlights].sort((a, b) => a.start - b.start);
     const parts = [];
     let pos = 0;
-
     sorted.forEach(({ start, end, id, text, color }) => {
       if (start > pos) parts.push(htmlContent.slice(pos, start));
       parts.push(
@@ -275,7 +271,6 @@ export default function HighlightEditor({
       );
       pos = end;
     });
-
     if (pos < htmlContent.length) parts.push(htmlContent.slice(pos));
     return parts;
   }, [htmlContent, highlights, activeHighlight]);
@@ -300,15 +295,7 @@ export default function HighlightEditor({
 
   return (
     <Container>
-      <ArticleArea
-        onMouseUp={addHighlight}
-        aria-label="Article content"
-        tabIndex={0}
-        style={{ outline: activeHighlight ? '2px solid #3b82f6' : undefined }}
-      >
-        {rendered}
-      </ArticleArea>
-
+      <ArticleArea onMouseUp={addHighlight}>{rendered}</ArticleArea>
       <Sidebar>
         <UtilityBar>
           <Input
@@ -318,7 +305,7 @@ export default function HighlightEditor({
             onChange={e => setSearch(e.target.value)}
           />
           {!readOnly && (
-            <Button title="Add highlight from selected text (Cmd/Ctrl+H)" onClick={addHighlight}>
+            <Button onClick={addHighlight} title="Cmd/Ctrl+H">
               + Highlight
             </Button>
           )}
@@ -332,7 +319,9 @@ export default function HighlightEditor({
             onClick={() => {
               setActiveHighlight(h.id);
               setTimeout(() => {
-                const m = document.querySelector<HTMLElement>(`mark[data-highlight-id="${h.id}"]`);
+                const m = document.querySelector<HTMLElement>(
+                  `mark[data-highlight-id="${h.id}"]`
+                );
                 m?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 m?.classList.add('highlighted');
                 setTimeout(() => m?.classList.remove('highlighted'), 1500);
@@ -346,11 +335,14 @@ export default function HighlightEditor({
               onChange={e => updateColor(h.id, e.target.value)}
               disabled={readOnly}
             />
-            <span style={{ marginLeft: 2, flex: 1, fontFamily: 'inherit' }}>{h.text}</span>
+            <span style={{ marginLeft: 2, flex: 1 }}>{h.text}</span>
             <Button
               style={{ width: 35, marginLeft: 6 }}
               title="Copy quote"
-              onClick={e => { e.stopPropagation(); copyQuote(h.text); }}
+              onClick={e => {
+                e.stopPropagation();
+                copyQuote(h.text);
+              }}
               disabled={readOnly}
             >📋</Button>
             <Button
@@ -363,10 +355,22 @@ export default function HighlightEditor({
               }}
               disabled={readOnly}
             >🎨</Button>
+            <Button
+              style={{ width: 35, marginLeft: 6 }}
+              title="Share Card"
+              onClick={e => {
+                e.stopPropagation();
+                setShareCardText(h.text);
+              }}
+              disabled={readOnly}
+            >🪪</Button>
             {!readOnly && (
               <RemoveButton
                 title="Remove highlight"
-                onClick={e => { e.stopPropagation(); removeHighlight(h.id); }}
+                onClick={e => {
+                  e.stopPropagation();
+                  removeHighlight(h.id);
+                }}
               >&times;</RemoveButton>
             )}
           </HighlightItem>
@@ -390,6 +394,13 @@ export default function HighlightEditor({
             setMemeText(null);
             setMemeUrl(null);
           }}
+        />
+      )}
+
+      {shareCardText && (
+        <ShareCardGenerator
+          quote={shareCardText}
+          onClose={() => setShareCardText(null)}
         />
       )}
 
