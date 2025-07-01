@@ -83,6 +83,7 @@ export default function Share() {
         </CTA>
 
         <ArticlePreviewFull
+          url="https://example.com" // ✅ Required prop to fix build
           scrapeEngine="scrapingbee"
           enableYouTubeTimestamp
           supportArticles
