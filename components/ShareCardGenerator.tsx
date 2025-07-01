@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import styled from "styled-components";
 import { toPng } from "html-to-image";
-import QRCode from "qrcode.react";
+import QRCode from "react-qr-code";
 
 // --- Styled Components ---
 const CardWrapper = styled.div`
@@ -91,7 +91,7 @@ export default function ShareCardGenerator({
           <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
             <span>jump2.link</span>
             <QR>
-              <QRCode value={articleUrl} size={80} includeMargin />
+              <QRCode value={articleUrl} size={80} />
             </QR>
           </div>
         </Footer>
