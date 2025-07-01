@@ -147,6 +147,7 @@ interface Props {
   initialHighlights?: Highlight[];
   readOnly?: boolean;
   sharing?: boolean;
+  enableYouTubeTimestamp?: boolean;
   onShare?: (highlights: Highlight[]) => Promise<void> | void;
   highlightId?: string;
   onHighlightsChange?: (highlights: Highlight[]) => void;
