@@ -18,7 +18,7 @@ const CardWrapper = styled.div`
   flex-direction: column;
   justify-content: space-between;
   position: relative;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 `;
 
 // Quote text
