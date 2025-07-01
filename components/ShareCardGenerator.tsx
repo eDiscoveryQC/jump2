@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { toPng } from "html-to-image";
 import QRCode from "qrcode.react";
 
-// Styled card wrapper
+// --- Styled Components ---
 const CardWrapper = styled.div`
   width: 1200px;
   height: 630px;
@@ -18,10 +18,9 @@ const CardWrapper = styled.div`
   flex-direction: column;
   justify-content: space-between;
   position: relative;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
 `;
 
-// Quote text
 const Quote = styled.blockquote`
   font-size: 2.8rem;
   font-weight: 600;
@@ -31,7 +30,6 @@ const Quote = styled.blockquote`
   text-overflow: ellipsis;
 `;
 
-// Footer branding
 const Footer = styled.div`
   display: flex;
   justify-content: space-between;
@@ -46,7 +44,6 @@ const QR = styled.div`
   height: 80px;
 `;
 
-// Download button
 const Button = styled.button`
   margin-top: 1rem;
   background: #1e293b;
@@ -59,6 +56,7 @@ const Button = styled.button`
   font-size: 1rem;
 `;
 
+// --- Props Interface ---
 type Props = {
   highlightText: string;
   articleUrl: string;
@@ -66,6 +64,7 @@ type Props = {
   onClose: () => void;
 };
 
+// --- Component ---
 export default function ShareCardGenerator({
   highlightText,
   articleUrl,

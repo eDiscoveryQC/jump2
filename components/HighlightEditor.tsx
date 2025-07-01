@@ -3,6 +3,7 @@ import styled, { keyframes } from 'styled-components';
 import MemeModal from "./MemeModal";
 import ShareCardGenerator from './ShareCardGenerator';
 
+// --- Animations and Styled Components ---
 const flash = keyframes`
   0% { background: #ffe066; }
   100% { background: inherit; }
@@ -134,6 +135,7 @@ const Toast = styled.div`
   }
 `;
 
+// --- Highlight Interface ---
 export interface Highlight {
   id: string;
   text: string;
@@ -153,6 +155,7 @@ interface Props {
   onHighlightsChange?: (highlights: Highlight[]) => void;
 }
 
+// --- Main Component ---
 export default function HighlightEditor({
   htmlContent,
   initialHighlights = [],
@@ -400,7 +403,8 @@ export default function HighlightEditor({
 
       {shareCardText && (
         <ShareCardGenerator
-          quote={shareCardText}
+          highlightText={shareCardText}
+          articleUrl={window.location.href}
           onClose={() => setShareCardText(null)}
         />
       )}
