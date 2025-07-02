@@ -41,7 +41,7 @@ const InputRow = styled.div`
   gap: 1rem;
   justify-content: center;
   align-items: center;
-  margin-bottom: 1.6rem;
+  margin-bottom: 2rem;
 
   input[type="text"] {
     padding: 0.75rem 1rem;
@@ -53,6 +53,10 @@ const InputRow = styled.div`
     color: white;
     box-shadow: 0 0 14px 4px rgba(14, 165, 233, 0.9);
     transition: box-shadow 0.3s ease;
+  }
+
+  input::placeholder {
+    color: #94a3b8;
   }
 
   input[type="file"] {
@@ -74,9 +78,25 @@ const InputRow = styled.div`
     background-color: #16a34a;
   }
 
+  button:not(:disabled):hover {
+    background-color: #0c8dcf;
+  }
+
+  button:focus {
+    outline: 2px solid #facc15;
+  }
+
   button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    input, button, label {
+      width: 100%;
+      justify-content: center;
+    }
   }
 `;
 
@@ -245,7 +265,7 @@ export default function Share() {
           )}
         </InputRow>
 
-        {errorMsg && <ErrorMessage>{errorMsg}</ErrorMessage>}
+        {errorMsg && <ErrorMessage role="alert">{errorMsg}</ErrorMessage>}
 
         <AssistantBox
           initial={{ opacity: 0, y: 10 }}
