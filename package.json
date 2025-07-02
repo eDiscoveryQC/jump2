@@ -31,7 +31,7 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-hot-toast": "^2.5.2",
-    "react-icons": "^5.5.0",
+    "react-icons": "^4.10.1",
     "react-qr-code": "^2.0.16",
     "styled-components": "^5.3.11",
     "typescript": "^5.1.6"
