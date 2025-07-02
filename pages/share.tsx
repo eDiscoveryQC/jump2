@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import styled from "styled-components";
 import Head from "next/head";
 import ArticlePreviewFull from "@/components/ArticlePreviewFull";
@@ -59,7 +59,7 @@ const InputRow = styled.div`
     display: none;
   }
 
-  label {
+  label, button {
     background-color: #0ea5e9;
     padding: 0.75rem 1.2rem;
     border-radius: 0.5rem;
@@ -72,14 +72,6 @@ const InputRow = styled.div`
 
   button {
     background-color: #16a34a;
-    padding: 0.75rem 1.2rem;
-    border: none;
-    border-radius: 0.5rem;
-    color: white;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
   }
 `;
 
@@ -121,19 +113,20 @@ export default function Share() {
   const [mode, setMode] = useState<'url' | 'file'>('url');
   const [showOnboarding, setShowOnboarding] = useState(false);
 
+  const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+
   useEffect(() => {
     if (!localStorage.getItem("visitedShare")) {
       setFirstVisit(true);
       setShowOnboarding(true);
       localStorage.setItem("visitedShare", "true");
       setTip("👋 First time here? Follow the steps to get started with Jump2.");
-      toast("🚀 Tip: You can highlight, timestamp, and even generate memes after sharing!");
+      toast("🚀 Tip: You can highlight, timestamp, and even generate memes after sharing!", { duration: 5000 });
     }
   }, []);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      const urlRegex = /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/\S*)?$/i;
       const isUrlValid = urlRegex.test(url.trim());
       setIsValid(isUrlValid);
       if (url && isUrlValid) {
@@ -142,12 +135,11 @@ export default function Share() {
         setTip("✅ Link detected! Scroll down to highlight, meme, or timestamp.");
         setErrorMsg("");
       }
-    }, 800);
+    }, 500);
     return () => clearTimeout(timeout);
   }, [url]);
 
-  const handlePaste = () => {
-    const urlRegex = /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/\S*)?$/i;
+  const handlePaste = useCallback(() => {
     if (urlRegex.test(url.trim())) {
       setSubmittedUrl(url.trim());
       setMode('url');
@@ -157,9 +149,9 @@ export default function Share() {
       toast.error("❌ Invalid URL — please double check.");
       setErrorMsg("❌ Invalid URL — please double check.");
     }
-  };
+  }, [url]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setFileName(file.name);
@@ -168,16 +160,16 @@ export default function Share() {
     setTip("📄 File uploaded. Parsing support coming soon. ⏳");
     toast.success(`📁 ${file.name} uploaded`);
     setErrorMsg("");
-  };
+  }, []);
 
-  const clearInputs = () => {
+  const clearInputs = useCallback(() => {
     setUrl("");
     setFileName("");
     setSubmittedUrl(null);
     setMode('url');
     setTip("Paste a YouTube link to highlight or timestamp — or upload a document.");
     setErrorMsg("");
-  };
+  }, []);
 
   const handleDismissOnboarding = () => {
     setShowOnboarding(false);
@@ -231,13 +223,13 @@ export default function Share() {
             aria-describedby="url-help"
             aria-invalid={!isValid && url !== ''}
           >
-            <FaLink /> Share URL
+            <span><FaLink /></span> Share URL
           </button>
           <label>
-            <FaUpload /> Upload
+            <span><FaUpload /></span> Upload
             <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} aria-label="Upload document" />
           </label>
-          {fileName && <button onClick={clearInputs} aria-label="Clear inputs"><FaTimesCircle /> Clear</button>}
+          {fileName && <button onClick={clearInputs} aria-label="Clear inputs"><span><FaTimesCircle /></span> Clear</button>}
         </InputRow>
 
         {errorMsg && <ErrorMessage>{errorMsg}</ErrorMessage>}
@@ -252,6 +244,10 @@ export default function Share() {
         </AssistantBox>
 
         <Divider />
+
+        {mode === 'file' && fileName && (
+          <p style={{ color: "#fef08a" }}>⏳ Parsing for <strong>{fileName}</strong> coming soon...</p>
+        )}
 
         {submittedUrl && (
           <ArticlePreviewFull
