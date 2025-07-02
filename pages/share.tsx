@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import Head from "next/head";
 import ArticlePreviewFull from "@/components/ArticlePreviewFull";
-import { FaLink, FaFileUpload } from "react-icons/fa6";
+import { FaLink, FaUpload, FaTimes } from "react-icons/fa6";
+import { motion } from "framer-motion";
+import toast, { Toaster } from "react-hot-toast";
 
 const PageWrapper = styled.div`
   display: flex;
@@ -16,129 +18,144 @@ const PageWrapper = styled.div`
 `;
 
 const Title = styled.h1`
-  font-size: 3.8rem;
+  font-size: 3.4rem;
   font-weight: 900;
-  letter-spacing: -1px;
   color: #facc15;
-  text-shadow: 0 2px 10px #0ea5e9cc;
   margin-bottom: 1rem;
+  text-shadow: 0 2px 8px #0ea5e9aa;
+  text-align: center;
 `;
 
 const Subtitle = styled.h2`
   font-size: 1.6rem;
   font-weight: 500;
-  max-width: 860px;
-  line-height: 1.7;
+  max-width: 720px;
   text-align: center;
   color: #fef08a;
   margin-bottom: 2.4rem;
 `;
 
-const InputBox = styled.div`
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 1rem;
-  padding: 2.2rem;
-  width: 100%;
-  max-width: 800px;
-  box-shadow: 0 0 20px #0ea5e980;
-  margin-bottom: 3rem;
-`;
-
 const InputRow = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 1.2rem;
-
-  @media (min-width: 600px) {
-    flex-direction: row;
-    align-items: center;
-  }
-`;
-
-const Input = styled.input`
-  flex: 1;
-  padding: 0.8rem 1rem;
-  font-size: 1.15rem;
-  border-radius: 0.6rem;
-  border: none;
-  outline: none;
-  background: #0f172a;
-  color: #e2e8f0;
-  box-shadow: inset 0 0 0 1px #334155;
-`;
-
-const Button = styled.button`
-  padding: 0.8rem 1.5rem;
-  font-size: 1.05rem;
-  background: #10b981;
-  color: #fff;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-weight: 600;
-  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
   align-items: center;
-  gap: 0.6rem;
-  transition: all 0.2s ease;
+  margin-bottom: 1.6rem;
 
-  &:hover {
-    background: #059669;
-    transform: scale(1.03);
+  input[type="text"] {
+    padding: 0.75rem 1rem;
+    font-size: 1.05rem;
+    border-radius: 0.5rem;
+    border: 1px solid #334155;
+    width: 320px;
+    background: #1e293b;
+    color: white;
+    box-shadow: 0 0 14px rgba(14, 165, 233, 0.7);
   }
+
+  input[type="file"] {
+    display: none;
+  }
+
+  label {
+    background-color: #0ea5e9;
+    padding: 0.75rem 1.2rem;
+    border-radius: 0.5rem;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  button {
+    background-color: #16a34a;
+    padding: 0.75rem 1.2rem;
+    border: none;
+    border-radius: 0.5rem;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+`;
+
+const AssistantBox = styled(motion.div)`
+  background: #1e293b;
+  border: 1px solid #334155;
+  padding: 1.2rem 1.5rem;
+  font-size: 1.05rem;
+  max-width: 680px;
+  text-align: center;
+  border-radius: 0.75rem;
+  color: #e2e8f0;
+  margin-bottom: 2.2rem;
+  box-shadow: 0 0 18px #0ea5e9cc;
 `;
 
 const Divider = styled.hr`
   width: 100%;
-  max-width: 780px;
+  max-width: 800px;
   border: none;
   border-top: 1px solid #334155;
-  margin: 3rem 0;
-`;
-
-const FileLabel = styled.label`
-  flex: 1;
-  padding: 0.8rem 1rem;
-  font-size: 1.1rem;
-  border-radius: 0.5rem;
-  background: #0f172a;
-  color: #cbd5e1;
-  box-shadow: inset 0 0 0 1px #334155;
-  cursor: pointer;
-  text-align: center;
-`;
-
-const FileInput = styled.input`
-  display: none;
-`;
-
-const FileName = styled.p`
-  margin-top: 1rem;
-  color: #cbd5e1;
-  font-style: italic;
+  margin: 2rem 0;
 `;
 
 export default function Share() {
   const [url, setUrl] = useState("");
   const [submittedUrl, setSubmittedUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
+  const [isValid, setIsValid] = useState(false);
+  const [tip, setTip] = useState("Paste a YouTube link to highlight or timestamp — or upload a document.");
+  const [firstVisit, setFirstVisit] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem("visitedShare")) {
+      setFirstVisit(true);
+      localStorage.setItem("visitedShare", "true");
+      setTip("👋 First time? Paste a link or upload a file to begin.");
+    }
+  }, []);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      if (url && url.startsWith("http")) setSubmittedUrl(url);
-    }, 1200);
+      const urlRegex = /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/\S*)?$/i;
+      const isUrlValid = urlRegex.test(url.trim());
+      setIsValid(isUrlValid);
+      if (url && isUrlValid) {
+        setSubmittedUrl(url.trim());
+        setTip("✅ Link detected! Scroll down to highlight, meme, or timestamp.");
+      }
+    }, 800);
     return () => clearTimeout(timeout);
   }, [url]);
 
   const handlePaste = () => {
-    if (url.trim()) setSubmittedUrl(url.trim());
+    const urlRegex = /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/\S*)?$/i;
+    if (urlRegex.test(url.trim())) {
+      setSubmittedUrl(url.trim());
+      setTip("🔗 URL loaded. Scroll down to begin highlighting or clipping.");
+    } else {
+      toast.error("Invalid URL — please double check.");
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setFileName(file.name);
-    alert(`📁 File selected: ${file.name}\n(Parsing support coming soon...)`);
+    setSubmittedUrl(null);
+    setTip("📄 File uploaded. Parsing support coming soon. ⏳");
+    toast.success(`📁 ${file.name} uploaded`);
+  };
+
+  const clearInputs = () => {
+    setUrl("");
+    setFileName("");
+    setSubmittedUrl(null);
+    setTip("Paste a YouTube link to highlight or timestamp — or upload a document.");
   };
 
   return (
@@ -147,38 +164,46 @@ export default function Share() {
         <title>Jump2 – Share the Moment That Matters</title>
         <meta name="description" content="Highlight. Meme. Timestamp. Upload. Welcome to Share-Tech." />
         <meta property="og:title" content="Jump2 – Highlight Anything, Share Everything" />
-        <meta property="og:image" content="https://jump2.link/share-og.jpg" />
+        <meta property="og:image" content="https://jump2.link/assets/og/share-og.png" />
         <meta property="og:url" content="https://jump2.link/share" />
         <meta property="og:description" content="Built for creators and curators — Jump2 lets you clip, highlight, and share precise content from any source." />
       </Head>
 
+      <Toaster position="top-right" />
+
       <PageWrapper>
-        <Title>🎯 Jump2 Smart Share</Title>
+        <Title>🔗 Create Your Jump2</Title>
         <Subtitle>
-          Paste a link or upload a file. Highlight, timestamp, meme — and generate a smart, shareable link.
+          Paste a link or upload a doc — then highlight key text, add a meme, or generate a shareable moment.
         </Subtitle>
 
-        <InputBox>
-          <InputRow>
-            <Input
-              placeholder="Paste article or video link..."
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handlePaste()}
-            />
-            <Button onClick={handlePaste}><FaLink /> Share URL</Button>
-          </InputRow>
+        <InputRow>
+          <input
+            type="text"
+            placeholder="Paste article or YouTube link..."
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handlePaste()}
+          />
+          <button onClick={handlePaste}>
+            <FaLink /> Share URL
+          </button>
+          <label>
+            <FaUpload /> Upload
+            <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} />
+          </label>
+          {fileName && <button onClick={clearInputs}><FaTimes /> Clear</button>}
+        </InputRow>
 
-          <Divider />
+        <AssistantBox
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          {tip}
+        </AssistantBox>
 
-          <InputRow>
-            <FileLabel htmlFor="fileUpload">Select a file to upload...</FileLabel>
-            <FileInput id="fileUpload" type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} />
-            <Button as="label" htmlFor="fileUpload"><FaFileUpload /> Upload File</Button>
-          </InputRow>
-
-          {fileName && <FileName>📎 {fileName}</FileName>}
-        </InputBox>
+        <Divider />
 
         {submittedUrl && (
           <ArticlePreviewFull
