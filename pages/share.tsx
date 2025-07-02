@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import Head from "next/head";
 import ArticlePreviewFull from "@/components/ArticlePreviewFull";
-import { FaLink, FaUpload } from "react-icons/fa6";
+import { FaLink, FaUpload } from "react-icons/fa";
 import { FaTimesCircle } from "react-icons/fa";
 import { motion } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
