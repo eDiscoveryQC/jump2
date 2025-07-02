@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import Head from "next/head";
 import ArticlePreviewFull from "@/components/ArticlePreviewFull";
-import { FaLink, FaUpload, FaTimes } from "react-icons/fa6";
+import { FaLink, FaUpload } from "react-icons/fa6";
+import { FaTimesCircle } from "react-icons/fa";
 import { motion } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -51,7 +52,8 @@ const InputRow = styled.div`
     width: 320px;
     background: #1e293b;
     color: white;
-    box-shadow: 0 0 14px rgba(14, 165, 233, 0.7);
+    box-shadow: 0 0 14px 3px rgba(14, 165, 233, 0.9);
+    transition: box-shadow 0.3s ease;
   }
 
   input[type="file"] {
@@ -82,7 +84,7 @@ const InputRow = styled.div`
   }
 `;
 
-const AssistantBox = styled(motion.div)`
+const AssistantBox = styled(motion.div)<{ mode?: string }>`
   background: #1e293b;
   border: 1px solid #334155;
   padding: 1.2rem 1.5rem;
@@ -92,7 +94,13 @@ const AssistantBox = styled(motion.div)`
   border-radius: 0.75rem;
   color: #e2e8f0;
   margin-bottom: 2.2rem;
-  box-shadow: 0 0 18px #0ea5e9cc;
+  box-shadow: 0 0 22px ${({ mode }) => (mode === 'file' ? '#22c55eaa' : '#0ea5e9cc')};
+`;
+
+const ErrorMessage = styled.div`
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  color: #f87171;
 `;
 
 const Divider = styled.hr`
@@ -110,12 +118,15 @@ export default function Share() {
   const [isValid, setIsValid] = useState(false);
   const [tip, setTip] = useState("Paste a YouTube link to highlight or timestamp — or upload a document.");
   const [firstVisit, setFirstVisit] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [mode, setMode] = useState<'url' | 'file'>('url');
 
   useEffect(() => {
     if (!localStorage.getItem("visitedShare")) {
       setFirstVisit(true);
       localStorage.setItem("visitedShare", "true");
       setTip("👋 First time? Paste a link or upload a file to begin.");
+      toast("🚀 Tip: You can highlight, timestamp, and even generate memes after sharing!");
     }
   }, []);
 
@@ -126,7 +137,9 @@ export default function Share() {
       setIsValid(isUrlValid);
       if (url && isUrlValid) {
         setSubmittedUrl(url.trim());
+        setMode('url');
         setTip("✅ Link detected! Scroll down to highlight, meme, or timestamp.");
+        setErrorMsg("");
       }
     }, 800);
     return () => clearTimeout(timeout);
@@ -136,9 +149,12 @@ export default function Share() {
     const urlRegex = /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/\S*)?$/i;
     if (urlRegex.test(url.trim())) {
       setSubmittedUrl(url.trim());
+      setMode('url');
       setTip("🔗 URL loaded. Scroll down to begin highlighting or clipping.");
+      setErrorMsg("");
     } else {
-      toast.error("Invalid URL — please double check.");
+      toast.error("❌ Invalid URL — please double check.");
+      setErrorMsg("❌ Invalid URL — please double check.");
     }
   };
 
@@ -147,15 +163,19 @@ export default function Share() {
     if (!file) return;
     setFileName(file.name);
     setSubmittedUrl(null);
+    setMode('file');
     setTip("📄 File uploaded. Parsing support coming soon. ⏳");
     toast.success(`📁 ${file.name} uploaded`);
+    setErrorMsg("");
   };
 
   const clearInputs = () => {
     setUrl("");
     setFileName("");
     setSubmittedUrl(null);
+    setMode('url');
     setTip("Paste a YouTube link to highlight or timestamp — or upload a document.");
+    setErrorMsg("");
   };
 
   return (
@@ -184,21 +204,25 @@ export default function Share() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handlePaste()}
+            aria-label="Paste a link to highlight or timestamp"
           />
-          <button onClick={handlePaste}>
+          <button onClick={handlePaste} aria-label="Share URL">
             <FaLink /> Share URL
           </button>
           <label>
             <FaUpload /> Upload
-            <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} />
+            <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} aria-label="Upload document" />
           </label>
-          {fileName && <button onClick={clearInputs}><FaTimes /> Clear</button>}
+          {fileName && <button onClick={clearInputs} aria-label="Clear inputs"><FaTimesCircle /> Clear</button>}
         </InputRow>
+
+        {errorMsg && <ErrorMessage>{errorMsg}</ErrorMessage>}
 
         <AssistantBox
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
+          mode={mode}
         >
           {tip}
         </AssistantBox>
