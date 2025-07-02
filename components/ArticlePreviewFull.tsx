@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import DOMPurify from "isomorphic-dompurify";
 import toast from "react-hot-toast";
@@ -7,21 +7,21 @@ import HighlightEditor, { Highlight } from "./HighlightEditor";
 import MemeModal from "./MemeModal";
 import Footer from "./Footer";
 
-// --- Utilities ---
+// Timed animation keyframes
+const fadeIn = keyframes`from { opacity: 0 } to { opacity: 1 }`;
+const pulse = keyframes`0%,100%{transform:scale(1)}50%{transform:scale(1.05)}`;
+
+// Utility functions
 function extractYouTubeID(url: string): string {
-  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([\w-]{11})/);
+  const match =
+    url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([\w-]{11})/);
   return match?.[1] ?? "";
 }
-
 function parseTimeInput(input: string): number | null {
   if (/^\d+$/.test(input)) return parseInt(input, 10);
-  const parts = input.split(":").map(Number);
-  if (parts.length === 2 && parts.every(n => !isNaN(n))) {
-    return parts[0] * 60 + parts[1];
-  }
-  return null;
+  const [m, s] = input.split(":").map(Number);
+  return m >= 0 && !isNaN(s) ? m * 60 + s : null;
 }
-
 function sanitizeWithHighlights(html: string, highlights: Highlight[]): string {
   if (!highlights.length) return DOMPurify.sanitize(html);
   const sorted = [...highlights].sort((a, b) => a.start - b.start);
@@ -35,64 +35,86 @@ function sanitizeWithHighlights(html: string, highlights: Highlight[]): string {
   return result;
 }
 
-// --- Styled Components ---
-const fadeIn = keyframes`from { opacity: 0 } to { opacity: 1 }`;
-const pulse = keyframes`0%,100%{transform:scale(1)}50%{transform:scale(1.05)}`;
-
+// Styled Components
 const Container = styled.div`
-  max-width: 850px;
+  max-width: 1000px;
   margin: 2rem auto;
-  padding: 1rem 1.2rem;
+  padding: 1rem;
   animation: ${fadeIn} 0.5s ease;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   display: grid;
+  grid-template-columns: 2fr 1fr;
   gap: 1.5rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 `;
-
+const ContentPanel = styled.div`
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 0.6rem;
+  box-shadow: 0 2px 12px rgba(203,213,225,0.2);
+  overflow: auto;
+  max-height: 80vh;
+`;
+const SidePanel = styled.div`
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.6rem;
+  box-shadow: 0 2px 12px rgba(203,213,225,0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 80vh;
+`;
 const Row = styled.div<{ justify?: string }>`
   display: flex;
   justify-content: ${({ justify }) => justify || "space-between"};
   align-items: center;
   flex-wrap: wrap;
+  gap: 0.5rem;
 `;
-
-const Panel = styled.div`
-  background: #f9fafb;
-  padding: 1rem;
-  border-radius: 0.6rem;
-  box-shadow: 0 2px 12px rgba(203, 213, 225, 0.34);
-`;
-
 const Preview = styled.div`
-  background: #fff;
-  padding: 1.5rem;
-  border-radius: 0.6rem;
-  box-shadow: 0 2px 12px rgba(203, 213, 225, 0.22);
   line-height: 1.6;
   font-size: 1rem;
-  position: relative;
   .jump2-highlight {
-    background: var(--highlight-color, #ffe066);
-    transition: background 0.4s;
     animation: ${pulse} 1s ease;
     cursor: pointer;
   }
 `;
-
-const WarningPanel = styled(Panel)`
-  border: 1px solid #e53e3e;
-  color: #e53e3e;
-`;
-
 const Input = styled.input`
   padding: 0.5rem;
-  margin-right: 0.5rem;
-  border-radius: 0.4rem;
   border: 1px solid #ccc;
+  border-radius: 0.4rem;
   flex: 1;
 `;
+const Button = styled.button`
+  padding: 0.5rem 1rem;
+  background: #0ea5e9;
+  color: white;
+  border-radius: 0.4rem;
+  border: none;
+  cursor: pointer;
+`;
+const WarningPanel = styled.div`
+  background: #fff4f4;
+  padding: 1rem;
+  border: 1px solid #e53e3e;
+  border-radius: 0.6rem;
+  color: #e53e3e;
+`;
+const FrameWrapper = styled.div`
+  position: relative;
+  &::after {
+    content: '';
+    display: block;
+    padding-bottom: 56.25%;
+  }
+  iframe {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+`;
 
-// --- Main Component ---
+// Component props
 type Props = {
   url: string;
   initialHighlights?: Highlight[];
@@ -114,7 +136,7 @@ export default function ArticlePreviewFull({
   supportArticles,
   supportMemes,
 }: Props) {
-  const isYouTube = url.includes("youtube.com") || url.includes("youtu.be");
+  const isYouTube = /youtu/.test(url);
   const [html, setHtml] = useState("");
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
@@ -127,141 +149,135 @@ export default function ArticlePreviewFull({
   const [showMemeModal, setShowMemeModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const previewRef = useRef<HTMLDivElement>(null);
 
+  const sanitizedHtml = sanitizeWithHighlights(html, highlightData);
+  const missingHighlights = highlightData.filter(
+    (h) => !html.toLowerCase().includes(h.text.trim().toLowerCase())
+  );
+
+  // Fetch article content
   useEffect(() => {
     if (isYouTube || !supportArticles) return;
     setLoading(true);
-    fetch(`/api/parse?url=${encodeURIComponent(url)}${scrapeEngine ? `&engine=${scrapeEngine}` : ""}`)
+    fetch(`/api/parse?url=${encodeURIComponent(url)}&engine=${scrapeEngine}`)
       .then(res => res.json())
-      .then(data => {
-        setHtml(data.article?.content || "");
-        setTitle(data.article?.title || "");
-        setAuthor(data.article?.author || "");
+      .then((data) => {
+        setHtml(data.article?.content ?? "");
+        setTitle(data.article?.title ?? "");
+        setAuthor(data.article?.author ?? "");
         setError(null);
       })
-      .catch(() => setError("❌ Failed to parse article."))
+      .catch(() => setError("Failed to parse article."))
       .finally(() => setLoading(false));
-  }, [url]);
+  }, [url, supportArticles, isYouTube]);
 
-  const handleManualTimestamp = () => {
-    const seconds = parseTimeInput(manualTime);
-    if (seconds === null) {
-      toast.error("Invalid time format (e.g., 2:30 or 150)");
-      return;
-    }
-    const jumpUrl = `${url.split("&")[0]}&t=${seconds}s`;
-    navigator.clipboard.writeText(jumpUrl);
-    toast.success("🕓 Manual timestamp copied!");
-    onGenerateLink?.(jumpUrl);
+  // Actions
+  const handleGenerateTimestamp = () => {
+    const secs = parseTimeInput(manualTime);
+    if (secs === null) return toast.error("Invalid time format");
+    const link = `${url.split("&")[0]}&t=${secs}s`;
+    navigator.clipboard.writeText(link);
+    toast.success("📍 Timestamp copied!");
+    onGenerateLink?.(link);
   };
-
-  const copyAnchorLink = () => {
-    const anchorUrl = url + "#:~:text=" + encodeURIComponent(anchorInput);
-    navigator.clipboard.writeText(anchorUrl);
-    toast.success("🔗 Anchor link copied!");
-    setShareUrl(anchorUrl);
+  const handleCopyAnchor = () => {
+    const anchor = `${url}#:~:text=${encodeURIComponent(anchorInput)}`;
+    navigator.clipboard.writeText(anchor);
+    toast.success("🔗 Anchor copied!");
+    setShareUrl(anchor);
     setCopied(true);
+    onAnchorEdit?.(anchorInput);
     setTimeout(() => setCopied(false), 1500);
   };
 
-  const sanitizedHtml = sanitizeWithHighlights(html, highlightData);
-  const missingHighlights = highlightData.filter(h => !html.toLowerCase().includes(h.text.trim().toLowerCase()));
-
   return (
     <Container>
-      <h2>🔍 Jump2 Preview</h2>
+      <ContentPanel>
+        <h2>🔍 Jump2 Preview</h2>
+        {isYouTube && enableYouTubeTimestamp && (
+          <FrameWrapper>
+            <iframe
+              src={`https://www.youtube.com/embed/${extractYouTubeID(url)}`}
+              title="Video"
+              allowFullScreen
+            />
+          </FrameWrapper>
+        )}
+        {!isYouTube && supportArticles && (
+          <>
+            {loading && <p>Loading article...</p>}
+            {error && <ArticleError error={error} url={url} />}
+            {!loading && !error && (
+              <>
+                <h3>{title}</h3>
+                <em>{author}</em>
+                <Preview dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
+                {missingHighlights.length > 0 && (
+                  <WarningPanel>
+                    ⚠️ Some highlights aren’t in view. Try scrolling.
+                  </WarningPanel>
+                )}
+              </>
+            )}
+          </>
+        )}
+      </ContentPanel>
 
-      {isYouTube && enableYouTubeTimestamp && (
-        <Panel>
-          <iframe
-            width="100%"
-            height="315"
-            src={`https://www.youtube.com/embed/${extractYouTubeID(url)}`}
-            title="YouTube video player"
-            allowFullScreen
-          />
-          <Row style={{ marginTop: "1rem" }}>
+      <SidePanel>
+        {isYouTube && enableYouTubeTimestamp && (
+          <>
             <Input
               type="text"
-              placeholder="Enter timestamp (e.g. 1:30)"
+              placeholder="e.g. 2:30"
               value={manualTime}
               onChange={(e) => setManualTime(e.target.value)}
             />
-            <button onClick={handleManualTimestamp}>⏱️ Generate Timestamp</button>
-          </Row>
-        </Panel>
-      )}
+            <Button onClick={handleGenerateTimestamp}>⏱️ Generate Timestamp</Button>
+          </>
+        )}
 
-      {!isYouTube && supportArticles && (
-        <>
-          {loading && <p>Loading article...</p>}
-          {error && <ArticleError error={error} url={url} />}
-          {!loading && !error && (
-            <>
-              <Panel>
-                <h3>{title}</h3>
-                <p><em>{author}</em></p>
-              </Panel>
-
-              <Preview ref={previewRef} dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
-
-              {missingHighlights.length > 0 && (
-                <WarningPanel>
-                  <p>⚠️ Some highlights were not found:</p>
-                  <ul>{missingHighlights.map(h => <li key={h.id}><code>{h.text}</code></li>)}</ul>
-                </WarningPanel>
-              )}
-
-              <HighlightEditor
-                htmlContent={html}
-                initialHighlights={highlightData}
-                onHighlightsChange={setHighlightData}
-                onShare={() => { toast.success("✅ Highlight ready to share."); return; }}
-              />
-            </>
-          )}
-        </>
-      )}
-
-      <Panel>
-        <Row>
-          <Input
-            type="text"
-            placeholder="Optional anchor text for sharing"
-            value={anchorInput}
-            onChange={(e) => {
-              setAnchorInput(e.target.value);
-              onAnchorEdit?.(e.target.value);
-            }}
+        {!isYouTube && supportArticles && (
+          <HighlightEditor
+            htmlContent={html}
+            initialHighlights={highlightData}
+            onHighlightsChange={setHighlightData}
+            onShare={() => toast.success("✅ Highlights ready!")}
           />
-          <button onClick={copyAnchorLink}>
-            📋 {copied ? "Copied!" : "Copy Anchor"}
-          </button>
-          <button onClick={() => setShowQR(!showQR)}>🧾 {showQR ? "Hide QR" : "Show QR"}</button>
+        )}
+
+        <Input
+          type="text"
+          placeholder="Anchor text"
+          value={anchorInput}
+          onChange={(e) => setAnchorInput(e.target.value)}
+        />
+        <Row>
+          <Button onClick={handleCopyAnchor}>{copied ? "Copied!" : "📋 Copy Anchor"}</Button>
+          <Button onClick={() => setShowQR((v) => !v)}>🧾 {showQR ? "Hide QR" : "Show QR"}</Button>
         </Row>
         {showQR && shareUrl && (
           <img
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shareUrl)}`}
-            alt="QR Code"
-            style={{ marginTop: '0.8rem', borderRadius: '0.4rem' }}
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
+              shareUrl
+            )}`}
+            alt="QR code"
+            style={{ alignSelf: "center" }}
           />
         )}
-      </Panel>
 
-      {supportMemes && (
-        <Panel>
-          <h3>🖼️ Auto Meme Generator</h3>
-          <button onClick={() => setShowMemeModal(true)}>Generate Meme</button>
-          {showMemeModal && (
-            <MemeModal
-              articleUrl={url}
-              highlightText={highlightData[0]?.text || ""}
-              onClose={() => setShowMemeModal(false)}
-            />
-          )}
-        </Panel>
-      )}
+        {supportMemes && (
+          <>
+            <Button onClick={() => setShowMemeModal(true)}>🖼️ Generate Meme</Button>
+            {showMemeModal && (
+              <MemeModal
+                articleUrl={url}
+                highlightText={highlightData[0]?.text ?? ""}
+                onClose={() => setShowMemeModal(false)}
+              />
+            )}
+          </>
+        )}
+      </SidePanel>
 
       <Footer />
     </Container>
