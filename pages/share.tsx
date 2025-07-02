@@ -73,6 +73,11 @@ const InputRow = styled.div`
   button {
     background-color: #16a34a;
   }
+
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
 const AssistantBox = styled(motion.div)<{ mode?: string }>`
@@ -102,18 +107,25 @@ const Divider = styled.hr`
   margin: 2rem 0;
 `;
 
+function isValidURL(str: string): boolean {
+  try {
+    const url = new URL(str);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export default function Share() {
   const [url, setUrl] = useState("");
   const [submittedUrl, setSubmittedUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
   const [isValid, setIsValid] = useState(false);
-  const [tip, setTip] = useState("Paste a YouTube link to highlight or timestamp — or upload a document.");
+  const [tip, setTip] = useState("Paste a YouTube or article link to highlight or timestamp — or upload a document.");
   const [firstVisit, setFirstVisit] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [mode, setMode] = useState<'url' | 'file'>('url');
   const [showOnboarding, setShowOnboarding] = useState(false);
-
-  const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
 
   useEffect(() => {
     if (!localStorage.getItem("visitedShare")) {
@@ -127,23 +139,27 @@ export default function Share() {
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      const isUrlValid = urlRegex.test(url.trim());
-      setIsValid(isUrlValid);
-      if (url && isUrlValid) {
-        setSubmittedUrl(url.trim());
+      const trimmed = url.trim();
+      const valid = isValidURL(trimmed);
+      setIsValid(valid);
+      if (trimmed && valid) {
+        setSubmittedUrl(trimmed);
         setMode('url');
         setTip("✅ Link detected! Scroll down to highlight, meme, or timestamp.");
         setErrorMsg("");
+        fileName && setFileName("");
       }
-    }, 500);
+    }, 400);
     return () => clearTimeout(timeout);
   }, [url]);
 
   const handlePaste = useCallback(() => {
-    if (urlRegex.test(url.trim())) {
-      setSubmittedUrl(url.trim());
+    const trimmed = url.trim();
+    if (isValidURL(trimmed)) {
+      setSubmittedUrl(trimmed);
       setMode('url');
       setTip("🔗 URL loaded. Scroll down to begin highlighting or clipping.");
+      setFileName("");
       setErrorMsg("");
     } else {
       toast.error("❌ Invalid URL — please double check.");
@@ -167,13 +183,11 @@ export default function Share() {
     setFileName("");
     setSubmittedUrl(null);
     setMode('url');
-    setTip("Paste a YouTube link to highlight or timestamp — or upload a document.");
+    setTip("Paste a YouTube or article link to highlight or timestamp — or upload a document.");
     setErrorMsg("");
   }, []);
 
-  const handleDismissOnboarding = () => {
-    setShowOnboarding(false);
-  };
+  const handleDismissOnboarding = () => setShowOnboarding(false);
 
   return (
     <>
@@ -217,19 +231,18 @@ export default function Share() {
             aria-describedby="url-help"
             aria-invalid={!isValid && url !== ''}
           />
-          <button
-            onClick={handlePaste}
-            aria-label="Share URL"
-            aria-describedby="url-help"
-            aria-invalid={!isValid && url !== ''}
-          >
-            <span><FaLink /></span> Share URL
+          <button onClick={handlePaste} disabled={!isValid}>
+            <FaLink /> Share URL
           </button>
           <label>
-            <span><FaUpload /></span> Upload
-            <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} aria-label="Upload document" />
+            <FaUpload /> Upload
+            <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} />
           </label>
-          {fileName && <button onClick={clearInputs} aria-label="Clear inputs"><span><FaTimesCircle /></span> Clear</button>}
+          {fileName && (
+            <button onClick={clearInputs}>
+              <FaTimesCircle /> Clear
+            </button>
+          )}
         </InputRow>
 
         {errorMsg && <ErrorMessage>{errorMsg}</ErrorMessage>}
@@ -256,6 +269,7 @@ export default function Share() {
             enableYouTubeTimestamp
             supportArticles
             supportMemes
+            onGenerateLink={(link) => toast.success(`🔗 Link ready: ${link}`)}
           />
         )}
       </PageWrapper>
