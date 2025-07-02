@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import Head from "next/head";
 import ArticlePreviewFull from "@/components/ArticlePreviewFull";
-import { FaLink, FaUpload } from "react-icons/fa";
-import { FaTimesCircle } from "react-icons/fa";
+import { FaLink, FaUpload, FaTimesCircle } from "react-icons/fa";
 import { motion } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -52,7 +51,7 @@ const InputRow = styled.div`
     width: 320px;
     background: #1e293b;
     color: white;
-    box-shadow: 0 0 14px 3px rgba(14, 165, 233, 0.9);
+    box-shadow: 0 0 14px 4px rgba(14, 165, 233, 0.9);
     transition: box-shadow 0.3s ease;
   }
 
@@ -120,12 +119,14 @@ export default function Share() {
   const [firstVisit, setFirstVisit] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [mode, setMode] = useState<'url' | 'file'>('url');
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     if (!localStorage.getItem("visitedShare")) {
       setFirstVisit(true);
+      setShowOnboarding(true);
       localStorage.setItem("visitedShare", "true");
-      setTip("👋 First time? Paste a link or upload a file to begin.");
+      setTip("👋 First time here? Follow the steps to get started with Jump2.");
       toast("🚀 Tip: You can highlight, timestamp, and even generate memes after sharing!");
     }
   }, []);
@@ -178,6 +179,10 @@ export default function Share() {
     setErrorMsg("");
   };
 
+  const handleDismissOnboarding = () => {
+    setShowOnboarding(false);
+  };
+
   return (
     <>
       <Head>
@@ -197,6 +202,18 @@ export default function Share() {
           Paste a link or upload a doc — then highlight key text, add a meme, or generate a shareable moment.
         </Subtitle>
 
+        {showOnboarding && (
+          <AssistantBox
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            mode={mode}
+          >
+            👋 Welcome to Jump2! Paste a URL or upload a file to begin. <br />
+            <button onClick={handleDismissOnboarding} style={{ marginTop: '1rem', background: '#334155', color: '#fff', padding: '0.5rem 1rem', borderRadius: '0.4rem' }}>Got it</button>
+          </AssistantBox>
+        )}
+
         <InputRow>
           <input
             type="text"
@@ -205,8 +222,15 @@ export default function Share() {
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handlePaste()}
             aria-label="Paste a link to highlight or timestamp"
+            aria-describedby="url-help"
+            aria-invalid={!isValid && url !== ''}
           />
-          <button onClick={handlePaste} aria-label="Share URL">
+          <button
+            onClick={handlePaste}
+            aria-label="Share URL"
+            aria-describedby="url-help"
+            aria-invalid={!isValid && url !== ''}
+          >
             <FaLink /> Share URL
           </button>
           <label>
