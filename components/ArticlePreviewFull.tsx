@@ -22,12 +22,6 @@ function parseTimeInput(input: string): number | null {
   return null;
 }
 
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
 function sanitizeWithHighlights(html: string, highlights: Highlight[]): string {
   if (!highlights.length) return DOMPurify.sanitize(html);
   const sorted = [...highlights].sort((a, b) => a.start - b.start);
@@ -223,7 +217,7 @@ export default function ArticlePreviewFull({
                 htmlContent={html}
                 initialHighlights={highlightData}
                 onHighlightsChange={setHighlightData}
-                onShare={() => toast.success("✅ Highlight ready to share.")}
+                onShare={() => { toast.success("✅ Highlight ready to share."); return; }}
               />
             </>
           )}
