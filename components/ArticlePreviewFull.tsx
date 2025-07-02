@@ -1,26 +1,50 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import DOMPurify from "isomorphic-dompurify";
+import toast from "react-hot-toast";
 import ArticleError from "./ArticleError";
 import HighlightEditor, { Highlight } from "./HighlightEditor";
 import MemeModal from "./MemeModal";
 import Footer from "./Footer";
 
-// Icons
-const Icon = styled.span`
-  font-size: 1.2em;
-  vertical-align: middle;
-`;
-const CopyIcon = () => <Icon aria-label="Copy">📋</Icon>;
-const RedoIcon = () => <Icon aria-label="Redo">🔄</Icon>;
-const CheckIcon = () => <Icon aria-label="Check" style={{ color: "#38a169" }}>✔️</Icon>;
-const Qricon = () => <Icon aria-label="QR">🧾</Icon>;
+// --- Utilities ---
+function extractYouTubeID(url: string): string {
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([\w-]{11})/);
+  return match?.[1] ?? "";
+}
 
-// Animations
+function parseTimeInput(input: string): number | null {
+  if (/^\d+$/.test(input)) return parseInt(input, 10);
+  const parts = input.split(":").map(Number);
+  if (parts.length === 2 && parts.every(n => !isNaN(n))) {
+    return parts[0] * 60 + parts[1];
+  }
+  return null;
+}
+
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function sanitizeWithHighlights(html: string, highlights: Highlight[]): string {
+  if (!highlights.length) return DOMPurify.sanitize(html);
+  const sorted = [...highlights].sort((a, b) => a.start - b.start);
+  let result = "", pos = 0;
+  for (const { start, end, color, id } of sorted) {
+    if (start > pos) result += DOMPurify.sanitize(html.slice(pos, start));
+    result += `<mark class="jump2-highlight" style="--highlight-color:${color};background:${color}" data-id="${id}" tabindex="0">${DOMPurify.sanitize(html.slice(start, end))}</mark>`;
+    pos = end;
+  }
+  if (pos < html.length) result += DOMPurify.sanitize(html.slice(pos));
+  return result;
+}
+
+// --- Styled Components ---
 const fadeIn = keyframes`from { opacity: 0 } to { opacity: 1 }`;
 const pulse = keyframes`0%,100%{transform:scale(1)}50%{transform:scale(1.05)}`;
 
-// Styled Components
 const Container = styled.div`
   max-width: 850px;
   margin: 2rem auto;
@@ -35,6 +59,7 @@ const Row = styled.div<{ justify?: string }>`
   display: flex;
   justify-content: ${({ justify }) => justify || "space-between"};
   align-items: center;
+  flex-wrap: wrap;
 `;
 
 const Panel = styled.div`
@@ -65,24 +90,19 @@ const WarningPanel = styled(Panel)`
   color: #e53e3e;
 `;
 
-function sanitizeWithHighlights(html: string, highlights: Highlight[]) {
-  if (!highlights.length) return DOMPurify.sanitize(html);
-  const sorted = [...highlights].sort((a, b) => a.start - b.start);
-  let result = "", pos = 0;
-  for (const { start, end, color, id } of sorted) {
-    if (start > pos) result += DOMPurify.sanitize(html.slice(pos, start));
-    result += `<mark class="jump2-highlight" style="--highlight-color:${color};background:${color}" data-id="${id}" tabindex="0">${DOMPurify.sanitize(html.slice(start, end))}</mark>`;
-    pos = end;
-  }
-  if (pos < html.length) result += DOMPurify.sanitize(html.slice(pos));
-  return result;
-}
+const Input = styled.input`
+  padding: 0.5rem;
+  margin-right: 0.5rem;
+  border-radius: 0.4rem;
+  border: 1px solid #ccc;
+  flex: 1;
+`;
 
-type ArticlePreviewFullProps = {
+// --- Main Component ---
+type Props = {
   url: string;
   initialHighlights?: Highlight[];
-  onClose?: () => void;
-  anchor?: string;
+  onGenerateLink?: (link: string) => void;
   onAnchorEdit?: (anchor: string) => void;
   scrapeEngine?: string;
   enableYouTubeTimestamp?: boolean;
@@ -93,195 +113,163 @@ type ArticlePreviewFullProps = {
 export default function ArticlePreviewFull({
   url,
   initialHighlights = [],
-  onClose,
-  anchor = "",
+  onGenerateLink,
   onAnchorEdit,
   scrapeEngine,
   enableYouTubeTimestamp,
   supportArticles,
   supportMemes,
-}: ArticlePreviewFullProps) {
-  const [html, setHtml] = useState<string>("");
-  const [text, setText] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+}: Props) {
+  const isYouTube = url.includes("youtube.com") || url.includes("youtu.be");
+  const [html, setHtml] = useState("");
+  const [title, setTitle] = useState("");
+  const [author, setAuthor] = useState("");
+  const [manualTime, setManualTime] = useState("");
+  const [highlightData, setHighlightData] = useState<Highlight[]>(initialHighlights);
+  const [anchorInput, setAnchorInput] = useState("");
   const [shareUrl, setShareUrl] = useState<string | null>(null);
-  const [sharing, setSharing] = useState<boolean>(false);
-  const [copied, setCopied] = useState<boolean>(false);
-  const [anchorInput, setAnchorInput] = useState<string>(anchor);
-  const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights);
-  const [showQR, setShowQR] = useState<boolean>(false);
-  const [showMemeModal, setShowMemeModal] = useState<boolean>(false);
-
+  const [copied, setCopied] = useState(false);
+  const [showQR, setShowQR] = useState(false);
+  const [showMemeModal, setShowMemeModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
-  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    if (!url) return;
+    if (isYouTube || !supportArticles) return;
     setLoading(true);
-    setError(null);
-    const controller = new AbortController();
-    abortRef.current = controller;
-    const t = setTimeout(() => controller.abort(), 13000);
-    const fetchUrl = `/api/parse?url=${encodeURIComponent(url)}${scrapeEngine ? `&engine=${encodeURIComponent(scrapeEngine)}` : ""}`;
-
-    fetch(fetchUrl, { signal: controller.signal })
-      .then(async (res) => {
-        clearTimeout(t);
-        if (!res.ok) throw new Error(await res.text());
-        return res.json();
+    fetch(`/api/parse?url=${encodeURIComponent(url)}${scrapeEngine ? `&engine=${scrapeEngine}` : ""}`)
+      .then(res => res.json())
+      .then(data => {
+        setHtml(data.article?.content || "");
+        setTitle(data.article?.title || "");
+        setAuthor(data.article?.author || "");
+        setError(null);
       })
-      .then((data) => {
-        if (data.article?.content) {
-          setHtml(data.article.content);
-          setText(data.article.content.replace(/<[^>]+>/g, " "));
-        } else {
-          throw new Error(data.error || "No content found.");
-        }
-      })
-      .catch((e) => setError(e.name === "AbortError" ? "Request timed out." : e.message))
+      .catch(() => setError("❌ Failed to parse article."))
       .finally(() => setLoading(false));
+  }, [url]);
 
-    return () => {
-      clearTimeout(t);
-      controller.abort();
-    };
-  }, [url, scrapeEngine]);
-
-  useEffect(() => {
-    if (!html || !highlights.length) return;
-    setTimeout(() => {
-      const mark = previewRef.current?.querySelector(".jump2-highlight");
-      if (mark) (mark as HTMLElement).scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 200);
-  }, [html, highlights]);
-
-  const missingHighlights = highlights.filter((h) =>
-    !html.toLowerCase().includes(h.text.trim().toLowerCase())
-  );
-
-  const shareHighlights = useCallback(
-    async (arr: Highlight[]) => {
-      setSharing(true);
-      try {
-        const res = await fetch("/api/highlights", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url, highlights: arr.map(h => h.text), colors: arr.map(h => h.color) }),
-        });
-        const data = await res.json();
-        if (!data.shareUrl) throw new Error("No share link returned");
-        setShareUrl(data.shareUrl);
-      } catch {
-        setError("Can't generate share link.");
-      } finally {
-        setSharing(false);
-      }
-    },
-    [url]
-  );
-
-  const copyToClipboard = () => {
-    if (!shareUrl) return;
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
+  const handleManualTimestamp = () => {
+    const seconds = parseTimeInput(manualTime);
+    if (seconds === null) {
+      toast.error("Invalid time format (e.g., 2:30 or 150)");
+      return;
+    }
+    const jumpUrl = `${url.split("&")[0]}&t=${seconds}s`;
+    navigator.clipboard.writeText(jumpUrl);
+    toast.success("🕓 Manual timestamp copied!");
+    onGenerateLink?.(jumpUrl);
   };
+
+  const copyAnchorLink = () => {
+    const anchorUrl = url + "#:~:text=" + encodeURIComponent(anchorInput);
+    navigator.clipboard.writeText(anchorUrl);
+    toast.success("🔗 Anchor link copied!");
+    setShareUrl(anchorUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  const sanitizedHtml = sanitizeWithHighlights(html, highlightData);
+  const missingHighlights = highlightData.filter(h => !html.toLowerCase().includes(h.text.trim().toLowerCase()));
 
   return (
     <Container>
-      <Row>
-        <h2>🖍️ Share‑Ready Highlights</h2>
-        {onClose && (
-          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', fontSize: '1.4em', cursor: 'pointer' }}>
-            ✕
-          </button>
-        )}
-      </Row>
+      <h2>🔍 Jump2 Preview</h2>
 
-      {loading && <p>Loading content…</p>}
-      {error && <ArticleError error={error} url={url} />}
-
-      {!loading && !error && (
-        <>
-          {anchor && (
-            <Panel>
-              <label><strong>Anchor:</strong></label>
-              <Row>
-                <input
-                  type="text"
-                  value={anchorInput}
-                  onChange={e => {
-                    setAnchorInput(e.target.value);
-                    onAnchorEdit?.(e.target.value);
-                  }}
-                  style={{ flex: 1, marginRight: '0.5rem', padding: '0.4rem' }}
-                />
-                <button onClick={copyToClipboard}><CopyIcon /> Copy</button>
-                <button onClick={() => setShowQR(v => !v)}><Qricon /> {showQR ? "Hide QR" : "Show QR"}</button>
-              </Row>
-              {showQR && (
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url + "#:~:text=" + encodeURIComponent(anchorInput))}`}
-                  alt="Anchor QR Code"
-                  style={{ marginTop: '0.8rem', borderRadius: '0.4rem' }}
-                />
-              )}
-            </Panel>
-          )}
-
-          <Preview ref={previewRef} dangerouslySetInnerHTML={{ __html: sanitizeWithHighlights(html, highlights) }} />
-
-          {missingHighlights.length > 0 && (
-            <WarningPanel>
-              <p>⚠️ Some highlights were not found:</p>
-              <ul>{missingHighlights.map(h => <li key={h.id}><code>{h.text}</code></li>)}</ul>
-              <button onClick={() => setHighlights([])}><RedoIcon /> Reset highlights</button>
-            </WarningPanel>
-          )}
-
-          <HighlightEditor
-            htmlContent={html}
-            initialHighlights={highlights}
-            onHighlightsChange={setHighlights}
-            onShare={shareHighlights}
-            sharing={sharing}
-            readOnly={!supportArticles}
-            enableYouTubeTimestamp={enableYouTubeTimestamp}
+      {isYouTube && enableYouTubeTimestamp && (
+        <Panel>
+          <iframe
+            width="100%"
+            height="315"
+            src={`https://www.youtube.com/embed/${extractYouTubeID(url)}`}
+            title="YouTube video player"
+            allowFullScreen
           />
+          <Row style={{ marginTop: "1rem" }}>
+            <Input
+              type="text"
+              placeholder="Enter timestamp (e.g. 1:30)"
+              value={manualTime}
+              onChange={(e) => setManualTime(e.target.value)}
+            />
+            <button onClick={handleManualTimestamp}>⏱️ Generate Timestamp</button>
+          </Row>
+        </Panel>
+      )}
 
-          {shareUrl && (
-            <Panel>
-              <Row justify="start">
-                <CheckIcon /> <strong>Share link:</strong>
-              </Row>
-              <Row>
-                <a href={shareUrl} target="_blank" rel="noopener noreferrer">{shareUrl}</a>
-                <button onClick={copyToClipboard}><CopyIcon /> {copied ? "Copied!" : "Copy"}</button>
-              </Row>
-            </Panel>
-          )}
+      {!isYouTube && supportArticles && (
+        <>
+          {loading && <p>Loading article...</p>}
+          {error && <ArticleError error={error} url={url} />}
+          {!loading && !error && (
+            <>
+              <Panel>
+                <h3>{title}</h3>
+                <p><em>{author}</em></p>
+              </Panel>
 
-          {supportMemes && (
-            <Panel>
-              <h3>Auto‑Meme Generator</h3>
-              <button onClick={() => setShowMemeModal(true)} style={{ padding: '0.6rem 1.2rem', fontWeight: 600 }}>
-                Generate Meme
-              </button>
-              {showMemeModal && (
-                <MemeModal
-                  highlightText={anchorInput || highlights[0]?.text || ""}
-                  articleUrl={url}
-                  onClose={() => setShowMemeModal(false)}
-                />
+              <Preview ref={previewRef} dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
+
+              {missingHighlights.length > 0 && (
+                <WarningPanel>
+                  <p>⚠️ Some highlights were not found:</p>
+                  <ul>{missingHighlights.map(h => <li key={h.id}><code>{h.text}</code></li>)}</ul>
+                </WarningPanel>
               )}
-            </Panel>
-          )}
 
-          <Footer />
+              <HighlightEditor
+                htmlContent={html}
+                initialHighlights={highlightData}
+                onHighlightsChange={setHighlightData}
+                onShare={() => toast.success("✅ Highlight ready to share.")}
+              />
+            </>
+          )}
         </>
       )}
+
+      <Panel>
+        <Row>
+          <Input
+            type="text"
+            placeholder="Optional anchor text for sharing"
+            value={anchorInput}
+            onChange={(e) => {
+              setAnchorInput(e.target.value);
+              onAnchorEdit?.(e.target.value);
+            }}
+          />
+          <button onClick={copyAnchorLink}>
+            📋 {copied ? "Copied!" : "Copy Anchor"}
+          </button>
+          <button onClick={() => setShowQR(!showQR)}>🧾 {showQR ? "Hide QR" : "Show QR"}</button>
+        </Row>
+        {showQR && shareUrl && (
+          <img
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shareUrl)}`}
+            alt="QR Code"
+            style={{ marginTop: '0.8rem', borderRadius: '0.4rem' }}
+          />
+        )}
+      </Panel>
+
+      {supportMemes && (
+        <Panel>
+          <h3>🖼️ Auto Meme Generator</h3>
+          <button onClick={() => setShowMemeModal(true)}>Generate Meme</button>
+          {showMemeModal && (
+            <MemeModal
+              articleUrl={url}
+              highlightText={highlightData[0]?.text || ""}
+              onClose={() => setShowMemeModal(false)}
+            />
+          )}
+        </Panel>
+      )}
+
+      <Footer />
     </Container>
   );
 }
