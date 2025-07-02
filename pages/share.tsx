@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import Head from "next/head";
 import ArticlePreviewFull from "@/components/ArticlePreviewFull";
-import { FaLink, FaFileUpload } from "react-icons/fa";
+import { FaLink, FaFileUpload } from "react-icons/fa6";
 
 const PageWrapper = styled.div`
   display: flex;
@@ -122,6 +122,13 @@ export default function Share() {
   const [url, setUrl] = useState("");
   const [submittedUrl, setSubmittedUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (url && url.startsWith("http")) setSubmittedUrl(url);
+    }, 1200);
+    return () => clearTimeout(timeout);
+  }, [url]);
 
   const handlePaste = () => {
     if (url.trim()) setSubmittedUrl(url.trim());
