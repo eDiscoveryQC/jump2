@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { logEvent } from "@/lib/log";
 import { generateShortCode } from "@/lib/shortCode";
 
-// --- Styles ---
+// --- Styled Components ---
 const PageWrapper = styled.div`
   display: flex;
   flex-direction: column;
@@ -17,26 +17,25 @@ const PageWrapper = styled.div`
   background: linear-gradient(to right, #0f172a, #1e293b);
   color: #ffffff;
   min-height: 100vh;
-  padding: 4rem 1.5rem 6rem;
+  padding: 5rem 2rem;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 `;
 
 const Title = styled.h1`
-  font-size: 3.4rem;
-  font-weight: 900;
+  font-size: 3.2rem;
+  font-weight: bold;
   color: #facc15;
   margin-bottom: 1rem;
-  text-shadow: 0 2px 8px #0ea5e9aa;
   text-align: center;
+  text-shadow: 0 2px 6px rgba(14, 165, 233, 0.6);
 `;
 
 const Subtitle = styled.h2`
-  font-size: 1.6rem;
-  font-weight: 500;
-  max-width: 720px;
+  font-size: 1.4rem;
+  color: #e0e7ff;
+  margin-bottom: 2.5rem;
   text-align: center;
-  color: #fef08a;
-  margin-bottom: 2.4rem;
+  max-width: 720px;
 `;
 
 const InputRow = styled.div`
@@ -49,24 +48,21 @@ const InputRow = styled.div`
 
   input[type="text"] {
     padding: 0.75rem 1rem;
-    font-size: 1.05rem;
+    font-size: 1rem;
     border-radius: 0.5rem;
     border: 1px solid #334155;
-    width: 320px;
     background: #1e293b;
-    color: #ffffff;
-    box-shadow: 0 0 14px 4px rgba(14, 165, 233, 0.9);
-    transition: box-shadow 0.3s ease, border-color 0.2s;
+    color: white;
+    width: 320px;
   }
+
   input::placeholder {
     color: #94a3b8;
   }
-  input[type="file"] {
-    display: none;
-  }
+
   label, button {
     background-color: #0ea5e9;
-    padding: 0.75rem 1.2rem;
+    padding: 0.7rem 1.2rem;
     border-radius: 0.5rem;
     color: white;
     cursor: pointer;
@@ -76,24 +72,23 @@ const InputRow = styled.div`
     border: none;
     transition: background 0.2s;
   }
+
   button {
     background-color: #16a34a;
   }
-  button:hover:not(:disabled) {
-    background-color: #0c8dcf;
+
+  button:hover {
+    background-color: #15803d;
   }
-  button:focus {
-    outline: 2px solid #facc15;
+
+  input[type="file"] {
+    display: none;
   }
-  button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+
   @media (max-width: 600px) {
     flex-direction: column;
     input, button, label {
       width: 100%;
-      justify-content: center;
     }
   }
 `;
@@ -102,12 +97,12 @@ const AssistantBox = styled(motion.div)<{ mode?: string }>`
   background: #1e293b;
   border: 1px solid #334155;
   padding: 1.2rem 1.5rem;
-  font-size: 1.05rem;
+  font-size: 1rem;
   max-width: 680px;
   text-align: center;
   border-radius: 0.75rem;
   color: #e2e8f0;
-  margin-bottom: 2.2rem;
+  margin-bottom: 2rem;
   box-shadow: 0 0 22px ${({ mode }) => (mode === 'file' ? '#22c55eaa' : '#0ea5e9cc')};
 `;
 
@@ -125,7 +120,7 @@ const Divider = styled.hr`
   margin: 2rem 0;
 `;
 
-// --- Helpers ---
+// --- Utilities ---
 function isValidURL(str: string): boolean {
   try {
     const url = new URL(str);
@@ -141,7 +136,6 @@ async function createJump2Link(originalUrl: string): Promise<string | null> {
     .from("links")
     .insert([{ code, url: originalUrl }]);
   if (error) {
-    console.error("Supabase insert error:", error.message);
     toast.error("Error creating short link.");
     return null;
   }
@@ -164,7 +158,7 @@ export default function Share() {
     if (!localStorage.getItem("visitedShare")) {
       setShowOnboarding(true);
       localStorage.setItem("visitedShare", "true");
-      toast("🚀 Tip: You can highlight, timestamp, and even generate memes after sharing!", { duration: 5000 });
+      toast("🚀 You can highlight, timestamp, and generate memes after sharing!");
     }
   }, []);
 
@@ -176,7 +170,7 @@ export default function Share() {
       if (valid) {
         setSubmittedUrl(trimmed);
         setMode('url');
-        setTip("✅ Link detected! Scroll down to highlight, meme, or timestamp.");
+        setTip("✅ Link detected. Scroll down to highlight, meme, or timestamp.");
         setErrorMsg("");
         setFileName("");
       }
@@ -189,11 +183,11 @@ export default function Share() {
     if (isValidURL(trimmed)) {
       setSubmittedUrl(trimmed);
       setMode('url');
-      setTip("🔗 URL loaded. Scroll down to begin highlighting or clipping.");
+      setTip("🔗 URL loaded. Scroll down to begin.");
       setFileName("");
       setErrorMsg("");
     } else {
-      toast.error("❌ Invalid URL — please double check.");
+      toast.error("Invalid URL");
       setErrorMsg("❌ Invalid URL — please double check.");
     }
   }, [url]);
@@ -204,7 +198,7 @@ export default function Share() {
     setFileName(file.name);
     setSubmittedUrl(null);
     setMode('file');
-    setTip("📄 File uploaded. Parsing support coming soon. ⏳");
+    setTip("📄 File uploaded. Parsing support coming soon.");
     toast.success(`📁 ${file.name} uploaded`);
     setErrorMsg("");
   }, []);
@@ -223,10 +217,6 @@ export default function Share() {
       <Head>
         <title>Jump2 – Share the Moment That Matters</title>
         <meta name="description" content="Highlight. Meme. Timestamp. Upload. Welcome to Share-Tech." />
-        <meta property="og:title" content="Jump2 – Highlight Anything, Share Everything" />
-        <meta property="og:image" content="https://jump2.link/assets/og/share-og.png" />
-        <meta property="og:url" content="https://jump2.link/share" />
-        <meta property="og:description" content="Built for creators and curators — Jump2 lets you clip, highlight, and share precise content from any source." />
       </Head>
 
       <Toaster position="top-right" />
@@ -234,7 +224,7 @@ export default function Share() {
       <PageWrapper>
         <Title>🔗 Create Your Jump2</Title>
         <Subtitle>
-          Paste a link or upload a document — then highlight key text, add a meme, or generate a shareable moment.
+          Paste a link or upload a document — highlight key text, add a meme, or generate a shareable moment.
         </Subtitle>
 
         {showOnboarding && (
@@ -265,7 +255,6 @@ export default function Share() {
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handlePaste()}
             aria-label="Paste a link"
-            aria-invalid={!isValid && url !== ""}
           />
           <button onClick={handlePaste} disabled={!isValid}>
             <FaLink /> Share URL
@@ -281,7 +270,7 @@ export default function Share() {
           )}
         </InputRow>
 
-        {errorMsg && <ErrorMessage role="alert">{errorMsg}</ErrorMessage>}
+        {errorMsg && <ErrorMessage>{errorMsg}</ErrorMessage>}
 
         <AssistantBox
           initial={{ opacity: 0, y: 10 }}

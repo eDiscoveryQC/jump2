@@ -1,3 +1,4 @@
+// Full updated HighlightEditor.tsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled, { keyframes } from 'styled-components';
 import MemeModal from "./MemeModal";
@@ -36,6 +37,7 @@ const ArticleArea = styled.div`
   overflow-wrap: break-word;
   min-height: 360px;
   transition: box-shadow .2s;
+  position: relative;
   &:hover {
     box-shadow: 0 4px 20px #1e426820;
   }
@@ -137,7 +139,7 @@ const Toast = styled.div`
   animation: ${fadeOut} 2.5s forwards;
 `;
 
-// --- Highlight Interface ---
+// --- Interfaces ---
 export interface Highlight {
   id: string;
   text: string;
@@ -196,9 +198,7 @@ export default function HighlightEditor({
 
   useEffect(() => {
     if (!highlightId) return;
-    const marker = document.querySelector<HTMLElement>(
-      `mark[data-highlight-id="${highlightId}"]`
-    );
+    const marker = document.getElementById(`highlight-${highlightId}`);
     if (marker) {
       marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
       marker.classList.add('highlighted');
@@ -263,12 +263,14 @@ export default function HighlightEditor({
       parts.push(
         <HighlightedText
           key={id}
+          id={`highlight-${id}`}
           data-highlight-id={id}
           color={color}
           isActive={activeHighlight === id}
           onClick={() => {
             setActiveHighlight(id);
             setToast("Highlight focused");
+            window.location.hash = `highlight-${id}`;
           }}
           title={text}
         >
@@ -324,14 +326,12 @@ export default function HighlightEditor({
             active={activeHighlight === h.id}
             onClick={() => {
               setActiveHighlight(h.id);
-              setTimeout(() => {
-                const m = document.querySelector<HTMLElement>(
-                  `mark[data-highlight-id="${h.id}"]`
-                );
-                m?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                m?.classList.add('highlighted');
-                setTimeout(() => m?.classList.remove('highlighted'), 1500);
-              }, 100);
+              const el = document.getElementById(`highlight-${h.id}`);
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.add('highlighted');
+                setTimeout(() => el.classList.remove('highlighted'), 1500);
+              }
             }}
           >
             <ColorInput

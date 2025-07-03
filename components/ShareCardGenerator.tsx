@@ -4,37 +4,42 @@ import { toPng } from "html-to-image";
 import QRCode from "react-qr-code";
 
 // --- Styled Components ---
+const Wrapper = styled.div`
+  text-align: center;
+  margin-top: 2rem;
+`;
+
 const CardWrapper = styled.div`
   width: 1200px;
   height: 630px;
   padding: 60px 80px;
-  box-sizing: border-box;
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
-  font-family: "Segoe UI", Roboto, sans-serif;
   color: #111827;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  box-shadow: 0 6px 36px rgba(0, 0, 0, 0.12);
+  font-family: "Segoe UI", Roboto, sans-serif;
   position: relative;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
 `;
 
 const Quote = styled.blockquote`
   font-size: 2.8rem;
   font-weight: 600;
-  line-height: 1.4;
-  max-height: 70%;
+  line-height: 1.45;
+  max-height: 75%;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: #1e293b;
 `;
 
-const Footer = styled.div`
+const Footer = styled.footer`
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 500;
   opacity: 0.85;
 `;
@@ -44,20 +49,36 @@ const QR = styled.div`
   height: 80px;
 `;
 
+const ButtonGroup = styled.div`
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+`;
+
 const Button = styled.button`
-  margin-top: 1rem;
   background: #1e293b;
   color: white;
-  padding: 0.5rem 1.2rem;
+  padding: 0.65rem 1.4rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 600;
-  cursor: pointer;
   font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: #334155;
+  }
+
+  &:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 3px;
+  }
 `;
 
 // --- Props Interface ---
-type Props = {
+type ShareCardGeneratorProps = {
   highlightText: string;
   articleUrl: string;
   source?: string;
@@ -70,20 +91,25 @@ export default function ShareCardGenerator({
   articleUrl,
   source = "Jump2 Highlight",
   onClose,
-}: Props) {
+}: ShareCardGeneratorProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   const handleDownload = async () => {
     if (!ref.current) return;
-    const dataUrl = await toPng(ref.current);
-    const a = document.createElement("a");
-    a.href = dataUrl;
-    a.download = "highlight-card.png";
-    a.click();
+    try {
+      const dataUrl = await toPng(ref.current);
+      const link = document.createElement("a");
+      link.href = dataUrl;
+      link.download = "highlight-card.png";
+      link.click();
+    } catch (error) {
+      alert("Download failed. Please try again.");
+      console.error("Error generating PNG:", error);
+    }
   };
 
   return (
-    <div style={{ textAlign: "center", marginTop: "2rem" }}>
+    <Wrapper>
       <CardWrapper ref={ref}>
         <Quote>“{highlightText}”</Quote>
         <Footer>
@@ -97,8 +123,10 @@ export default function ShareCardGenerator({
         </Footer>
       </CardWrapper>
 
-      <Button onClick={handleDownload}>📥 Download as PNG</Button>
-      <Button style={{ marginLeft: 12 }} onClick={onClose}>❌ Close</Button>
-    </div>
+      <ButtonGroup>
+        <Button onClick={handleDownload}>📥 Download as PNG</Button>
+        <Button onClick={onClose}>❌ Close</Button>
+      </ButtonGroup>
+    </Wrapper>
   );
 }

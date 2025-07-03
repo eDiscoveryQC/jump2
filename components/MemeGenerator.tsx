@@ -11,44 +11,66 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 `;
 
 const MemeImage = styled.img`
   width: 100%;
   max-width: 100%;
-  border-radius: 10px;
-  margin: 1rem 0;
-  border: 2px solid #eee;
+  border-radius: 12px;
+  margin: 1.5rem 0;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
 `;
 
 const ButtonRow = styled.div`
   display: flex;
-  gap: 0.5em;
-  margin-top: 1rem;
+  flex-wrap: wrap;
+  gap: 0.8em;
+  margin-top: 1.2rem;
+  justify-content: center;
 `;
 
 const Button = styled.button`
-  padding: 0.6em 1.2em;
-  background-color: #1e4268;
-  color: #fff;
+  padding: 0.7em 1.4em;
+  background-color: #0ea5e9;
+  color: #ffffff;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
+  transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: #173352;
+    background-color: #0284c7;
   }
+
+  &:disabled {
+    background-color: #94a3b8;
+    cursor: not-allowed;
+  }
+`;
+
+const ErrorText = styled.p`
+  color: #dc2626;
+  font-weight: 500;
+`;
+
+const LoadingText = styled.p`
+  color: #0ea5e9;
+  font-weight: 600;
 `;
 
 const MemeGenerator = ({ highlightText, articleUrl, onClose }: MemeGeneratorProps) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const generate = async () => {
       setLoading(true);
+      setError(null);
       try {
         const res = await fetch("/api/meme", {
           method: "POST",
@@ -63,9 +85,9 @@ const MemeGenerator = ({ highlightText, articleUrl, onClose }: MemeGeneratorProp
         if (!res.ok) throw new Error("Image generation failed");
         const blob = await res.blob();
         setImageUrl(URL.createObjectURL(blob));
-      } catch (err) {
-        alert("Failed to generate meme.");
-        console.error(err);
+      } catch (err: any) {
+        setError("Failed to generate meme. Please try again later.");
+        console.error("Meme generation error:", err);
       } finally {
         setLoading(false);
       }
@@ -84,25 +106,26 @@ const MemeGenerator = ({ highlightText, articleUrl, onClose }: MemeGeneratorProp
 
   const handleShareToX = () => {
     const tweet = `“${highlightText}”\n\nvia jump2.link`;
-    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweet)}&url=${encodeURIComponent(articleUrl)}`;
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+      tweet
+    )}&url=${encodeURIComponent(articleUrl)}`;
     window.open(url, "_blank");
   };
 
   return (
     <Container>
-      {loading ? (
-        <p>Generating meme...</p>
-      ) : imageUrl ? (
+      {loading && <LoadingText>🚧 Generating meme...</LoadingText>}
+      {!loading && imageUrl && (
         <>
           <MemeImage src={imageUrl} alt="Jump2 Meme" />
           <ButtonRow>
             <Button onClick={handleDownload}>⬇️ Download Meme</Button>
             <Button onClick={handleShareToX}>🚀 Share to X</Button>
+            <Button onClick={onClose}>❌ Close</Button>
           </ButtonRow>
         </>
-      ) : (
-        <p>Error loading image.</p>
       )}
+      {!loading && error && <ErrorText>{error}</ErrorText>}
     </Container>
   );
 };

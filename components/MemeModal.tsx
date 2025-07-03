@@ -11,41 +11,76 @@ export interface MemeModalProps {
 const Overlay = styled.div`
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.65);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 2000;
+  backdrop-filter: blur(3px);
 `;
 
 const ModalBox = styled.div`
-  background: #fff;
-  padding: 2rem;
-  border-radius: 10px;
-  max-width: 640px;
-  width: 90%;
+  background: #fefefe;
+  padding: 2.5rem;
+  border-radius: 14px;
+  max-width: 720px;
+  width: 92%;
   position: relative;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
+  animation: fadeIn 0.3s ease-out;
+
+  @keyframes fadeIn {
+    from {
+      transform: scale(0.96);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
 `;
 
 const CloseButton = styled.button`
   position: absolute;
   top: 12px;
-  right: 12px;
-  background: none;
+  right: 16px;
+  background: transparent;
   border: none;
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   cursor: pointer;
-  color: #333;
+  color: #334155;
+  transition: color 0.2s;
+  &:hover {
+    color: #1e3a8a;
+  }
+  &:focus {
+    outline: 2px solid #facc15;
+    border-radius: 4px;
+  }
+`;
+
+const Title = styled.h2`
+  margin-bottom: 1.25rem;
+  font-size: 1.6rem;
+  color: #1e293b;
+  text-align: center;
+  font-weight: 700;
 `;
 
 const MemeModal: React.FC<MemeModalProps> = ({ highlightText, articleUrl, onClose }) => {
   return (
-    <Overlay onClick={onClose}>
+    <Overlay onClick={onClose} aria-modal="true" role="dialog">
       <ModalBox onClick={(e) => e.stopPropagation()}>
-        <CloseButton onClick={onClose}>✖</CloseButton>
-        <h2 style={{ marginBottom: "1rem" }}>Your Meme Preview</h2>
-        <MemeGenerator highlightText={highlightText} articleUrl={articleUrl} onClose={onClose} />
+        <CloseButton onClick={onClose} aria-label="Close Meme Modal">
+          ✖
+        </CloseButton>
+        <Title>Your Meme Preview</Title>
+        <MemeGenerator
+          highlightText={highlightText}
+          articleUrl={articleUrl}
+          onClose={onClose}
+        />
       </ModalBox>
     </Overlay>
   );
