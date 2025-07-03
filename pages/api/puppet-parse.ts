@@ -13,7 +13,7 @@ export async function puppetParse(targetUrl: string): Promise<{
   try {
     browser = await puppeteer.launch({
       args: ['--no-sandbox'],
-      headless: 'new',
+      headless: true,
       executablePath: process.env.CHROME_EXECUTABLE_PATH, // Set in Vercel env
     });
 
