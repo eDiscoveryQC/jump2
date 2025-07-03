@@ -7,21 +7,22 @@ import HighlightEditor, { Highlight } from "./HighlightEditor";
 import MemeModal from "./MemeModal";
 import Footer from "./Footer";
 
-// Timed animation keyframes
+// Animations
 const fadeIn = keyframes`from { opacity: 0 } to { opacity: 1 }`;
 const pulse = keyframes`0%,100%{transform:scale(1)}50%{transform:scale(1.05)}`;
 
-// Utility functions
+// Utils
 function extractYouTubeID(url: string): string {
-  const match =
-    url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([\w-]{11})/);
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([\w-]{11})/);
   return match?.[1] ?? "";
 }
+
 function parseTimeInput(input: string): number | null {
   if (/^\d+$/.test(input)) return parseInt(input, 10);
   const [m, s] = input.split(":").map(Number);
   return m >= 0 && !isNaN(s) ? m * 60 + s : null;
 }
+
 function sanitizeWithHighlights(html: string, highlights: Highlight[]): string {
   if (!highlights.length) return DOMPurify.sanitize(html);
   const sorted = [...highlights].sort((a, b) => a.start - b.start);
@@ -35,35 +36,84 @@ function sanitizeWithHighlights(html: string, highlights: Highlight[]): string {
   return result;
 }
 
-// Styled Components
+// Styled components
 const Container = styled.div`
-  max-width: 1000px;
-  margin: 2rem auto;
-  padding: 1rem;
-  animation: ${fadeIn} 0.5s ease;
   display: grid;
   grid-template-columns: 2fr 1fr;
+  max-width: 1200px;
+  margin: 2rem auto;
   gap: 1.5rem;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  animation: ${fadeIn} 0.6s ease-in;
+  font-family: 'Segoe UI', sans-serif;
+  color: #1e293b;
 `;
+
 const ContentPanel = styled.div`
-  background: #fff;
-  padding: 1.5rem;
-  border-radius: 0.6rem;
-  box-shadow: 0 2px 12px rgba(203,213,225,0.2);
-  overflow: auto;
-  max-height: 80vh;
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+  overflow-y: auto;
+  max-height: 85vh;
 `;
+
 const SidePanel = styled.div`
-  background: #f9fafb;
-  padding: 1rem;
-  border-radius: 0.6rem;
-  box-shadow: 0 2px 12px rgba(203,213,225,0.2);
+  background: #f1f5f9;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-height: 80vh;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.05);
 `;
+
+const Preview = styled.div`
+  font-size: 1.05rem;
+  line-height: 1.7;
+  .jump2-highlight {
+    animation: ${pulse} 1s ease;
+    cursor: pointer;
+    border-radius: 0.25rem;
+    padding: 0.05rem 0.3rem;
+  }
+`;
+
+const FrameWrapper = styled.div`
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  margin-bottom: 1rem;
+  iframe {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+`;
+
+const Input = styled.input`
+  padding: 0.6rem;
+  font-size: 0.95rem;
+  border-radius: 0.5rem;
+  border: 1px solid #94a3b8;
+  flex: 1;
+  background: #fff;
+  color: #0f172a;
+`;
+
+const Button = styled.button`
+  background: #0ea5e9;
+  color: white;
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  &:hover {
+    background: #0284c7;
+  }
+`;
+
 const Row = styled.div<{ justify?: string }>`
   display: flex;
   justify-content: ${({ justify }) => justify || "space-between"};
@@ -71,50 +121,17 @@ const Row = styled.div<{ justify?: string }>`
   flex-wrap: wrap;
   gap: 0.5rem;
 `;
-const Preview = styled.div`
-  line-height: 1.6;
-  font-size: 1rem;
-  .jump2-highlight {
-    animation: ${pulse} 1s ease;
-    cursor: pointer;
-  }
-`;
-const Input = styled.input`
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 0.4rem;
-  flex: 1;
-`;
-const Button = styled.button`
-  padding: 0.5rem 1rem;
-  background: #0ea5e9;
-  color: white;
-  border-radius: 0.4rem;
-  border: none;
-  cursor: pointer;
-`;
+
 const WarningPanel = styled.div`
-  background: #fff4f4;
+  background: #fef2f2;
+  color: #b91c1c;
   padding: 1rem;
-  border: 1px solid #e53e3e;
-  border-radius: 0.6rem;
-  color: #e53e3e;
-`;
-const FrameWrapper = styled.div`
-  position: relative;
-  &::after {
-    content: '';
-    display: block;
-    padding-bottom: 56.25%;
-  }
-  iframe {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-  }
+  border: 1px solid #fca5a5;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
 `;
 
-// Component props
+// Props
 type Props = {
   url: string;
   initialHighlights?: Highlight[];
@@ -151,11 +168,8 @@ export default function ArticlePreviewFull({
   const [error, setError] = useState<string | null>(null);
 
   const sanitizedHtml = sanitizeWithHighlights(html, highlightData);
-  const missingHighlights = highlightData.filter(
-    (h) => !html.toLowerCase().includes(h.text.trim().toLowerCase())
-  );
+  const missingHighlights = highlightData.filter(h => !html.toLowerCase().includes(h.text.trim().toLowerCase()));
 
-  // Fetch article content
   useEffect(() => {
     if (isYouTube || !supportArticles) return;
     setLoading(true);
@@ -169,9 +183,8 @@ export default function ArticlePreviewFull({
       })
       .catch(() => setError("Failed to parse article."))
       .finally(() => setLoading(false));
-  }, [url, supportArticles, isYouTube]);
+  }, [url]);
 
-  // Actions
   const handleGenerateTimestamp = () => {
     const secs = parseTimeInput(manualTime);
     if (secs === null) return toast.error("Invalid time format");
@@ -180,6 +193,7 @@ export default function ArticlePreviewFull({
     toast.success("📍 Timestamp copied!");
     onGenerateLink?.(link);
   };
+
   const handleCopyAnchor = () => {
     const anchor = `${url}#:~:text=${encodeURIComponent(anchorInput)}`;
     navigator.clipboard.writeText(anchor);
@@ -198,14 +212,14 @@ export default function ArticlePreviewFull({
           <FrameWrapper>
             <iframe
               src={`https://www.youtube.com/embed/${extractYouTubeID(url)}`}
-              title="Video"
+              title="YouTube Video"
               allowFullScreen
             />
           </FrameWrapper>
         )}
         {!isYouTube && supportArticles && (
           <>
-            {loading && <p>Loading article...</p>}
+            {loading && <p>Loading...</p>}
             {error && <ArticleError error={error} url={url} />}
             {!loading && !error && (
               <>
@@ -214,7 +228,7 @@ export default function ArticlePreviewFull({
                 <Preview dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
                 {missingHighlights.length > 0 && (
                   <WarningPanel>
-                    ⚠️ Some highlights aren’t in view. Try scrolling.
+                    ⚠️ Some highlights may not be visible — try scrolling or re-highlighting.
                   </WarningPanel>
                 )}
               </>
@@ -228,11 +242,11 @@ export default function ArticlePreviewFull({
           <>
             <Input
               type="text"
-              placeholder="e.g. 2:30"
+              placeholder="e.g. 1:30"
               value={manualTime}
               onChange={(e) => setManualTime(e.target.value)}
             />
-            <Button onClick={handleGenerateTimestamp}>⏱️ Generate Timestamp</Button>
+            <Button onClick={handleGenerateTimestamp}>⏱ Generate Timestamp</Button>
           </>
         )}
 
@@ -241,7 +255,7 @@ export default function ArticlePreviewFull({
             htmlContent={html}
             initialHighlights={highlightData}
             onHighlightsChange={setHighlightData}
-            onShare={() => toast.success("✅ Highlights ready!")}
+            onShare={() => toast.success("✅ Highlights updated!")}
           />
         )}
 
@@ -253,21 +267,19 @@ export default function ArticlePreviewFull({
         />
         <Row>
           <Button onClick={handleCopyAnchor}>{copied ? "Copied!" : "📋 Copy Anchor"}</Button>
-          <Button onClick={() => setShowQR((v) => !v)}>🧾 {showQR ? "Hide QR" : "Show QR"}</Button>
+          <Button onClick={() => setShowQR(prev => !prev)}>🧾 {showQR ? "Hide QR" : "Show QR"}</Button>
         </Row>
         {showQR && shareUrl && (
           <img
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
-              shareUrl
-            )}`}
-            alt="QR code"
-            style={{ alignSelf: "center" }}
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shareUrl)}`}
+            alt="QR Code"
+            style={{ alignSelf: "center", marginTop: "1rem" }}
           />
         )}
 
         {supportMemes && (
           <>
-            <Button onClick={() => setShowMemeModal(true)}>🖼️ Generate Meme</Button>
+            <Button onClick={() => setShowMemeModal(true)}>🖼 Generate Meme</Button>
             {showMemeModal && (
               <MemeModal
                 articleUrl={url}

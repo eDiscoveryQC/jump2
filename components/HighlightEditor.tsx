@@ -3,27 +3,22 @@ import styled, { keyframes } from 'styled-components';
 import MemeModal from "./MemeModal";
 import ShareCardGenerator from './ShareCardGenerator';
 
-// --- Animations and Styled Components ---
+// --- Animations ---
 const flash = keyframes`
   0% { background: #ffe066; }
   100% { background: inherit; }
 `;
 
-const HighlightedText = styled.mark<{ color: string; isActive?: boolean }>`
-  background-color: ${({ color }) => color};
-  cursor: pointer;
-  border-radius: 3px;
-  padding: 0 2px;
-  transition: background 0.2s;
-  ${({ isActive }) => isActive && `
-    animation: ${flash} 1.5s ease-out;
-    box-shadow: 0 0 0 2px #ffd10099;
-  `}
+const fadeOut = keyframes`
+  0% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; }
 `;
 
+// --- Styled Components ---
 const Container = styled.div`
   display: flex;
-  max-width: 900px;
+  max-width: 1100px;
   margin: 2rem auto;
   gap: 2rem;
   user-select: text;
@@ -39,18 +34,30 @@ const ArticleArea = styled.div`
   background: #fcfcfc;
   white-space: pre-wrap;
   overflow-wrap: break-word;
-  min-height: 340px;
+  min-height: 360px;
   transition: box-shadow .2s;
   &:hover {
     box-shadow: 0 4px 20px #1e426820;
   }
 `;
 
+const HighlightedText = styled.mark<{ color: string; isActive?: boolean }>`
+  background-color: ${({ color }) => color};
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 0 2px;
+  transition: background 0.2s;
+  ${({ isActive }) => isActive && `
+    animation: ${flash} 1.5s ease-out;
+    box-shadow: 0 0 0 2px #ffd10099;
+  `}
+`;
+
 const Sidebar = styled.div`
-  flex: 1.2;
+  flex: 1.4;
   border-left: 1px solid #ccc;
   padding-left: 1rem;
-  max-height: 60vh;
+  max-height: 65vh;
   overflow-y: auto;
   background: #f6faff;
   border-radius: 8px;
@@ -127,12 +134,7 @@ const Toast = styled.div`
   font-size: 1.08em;
   box-shadow: 0 2px 18px #1e293b33;
   z-index: 100000;
-  animation: fadeOut 2.5s forwards;
-  @keyframes fadeOut {
-    0% { opacity: 1 }
-    85% { opacity: 1 }
-    100% { opacity: 0 }
-  }
+  animation: ${fadeOut} 2.5s forwards;
 `;
 
 // --- Highlight Interface ---
