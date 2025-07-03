@@ -1,4 +1,3 @@
-// pages/share.tsx
 import React, { useState, useEffect, useCallback } from "react";
 import styled from "styled-components";
 import Head from "next/head";
@@ -10,85 +9,82 @@ import { supabase } from "@/lib/supabase";
 import { logEvent } from "@/lib/log";
 import { generateShortCode } from "@/lib/shortCode";
 
-// ————————————————————————————
-// Styled Components
-// ————————————————————————————
-const Page = styled.div`
+// --- Styled Components ---
+const PageWrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: linear-gradient(135deg, #0f172a, #1e293b);
+  background: linear-gradient(to right, #0f172a, #1e293b);
+  color: #ffffff;
   min-height: 100vh;
   padding: 5rem 2rem;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 `;
 
 const Title = styled.h1`
-  font-size: 3rem;
-  font-weight: 900;
+  font-size: 3.2rem;
+  font-weight: bold;
   color: #facc15;
-  text-align: center;
   margin-bottom: 1rem;
-  text-shadow: 0 2px 8px rgba(14, 165, 233, 0.5);
+  text-align: center;
+  text-shadow: 0 2px 6px rgba(14, 165, 233, 0.6);
 `;
 
 const Subtitle = styled.h2`
-  font-size: 1.3rem;
-  color: #cbd5e1;
+  font-size: 1.4rem;
+  color: #e0e7ff;
+  margin-bottom: 2.5rem;
   text-align: center;
-  max-width: 700px;
-  margin-bottom: 2rem;
+  max-width: 720px;
 `;
 
 const InputRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 1rem;
   justify-content: center;
   align-items: center;
   margin-bottom: 2rem;
 
   input[type="text"] {
-    width: 320px;
     padding: 0.75rem 1rem;
+    font-size: 1rem;
     border-radius: 0.5rem;
     border: 1px solid #334155;
     background: #1e293b;
-    color: #fff;
-    font-size: 1rem;
+    color: white;
+    width: 320px;
   }
+
   input::placeholder {
     color: #94a3b8;
   }
-  input[type="file"] {
-    display: none;
-  }
-  button, label {
+
+  label, button {
+    background-color: #0ea5e9;
+    padding: 0.7rem 1.2rem;
+    border-radius: 0.5rem;
+    color: white;
+    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.75rem 1.2rem;
-    border-radius: 0.5rem;
     border: none;
-    font-size: 1rem;
-    cursor: pointer;
     transition: background 0.2s;
   }
+
   button {
-    background: #16a34a;
-    color: #fff;
+    background-color: #16a34a;
   }
-  button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+
+  button:hover {
+    background-color: #15803d;
   }
-  button:hover:enabled {
-    background: #15803d;
+
+  input[type="file"] {
+    display: none;
   }
-  label {
-    background: #0ea5e9;
-    color: #fff;
-  }
+
   @media (max-width: 600px) {
     flex-direction: column;
     input, button, label {
@@ -97,22 +93,23 @@ const InputRow = styled.div`
   }
 `;
 
-const AssistantBox = styled(motion.div)<{ mode: 'url' | 'file' }>`
-  max-width: 680px;
-  width: 100%;
-  padding: 1rem 1.5rem;
-  border-radius: 0.75rem;
+const AssistantBox = styled(motion.div)<{ mode?: string }>`
   background: #1e293b;
   border: 1px solid #334155;
-  color: #e2e8f0;
+  padding: 1.2rem 1.5rem;
+  font-size: 1rem;
+  max-width: 680px;
   text-align: center;
+  border-radius: 0.75rem;
+  color: #e2e8f0;
   margin-bottom: 2rem;
-  box-shadow: 0 0 22px ${({ mode }) => mode === 'file' ? "#22c55eaa" : "#0ea5e9cc"};
+  box-shadow: 0 0 22px ${({ mode }) => (mode === 'file' ? '#22c55eaa' : '#0ea5e9cc')};
 `;
 
-const ErrorMsg = styled.div`
+const ErrorMessage = styled.div`
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
   color: #f87171;
-  margin-bottom: 1rem;
 `;
 
 const Divider = styled.hr`
@@ -123,95 +120,99 @@ const Divider = styled.hr`
   margin: 2rem 0;
 `;
 
-// ————————————————————————————
-// Helpers
-// ————————————————————————————
-const validateUrl = (str: string): boolean => {
+// --- Utilities ---
+function isValidURL(str: string): boolean {
   try {
     const url = new URL(str);
-    return ["http:", "https:"].includes(url.protocol);
+    return url.protocol === "http:" || url.protocol === "https:";
   } catch {
     return false;
   }
-};
+}
 
 async function createJump2Link(originalUrl: string): Promise<string | null> {
   const code = await generateShortCode();
-  const { error } = await supabase.from("links").insert([{ code, url: originalUrl }]);
+  const { error } = await supabase
+    .from("links")
+    .insert([{ code, url: originalUrl }]);
   if (error) {
-    console.error("Supabase error:", error);
-    toast.error("Server error creating link.");
+    toast.error("Error creating short link.");
     return null;
   }
-  logEvent("create_link", { code, url: originalUrl }).catch(console.warn);
+  try {
+    await logEvent("create_link", { code, url: originalUrl });
+  } catch (err) {
+    console.warn(err);
+  }
   return `https://jump2.link/${code}`;
 }
 
-// ————————————————————————————
-// Main Component
-// ————————————————————————————
+// --- Main Component ---
 export default function Share() {
   const [url, setUrl] = useState("");
   const [submittedUrl, setSubmittedUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
   const [isValid, setIsValid] = useState(false);
-  const [tipMsg, setTipMsg] = useState("Paste a link or upload a document.");
-  const [showOnboard, setShowOnboard] = useState(false);
+  const [tip, setTip] = useState("Paste a YouTube or article link to highlight or timestamp — or upload a document.");
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [mode, setMode] = useState<'url' | 'file'>('url');
 
   useEffect(() => {
     if (!localStorage.getItem("visitedShare")) {
-      setShowOnboard(true);
+      setShowOnboarding(true);
       localStorage.setItem("visitedShare", "true");
+      toast("🚀 You can highlight, timestamp, and generate memes after sharing!");
     }
   }, []);
 
   useEffect(() => {
-    const handle = setTimeout(() => {
+    const t = setTimeout(() => {
       const trimmed = url.trim();
-      setIsValid(validateUrl(trimmed));
-      if (validateUrl(trimmed)) {
+      const valid = isValidURL(trimmed);
+      setIsValid(valid);
+      if (valid) {
         setSubmittedUrl(trimmed);
         setMode('url');
-        setTipMsg("✅ Link detected — start highlighting or clipping below!");
+        setTip("✅ Link detected. Scroll down to highlight, meme, or timestamp.");
         setErrorMsg("");
         setFileName("");
       }
-    }, 300);
-    return () => clearTimeout(handle);
+    }, 400);
+    return () => clearTimeout(t);
   }, [url]);
 
-  const handleShare = useCallback(() => {
+  const handlePaste = useCallback(() => {
     const trimmed = url.trim();
-    if (!validateUrl(trimmed)) {
-      setErrorMsg("❌ Invalid URL");
+    if (isValidURL(trimmed)) {
+      setSubmittedUrl(trimmed);
+      setMode('url');
+      setTip("🔗 URL loaded. Scroll down to begin.");
+      setFileName("");
+      setErrorMsg("");
+    } else {
       toast.error("Invalid URL");
-      return;
+      setErrorMsg("❌ Invalid URL — please double check.");
     }
-    setSubmittedUrl(trimmed);
-    setMode('url');
-    setErrorMsg("");
-    setTipMsg("🔗 URL Loaded — scroll to highlight.");
   }, [url]);
 
-  const handleUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.length) return;
-    const f = e.target.files[0];
-    setFileName(f.name);
+  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFileName(file.name);
     setSubmittedUrl(null);
     setMode('file');
-    setTipMsg(`📄 ${f.name} uploaded — parsing soon...`);
+    setTip("📄 File uploaded. Parsing support coming soon.");
+    toast.success(`📁 ${file.name} uploaded`);
     setErrorMsg("");
-    toast.success(`Uploaded: ${f.name}`);
   }, []);
 
-  const clearAll = useCallback(() => {
+  const clearInputs = useCallback(() => {
     setUrl("");
     setSubmittedUrl(null);
     setFileName("");
     setMode('url');
-    setTipMsg("Paste a link or upload a document.");
+    setTip("Paste a YouTube or article link to highlight or timestamp — or upload a document.");
     setErrorMsg("");
   }, []);
 
@@ -219,32 +220,34 @@ export default function Share() {
     <>
       <Head>
         <title>Jump2 – Share the Moment That Matters</title>
-        <meta name="description" content="Jump2: highlight, meme, timestamp from any content." />
+        <meta name="description" content="Highlight. Meme. Timestamp. Upload. Welcome to Share-Tech." />
       </Head>
 
       <Toaster position="top-right" />
 
-      <Page>
+      <PageWrapper>
         <Title>🔗 Create Your Jump2</Title>
         <Subtitle>
-          Highlight text, generate memes or timestamps — from articles, YouTube, or uploads.
+          Paste a link or upload a document — highlight key text, add a meme, or generate a shareable moment.
         </Subtitle>
 
-        {showOnboard && (
+        {showOnboarding && (
           <AssistantBox
-            mode={mode}
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
+            mode={mode}
           >
-            Welcome! Paste a URL or upload a file to begin.{" "}
-            <button onClick={() => setShowOnboard(false)} style={{
+            👋 Welcome! Paste a URL or upload a file to begin. <br />
+            <button onClick={() => setShowOnboarding(false)} style={{
               marginTop: '1rem',
-              padding: '0.5rem 1rem',
               background: '#334155',
               color: '#fff',
+              padding: '0.5rem 1rem',
               borderRadius: '0.4rem'
-            }}>Got it</button>
+            }}>
+              Got it
+            </button>
           </AssistantBox>
         )}
 
@@ -252,40 +255,42 @@ export default function Share() {
           <input
             type="text"
             placeholder="Paste article or YouTube link..."
-            aria-label="URL input"
             value={url}
-            onChange={e => setUrl(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleShare()}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handlePaste()}
+            aria-label="Paste a link"
           />
-          <button onClick={handleShare} disabled={!isValid}>
+          <button onClick={handlePaste} disabled={!isValid}>
             <FaLink /> Share URL
           </button>
           <label>
-            <FaUpload /> Upload File
-            <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleUpload} />
+            <FaUpload /> Upload
+            <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} />
           </label>
           {fileName && (
-            <button onClick={clearAll}>
+            <button onClick={clearInputs}>
               <FaTimesCircle /> Clear
             </button>
           )}
         </InputRow>
 
-        {errorMsg && <ErrorMsg>{errorMsg}</ErrorMsg>}
+        {errorMsg && <ErrorMessage>{errorMsg}</ErrorMessage>}
 
         <AssistantBox
-          mode={mode}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.4 }}
+          mode={mode}
         >
-          {tipMsg}
+          {tip}
         </AssistantBox>
 
         <Divider />
 
         {mode === 'file' && fileName && (
-          <p style={{ color: '#fef08a' }}>⏳ Parsing support coming soon for <strong>{fileName}</strong>.</p>
+          <p style={{ color: "#fef08a" }}>
+            ⏳ Parsing support for <strong>{fileName}</strong> coming soon…
+          </p>
         )}
 
         {submittedUrl && (
@@ -298,13 +303,13 @@ export default function Share() {
             onGenerateLink={async (link) => {
               const shortLink = await createJump2Link(link);
               if (shortLink) {
-                toast.success("🔗 Jump2 link created & copied!");
+                toast.success(`🔗 Jump2 link created & copied!`);
                 navigator.clipboard.writeText(shortLink);
               }
             }}
           />
         )}
-      </Page>
+      </PageWrapper>
     </>
   );
 }
