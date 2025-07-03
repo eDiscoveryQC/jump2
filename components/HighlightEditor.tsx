@@ -1,10 +1,9 @@
-// Full updated HighlightEditor.tsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled, { keyframes } from 'styled-components';
 import MemeModal from "./MemeModal";
 import ShareCardGenerator from './ShareCardGenerator';
 
-// --- Animations ---
+// Animations
 const flash = keyframes`
   0% { background: #ffe066; }
   100% { background: inherit; }
@@ -16,12 +15,14 @@ const fadeOut = keyframes`
   100% { opacity: 0; }
 `;
 
-// --- Styled Components ---
+// Styled Components
 const Container = styled.div`
   display: flex;
-  max-width: 1100px;
+  max-width: 100%;
   margin: 2rem auto;
   gap: 2rem;
+  padding: 0 2rem;
+  box-sizing: border-box;
   user-select: text;
 `;
 
@@ -36,7 +37,7 @@ const ArticleArea = styled.div`
   white-space: pre-wrap;
   overflow-wrap: break-word;
   min-height: 360px;
-  transition: box-shadow .2s;
+  transition: box-shadow 0.2s;
   position: relative;
   &:hover {
     box-shadow: 0 4px 20px #1e426820;
@@ -59,7 +60,7 @@ const Sidebar = styled.div`
   flex: 1.4;
   border-left: 1px solid #ccc;
   padding-left: 1rem;
-  max-height: 65vh;
+  max-height: 75vh;
   overflow-y: auto;
   background: #f6faff;
   border-radius: 8px;
@@ -139,7 +140,7 @@ const Toast = styled.div`
   animation: ${fadeOut} 2.5s forwards;
 `;
 
-// --- Interfaces ---
+// Interfaces
 export interface Highlight {
   id: string;
   text: string;
@@ -159,7 +160,7 @@ interface Props {
   onHighlightsChange?: (highlights: Highlight[]) => void;
 }
 
-// --- Main Component ---
+// Component
 export default function HighlightEditor({
   htmlContent,
   initialHighlights = [],
