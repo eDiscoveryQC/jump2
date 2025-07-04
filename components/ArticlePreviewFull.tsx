@@ -1,18 +1,18 @@
 // components/ArticlePreviewFull.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import DOMPurify from "isomorphic-dompurify";
 import toast from "react-hot-toast";
-import { QRCodeCanvas } from "qrcode.react";
+import dynamic from "next/dynamic";
 import ArticleError from "./ArticleError";
 import HighlightEditor, { Highlight } from "./HighlightEditor";
 import MemeModal from "./MemeModal";
 
-// Animations
+const QRCode = dynamic(() => import("qrcode.react"), { ssr: false });
+
 const fadeIn = keyframes`from { opacity: 0 } to { opacity: 1 }`;
 const pulse = keyframes`0%,100%{transform:scale(1)}50%{transform:scale(1.05)}`;
 
-// Utilities
 function extractYouTubeID(url: string): string {
   const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([\w-]{11})/);
   return match?.[1] ?? "";
@@ -20,7 +20,7 @@ function extractYouTubeID(url: string): string {
 
 function parseTimeInput(input: string): number | null {
   if (/^\d+$/.test(input)) return parseInt(input, 10);
-  const [m, s] = input.split(":").map(Number);
+  const [m, s] = input.split(":" ).map(Number);
   return m >= 0 && !isNaN(s) ? m * 60 + s : null;
 }
 
@@ -37,7 +37,6 @@ function sanitizeWithHighlights(html: string, highlights: Highlight[]): string {
   return result;
 }
 
-// Styled components
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -54,6 +53,7 @@ const LayoutSplit = styled.div`
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 2rem;
+
   @media (max-width: 960px) {
     grid-template-columns: 1fr;
   }
@@ -121,6 +121,7 @@ const Button = styled.button`
   cursor: pointer;
   width: 100%;
   transition: background 0.2s;
+
   &:hover {
     background: #0284c7;
   }
@@ -141,7 +142,6 @@ const WarningPanel = styled.div`
   margin-top: 1rem;
 `;
 
-// Props
 interface Props {
   url: string;
   initialHighlights?: Highlight[];
@@ -185,7 +185,7 @@ export default function ArticlePreviewFull({
     setLoading(true);
     fetch(`/api/parse?url=${encodeURIComponent(url)}&engine=${scrapeEngine}`)
       .then(res => res.json())
-      .then(data => {
+      .then((data) => {
         setHtml(data.article?.content ?? "");
         setTitle(data.article?.title ?? "");
         setAuthor(data.article?.author ?? "");
@@ -266,7 +266,7 @@ export default function ArticlePreviewFull({
               htmlContent={html}
               initialHighlights={highlightData}
               onHighlightsChange={setHighlightData}
-              onShare={() => toast.success("✅ Highlights updated!")}
+              onShare={() => { toast.success("✅ Highlights updated!") }}
             />
           )}
 
@@ -282,7 +282,7 @@ export default function ArticlePreviewFull({
           </Row>
           {showQR && shareUrl && (
             <div style={{ textAlign: "center", marginTop: "1rem" }}>
-              <QRCodeCanvas value={shareUrl} size={180} />
+              <QRCode value={shareUrl} size={180} />
             </div>
           )}
 
