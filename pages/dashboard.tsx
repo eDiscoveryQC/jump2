@@ -1,4 +1,3 @@
-// pages/dashboard.tsx
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Head from "next/head";
@@ -73,8 +72,8 @@ const FloatingAction = styled.button`
 
 interface LinkItem {
   id: number;
-  code: string;
   url: string;
+  code: string;
   created_at: string;
 }
 
@@ -86,22 +85,18 @@ export default function Dashboard() {
     async function fetchLinks() {
       const { data, error } = await supabase
         .from("links")
-        .select("id, code, url, created_at")
+        .select("id, url, code, created_at")
         .order("created_at", { ascending: false });
       if (data) setShares(data);
       if (error) console.error(error);
     }
+
     fetchLinks();
   }, []);
 
-  const filtered = shares.filter((link) =>
-    link.url.toLowerCase().includes(search.toLowerCase())
-  );
-
   const handleDelete = (id: number) => {
     const original = [...shares];
-    const updated = shares.filter((s) => s.id !== id);
-    setShares(updated);
+    setShares((prev) => prev.filter((s) => s.id !== id));
 
     toast.custom((t) => (
       <div
@@ -137,13 +132,16 @@ export default function Dashboard() {
     ));
   };
 
+  const filtered = shares.filter((link) =>
+    link.url.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <AppLayout>
       <Head>
         <title>Jump2 Dashboard</title>
       </Head>
       <Toaster position="top-right" />
-
       <PageWrapper>
         <TitleBar>
           <h1>📊 Your Shares</h1>
@@ -157,12 +155,24 @@ export default function Dashboard() {
 
         <Grid>
           {filtered.map((item) => (
-            <Jump2Card key={item.id} item={item} onDelete={handleDelete} />
+            <Jump2Card
+              key={item.id}
+              id={item.id}
+              title={`jump2.link/${item.code}`}
+              domain={new URL(item.url).hostname}
+              url={`https://jump2.link/${item.code}`}
+              createdAt={item.created_at}
+              onCopy={() => {
+                navigator.clipboard.writeText(`https://jump2.link/${item.code}`);
+                toast.success("Copied to clipboard");
+              }}
+              onDelete={handleDelete}
+            />
           ))}
         </Grid>
       </PageWrapper>
 
-      <FloatingAction onClick={() => (window.location.href = "/share")}> 
+      <FloatingAction onClick={() => (window.location.href = "/share")}>
         <FaPlus /> New Share
       </FloatingAction>
     </AppLayout>
