@@ -1,3 +1,4 @@
+// pages/share.tsx
 import React, { useState, useEffect, useCallback } from "react";
 import styled from "styled-components";
 import Head from "next/head";
@@ -8,34 +9,26 @@ import toast, { Toaster } from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
 import { logEvent } from "@/lib/log";
 import { generateShortCode } from "@/lib/shortCode";
+import AppLayout from "@/components/AppLayout";
 
-// --- Styled Components ---
-const PageWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: linear-gradient(to right, #0f172a, #1e293b);
-  color: #ffffff;
-  min-height: 100vh;
-  padding: 5rem 2rem;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+const HeaderBlock = styled.div`
+  margin-bottom: 2.5rem;
+  text-align: center;
 `;
 
 const Title = styled.h1`
-  font-size: 3.2rem;
-  font-weight: bold;
+  font-size: 2.4rem;
+  font-weight: 700;
   color: #facc15;
-  margin-bottom: 1rem;
-  text-align: center;
-  text-shadow: 0 2px 6px rgba(14, 165, 233, 0.6);
+  text-shadow: 0 1px 4px rgba(14, 165, 233, 0.4);
+  margin-bottom: 0.5rem;
 `;
 
 const Subtitle = styled.h2`
-  font-size: 1.4rem;
-  color: #e0e7ff;
-  margin-bottom: 2.5rem;
-  text-align: center;
+  font-size: 1rem;
+  color: #cbd5e1;
   max-width: 720px;
+  margin: 0 auto;
 `;
 
 const InputRow = styled.div`
@@ -60,7 +53,8 @@ const InputRow = styled.div`
     color: #94a3b8;
   }
 
-  label, button {
+  label,
+  button {
     background-color: #0ea5e9;
     padding: 0.7rem 1.2rem;
     border-radius: 0.5rem;
@@ -87,7 +81,9 @@ const InputRow = styled.div`
 
   @media (max-width: 600px) {
     flex-direction: column;
-    input, button, label {
+    input,
+    button,
+    label {
       width: 100%;
     }
   }
@@ -110,6 +106,7 @@ const ErrorMessage = styled.div`
   margin-top: 0.5rem;
   font-size: 0.95rem;
   color: #f87171;
+  text-align: center;
 `;
 
 const Divider = styled.hr`
@@ -120,7 +117,6 @@ const Divider = styled.hr`
   margin: 2rem 0;
 `;
 
-// --- Utilities ---
 function isValidURL(str: string): boolean {
   try {
     const url = new URL(str);
@@ -132,9 +128,7 @@ function isValidURL(str: string): boolean {
 
 async function createJump2Link(originalUrl: string): Promise<string | null> {
   const code = await generateShortCode();
-  const { error } = await supabase
-    .from("links")
-    .insert([{ code, url: originalUrl }]);
+  const { error } = await supabase.from("links").insert([{ code, url: originalUrl }]);
   if (error) {
     toast.error("Error creating short link.");
     return null;
@@ -147,13 +141,12 @@ async function createJump2Link(originalUrl: string): Promise<string | null> {
   return `https://jump2.link/${code}`;
 }
 
-// --- Main Component ---
 export default function Share() {
   const [url, setUrl] = useState("");
   const [submittedUrl, setSubmittedUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
   const [isValid, setIsValid] = useState(false);
-  const [tip, setTip] = useState("Paste a YouTube or article link to highlight or timestamp — or upload a document.");
+  const [tip, setTip] = useState("Paste a link or upload a file to begin.");
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [mode, setMode] = useState<'url' | 'file'>('url');
@@ -173,7 +166,7 @@ export default function Share() {
       setIsValid(valid);
       if (valid) {
         setSubmittedUrl(trimmed);
-        setMode('url');
+        setMode("url");
         setTip("✅ Link detected. Scroll down to highlight, meme, or timestamp.");
         setErrorMsg("");
         setFileName("");
@@ -186,7 +179,7 @@ export default function Share() {
     const trimmed = url.trim();
     if (isValidURL(trimmed)) {
       setSubmittedUrl(trimmed);
-      setMode('url');
+      setMode("url");
       setTip("🔗 URL loaded. Scroll down to begin.");
       setFileName("");
       setErrorMsg("");
@@ -201,7 +194,7 @@ export default function Share() {
     if (!file) return;
     setFileName(file.name);
     setSubmittedUrl(null);
-    setMode('file');
+    setMode("file");
     setTip("📄 File uploaded. Parsing support coming soon.");
     toast.success(`📁 ${file.name} uploaded`);
     setErrorMsg("");
@@ -211,105 +204,86 @@ export default function Share() {
     setUrl("");
     setSubmittedUrl(null);
     setFileName("");
-    setMode('url');
-    setTip("Paste a YouTube or article link to highlight or timestamp — or upload a document.");
+    setMode("url");
+    setTip("Paste a link or upload a file to begin.");
     setErrorMsg("");
   }, []);
 
   return (
-    <>
+    <AppLayout>
       <Head>
         <title>Jump2 – Share the Moment That Matters</title>
         <meta name="description" content="Highlight. Meme. Timestamp. Upload. Welcome to Share-Tech." />
       </Head>
-
       <Toaster position="top-right" />
 
-      <PageWrapper>
-        <Title>🔗 Create Your Jump2</Title>
-        <Subtitle>
-          Paste a link or upload a document — highlight key text, add a meme, or generate a shareable moment.
-        </Subtitle>
+      <HeaderBlock>
+        <Title>Create a Shareable Moment</Title>
+        <Subtitle>Paste a link or upload a file — highlight key content, generate memes, or timestamp insights.</Subtitle>
+      </HeaderBlock>
 
-        {showOnboarding && (
-          <AssistantBox
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            mode={mode}
-          >
-            👋 Welcome! Paste a URL or upload a file to begin. <br />
-            <button onClick={() => setShowOnboarding(false)} style={{
-              marginTop: '1rem',
-              background: '#334155',
-              color: '#fff',
-              padding: '0.5rem 1rem',
-              borderRadius: '0.4rem'
-            }}>
-              Got it
-            </button>
-          </AssistantBox>
-        )}
-
-        <InputRow>
-          <input
-            type="text"
-            placeholder="Paste article or YouTube link..."
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handlePaste()}
-            aria-label="Paste a link"
-          />
-          <button onClick={handlePaste} disabled={!isValid}>
-            <FaLink /> Share URL
+      <InputRow>
+        <input
+          type="text"
+          placeholder="Paste article or YouTube link..."
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handlePaste()}
+          aria-label="Paste a link"
+        />
+        <button onClick={handlePaste} disabled={!isValid}>
+          <FaLink /> Share URL
+        </button>
+        <label>
+          <FaUpload /> Upload
+          <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} />
+        </label>
+        {fileName && (
+          <button onClick={clearInputs}>
+            <FaTimesCircle /> Clear
           </button>
-          <label>
-            <FaUpload /> Upload
-            <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} />
-          </label>
-          {fileName && (
-            <button onClick={clearInputs}>
-              <FaTimesCircle /> Clear
-            </button>
-          )}
-        </InputRow>
-
-        {errorMsg && <ErrorMessage>{errorMsg}</ErrorMessage>}
-
-        <AssistantBox
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          mode={mode}
-        >
-          {tip}
-        </AssistantBox>
-
-        <Divider />
-
-        {mode === 'file' && fileName && (
-          <p style={{ color: "#fef08a" }}>
-            ⏳ Parsing support for <strong>{fileName}</strong> coming soon…
-          </p>
         )}
+      </InputRow>
 
-        {submittedUrl && (
-          <ArticlePreviewFull
-            url={submittedUrl}
-            scrapeEngine="scrapingbee"
-            enableYouTubeTimestamp
-            supportArticles
-            supportMemes
-            onGenerateLink={async (link) => {
-              const shortLink = await createJump2Link(link);
-              if (shortLink) {
-                toast.success(`🔗 Jump2 link created & copied!`);
-                navigator.clipboard.writeText(shortLink);
+      {errorMsg && <ErrorMessage>{errorMsg}</ErrorMessage>}
+
+      <AssistantBox
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        mode={mode}
+      >
+        {tip}
+      </AssistantBox>
+
+      <Divider />
+
+      {mode === 'file' && fileName && (
+        <p style={{ color: "#fef08a" }}>
+          ⏳ Parsing support for <strong>{fileName}</strong> coming soon…
+        </p>
+      )}
+
+      {submittedUrl && (
+        <ArticlePreviewFull
+          url={submittedUrl}
+          scrapeEngine="scrapingbee"
+          enableYouTubeTimestamp
+          supportArticles
+          supportMemes
+          onGenerateLink={async (link) => {
+            const shortLink = await createJump2Link(link);
+            if (shortLink) {
+              toast.success(`🔗 Jump2 link created & copied!`);
+              try {
+                await navigator.clipboard.writeText(shortLink);
+              } catch {
+                console.warn("Clipboard copy failed.");
               }
-            }}
-          />
-        )}
-      </PageWrapper>
-    </>
+            }
+          }}
+        />
+      )}
+    </AppLayout>
   );
 }
