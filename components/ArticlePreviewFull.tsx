@@ -1,17 +1,18 @@
+// components/ArticlePreviewFull.tsx
 import React, { useState, useEffect, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import DOMPurify from "isomorphic-dompurify";
 import toast from "react-hot-toast";
+import dynamic from "next/dynamic";
 import ArticleError from "./ArticleError";
 import HighlightEditor, { Highlight } from "./HighlightEditor";
 import MemeModal from "./MemeModal";
-import QRCode from "qrcode.react";
 
-// Animations
+const QRCode = dynamic(() => import("qrcode.react"), { ssr: false });
+
 const fadeIn = keyframes`from { opacity: 0 } to { opacity: 1 }`;
 const pulse = keyframes`0%,100%{transform:scale(1)}50%{transform:scale(1.05)}`;
 
-// Utils
 function extractYouTubeID(url: string): string {
   const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([\w-]{11})/);
   return match?.[1] ?? "";
@@ -36,7 +37,6 @@ function sanitizeWithHighlights(html: string, highlights: Highlight[]): string {
   return result;
 }
 
-// Styled components
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -142,7 +142,6 @@ const WarningPanel = styled.div`
   margin-top: 1rem;
 `;
 
-// Props
 interface Props {
   url: string;
   initialHighlights?: Highlight[];
@@ -154,7 +153,6 @@ interface Props {
   supportMemes?: boolean;
 }
 
-// Final component with unicorn polish
 export default function ArticlePreviewFull({
   url,
   initialHighlights = [],
