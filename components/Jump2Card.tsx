@@ -1,4 +1,3 @@
-// components/Jump2Card.tsx
 import React from "react";
 import styled from "styled-components";
 import { FaCopy, FaTrash, FaExternalLinkAlt } from "react-icons/fa";
@@ -56,15 +55,24 @@ const Actions = styled.div`
 `;
 
 interface Props {
+  id: number;
   title: string;
   domain: string;
   url: string;
   createdAt: string;
   onCopy: () => void;
-  onDelete: () => void;
+  onDelete: (id: number) => void;
 }
 
-export default function Jump2Card({ title, domain, url, createdAt, onCopy, onDelete }: Props) {
+export default function Jump2Card({
+  id,
+  title,
+  domain,
+  url,
+  createdAt,
+  onCopy,
+  onDelete,
+}: Props) {
   return (
     <Card>
       <div>
@@ -80,7 +88,7 @@ export default function Jump2Card({ title, domain, url, createdAt, onCopy, onDel
           <button onClick={onCopy}>
             <FaCopy />
           </button>
-          <button onClick={onDelete}>
+          <button onClick={() => onDelete(id)}>
             <FaTrash />
           </button>
         </Actions>
