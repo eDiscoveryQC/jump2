@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import ArticleError from "./ArticleError";
 import HighlightEditor, { Highlight } from "./HighlightEditor";
 import MemeModal from "./MemeModal";
-import Footer from "./Footer";
+import QRCode from "qrcode.react";
 
 // Animations
 const fadeIn = keyframes`from { opacity: 0 } to { opacity: 1 }`;
@@ -19,7 +19,7 @@ function extractYouTubeID(url: string): string {
 
 function parseTimeInput(input: string): number | null {
   if (/^\d+$/.test(input)) return parseInt(input, 10);
-  const [m, s] = input.split(":").map(Number);
+  const [m, s] = input.split(":" ).map(Number);
   return m >= 0 && !isNaN(s) ? m * 60 + s : null;
 }
 
@@ -38,43 +38,53 @@ function sanitizeWithHighlights(html: string, highlights: Highlight[]): string {
 
 // Styled components
 const Container = styled.div`
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  max-width: 1280px;
   margin: 2rem auto;
-  gap: 1.5rem;
+  padding: 1rem;
+  gap: 2rem;
   animation: ${fadeIn} 0.6s ease-in;
   font-family: 'Segoe UI', sans-serif;
   color: #1e293b;
 `;
 
+const LayoutSplit = styled.div`
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
 const ContentPanel = styled.div`
   background: #ffffff;
   padding: 2rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+  border-radius: 1rem;
+  box-shadow: 0 2px 24px rgba(0,0,0,0.05);
   overflow-y: auto;
-  max-height: 85vh;
 `;
 
 const SidePanel = styled.div`
   background: #f1f5f9;
   padding: 1.5rem;
-  border-radius: 0.75rem;
+  border-radius: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.05);
+  gap: 1.25rem;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.04);
 `;
 
 const Preview = styled.div`
-  font-size: 1.05rem;
-  line-height: 1.7;
+  font-size: 1.1rem;
+  line-height: 1.75;
   .jump2-highlight {
     animation: ${pulse} 1s ease;
     cursor: pointer;
-    border-radius: 0.25rem;
-    padding: 0.05rem 0.3rem;
+    border-radius: 0.3rem;
+    padding: 0.1rem 0.4rem;
   }
 `;
 
@@ -92,34 +102,35 @@ const FrameWrapper = styled.div`
 `;
 
 const Input = styled.input`
-  padding: 0.6rem;
-  font-size: 0.95rem;
-  border-radius: 0.5rem;
+  padding: 0.7rem;
+  font-size: 1rem;
+  border-radius: 0.6rem;
   border: 1px solid #94a3b8;
-  flex: 1;
   background: #fff;
   color: #0f172a;
+  width: 100%;
 `;
 
 const Button = styled.button`
   background: #0ea5e9;
   color: white;
-  padding: 0.6rem 1rem;
-  font-size: 0.95rem;
-  border-radius: 0.5rem;
+  padding: 0.7rem 1.2rem;
+  font-size: 1rem;
+  border-radius: 0.6rem;
   border: none;
   cursor: pointer;
+  width: 100%;
+  transition: background 0.2s;
+
   &:hover {
     background: #0284c7;
   }
 `;
 
-const Row = styled.div<{ justify?: string }>`
+const Row = styled.div`
   display: flex;
-  justify-content: ${({ justify }) => justify || "space-between"};
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  flex-direction: column;
 `;
 
 const WarningPanel = styled.div`
@@ -127,12 +138,12 @@ const WarningPanel = styled.div`
   color: #b91c1c;
   padding: 1rem;
   border: 1px solid #fca5a5;
-  border-radius: 0.5rem;
+  border-radius: 0.6rem;
   margin-top: 1rem;
 `;
 
 // Props
-type Props = {
+interface Props {
   url: string;
   initialHighlights?: Highlight[];
   onGenerateLink?: (link: string) => void;
@@ -141,8 +152,9 @@ type Props = {
   enableYouTubeTimestamp?: boolean;
   supportArticles?: boolean;
   supportMemes?: boolean;
-};
+}
 
+// Final component with unicorn polish
 export default function ArticlePreviewFull({
   url,
   initialHighlights = [],
@@ -206,92 +218,90 @@ export default function ArticlePreviewFull({
 
   return (
     <Container>
-      <ContentPanel>
-        <h2>🔍 Jump2 Preview</h2>
-        {isYouTube && enableYouTubeTimestamp && (
-          <FrameWrapper>
-            <iframe
-              src={`https://www.youtube.com/embed/${extractYouTubeID(url)}`}
-              title="YouTube Video"
-              allowFullScreen
-            />
-          </FrameWrapper>
-        )}
-        {!isYouTube && supportArticles && (
-          <>
-            {loading && <p>Loading...</p>}
-            {error && <ArticleError error={error} url={url} />}
-            {!loading && !error && (
-              <>
-                <h3>{title}</h3>
-                <em>{author}</em>
-                <Preview dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
-                {missingHighlights.length > 0 && (
-                  <WarningPanel>
-                    ⚠️ Some highlights may not be visible — try scrolling or re-highlighting.
-                  </WarningPanel>
-                )}
-              </>
-            )}
-          </>
-        )}
-      </ContentPanel>
-
-      <SidePanel>
-        {isYouTube && enableYouTubeTimestamp && (
-          <>
-            <Input
-              type="text"
-              placeholder="e.g. 1:30"
-              value={manualTime}
-              onChange={(e) => setManualTime(e.target.value)}
-            />
-            <Button onClick={handleGenerateTimestamp}>⏱ Generate Timestamp</Button>
-          </>
-        )}
-
-        {!isYouTube && supportArticles && (
-          <HighlightEditor
-            htmlContent={html}
-            initialHighlights={highlightData}
-            onHighlightsChange={setHighlightData}
-            onShare={() => { toast.success("✅ Highlights updated!"); }}
-          />
-        )}
-
-        <Input
-          type="text"
-          placeholder="Anchor text"
-          value={anchorInput}
-          onChange={(e) => setAnchorInput(e.target.value)}
-        />
-        <Row>
-          <Button onClick={handleCopyAnchor}>{copied ? "Copied!" : "📋 Copy Anchor"}</Button>
-          <Button onClick={() => setShowQR(prev => !prev)}>🧾 {showQR ? "Hide QR" : "Show QR"}</Button>
-        </Row>
-        {showQR && shareUrl && (
-          <img
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shareUrl)}`}
-            alt="QR Code"
-            style={{ alignSelf: "center", marginTop: "1rem" }}
-          />
-        )}
-
-        {supportMemes && (
-          <>
-            <Button onClick={() => setShowMemeModal(true)}>🖼 Generate Meme</Button>
-            {showMemeModal && (
-              <MemeModal
-                articleUrl={url}
-                highlightText={highlightData[0]?.text ?? ""}
-                onClose={() => setShowMemeModal(false)}
+      <LayoutSplit>
+        <ContentPanel>
+          <h2>🔍 Jump2 Preview</h2>
+          {isYouTube && enableYouTubeTimestamp && (
+            <FrameWrapper>
+              <iframe
+                src={`https://www.youtube.com/embed/${extractYouTubeID(url)}`}
+                title="YouTube Video"
+                allowFullScreen
               />
-            )}
-          </>
-        )}
-      </SidePanel>
+            </FrameWrapper>
+          )}
+          {!isYouTube && supportArticles && (
+            <>
+              {loading && <p>Loading article preview...</p>}
+              {error && <ArticleError error={error} url={url} />}
+              {!loading && !error && (
+                <>
+                  <h3>{title}</h3>
+                  <em>{author}</em>
+                  <Preview dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
+                  {missingHighlights.length > 0 && (
+                    <WarningPanel>
+                      ⚠️ Some highlights may not be visible — try scrolling or re-highlighting.
+                    </WarningPanel>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </ContentPanel>
 
-      <Footer />
+        <SidePanel>
+          {isYouTube && enableYouTubeTimestamp && (
+            <>
+              <Input
+                type="text"
+                placeholder="e.g. 1:30"
+                value={manualTime}
+                onChange={(e) => setManualTime(e.target.value)}
+              />
+              <Button onClick={handleGenerateTimestamp}>⏱ Generate Timestamp</Button>
+            </>
+          )}
+
+          {!isYouTube && supportArticles && (
+            <HighlightEditor
+              htmlContent={html}
+              initialHighlights={highlightData}
+              onHighlightsChange={setHighlightData}
+              onShare={() => { toast.success("✅ Highlights updated!"); }}
+            />
+          )}
+
+          <Input
+            type="text"
+            placeholder="Anchor text"
+            value={anchorInput}
+            onChange={(e) => setAnchorInput(e.target.value)}
+          />
+          <Row>
+            <Button onClick={handleCopyAnchor}>{copied ? "Copied!" : "📋 Copy Anchor"}</Button>
+            <Button onClick={() => setShowQR(prev => !prev)}>🧾 {showQR ? "Hide QR" : "Show QR"}</Button>
+          </Row>
+          {showQR && shareUrl && (
+            <div style={{ textAlign: "center", marginTop: "1rem" }}>
+              <QRCode value={shareUrl} size={180} />
+            </div>
+          )}
+
+          {supportMemes && (
+            <>
+              <Button onClick={() => setShowMemeModal(true)}>🖼 Generate Meme</Button>
+              {showMemeModal && (
+                <MemeModal
+                  articleUrl={url}
+                  highlightText={highlightData[0]?.text ?? ""}
+                  onClose={() => setShowMemeModal(false)}
+                />
+              )}
+            </>
+          )}
+        </SidePanel>
+      </LayoutSplit>
     </Container>
   );
 }
