@@ -278,7 +278,7 @@ export default function ArticlePreviewFull({
               htmlContent={html}
               initialHighlights={highlightData}
               onHighlightsChange={setHighlightData}
-              onShare={() => toast.success("✅ Highlights updated!")}
+              onShare={() => { toast.success("✅ Highlights updated!") }}
             />
           )}
 
