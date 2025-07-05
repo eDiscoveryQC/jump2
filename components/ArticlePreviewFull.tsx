@@ -1,5 +1,5 @@
 // components/ArticlePreviewFull.tsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import DOMPurify from "isomorphic-dompurify";
 import toast from "react-hot-toast";
@@ -8,7 +8,7 @@ import ArticleError from "./ArticleError";
 import HighlightEditor, { Highlight } from "./HighlightEditor";
 import MemeModal from "./MemeModal";
 
-const QRCode = dynamic(() => import("qrcode.react"), { ssr: false });
+const QRCode = dynamic(() => import("qrcode.react").then((mod) => mod.QRCodeSVG), { ssr: false });
 
 const fadeIn = keyframes`from { opacity: 0 } to { opacity: 1 }`;
 const pulse = keyframes`0%,100%{transform:scale(1)}50%{transform:scale(1.05)}`;
@@ -49,11 +49,19 @@ const Container = styled.div`
   color: #1e293b;
 `;
 
+const Title = styled.h2`
+  font-size: 2rem;
+  background: linear-gradient(90deg, #0ea5e9, #9333ea);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+  margin-bottom: 1.25rem;
+`;
+
 const LayoutSplit = styled.div`
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 2rem;
-
   @media (max-width: 960px) {
     grid-template-columns: 1fr;
   }
@@ -65,6 +73,8 @@ const ContentPanel = styled.div`
   border-radius: 1rem;
   box-shadow: 0 2px 24px rgba(0,0,0,0.05);
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #f1f5f9;
 `;
 
 const SidePanel = styled.div`
@@ -75,6 +85,9 @@ const SidePanel = styled.div`
   flex-direction: column;
   gap: 1.25rem;
   box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+  @media (max-width: 640px) {
+    padding: 1rem;
+  }
 `;
 
 const Preview = styled.div`
@@ -121,7 +134,6 @@ const Button = styled.button`
   cursor: pointer;
   width: 100%;
   transition: background 0.2s;
-
   &:hover {
     background: #0284c7;
   }
@@ -218,7 +230,7 @@ export default function ArticlePreviewFull({
     <Container>
       <LayoutSplit>
         <ContentPanel>
-          <h2>🔍 Jump2 Preview</h2>
+          <Title>🔍 Jump2 Preview</Title>
           {isYouTube && enableYouTubeTimestamp && (
             <FrameWrapper>
               <iframe
@@ -266,7 +278,7 @@ export default function ArticlePreviewFull({
               htmlContent={html}
               initialHighlights={highlightData}
               onHighlightsChange={setHighlightData}
-              onShare={() => { toast.success("✅ Highlights updated!") }}
+              onShare={() => toast.success("✅ Highlights updated!")}
             />
           )}
 
@@ -280,8 +292,13 @@ export default function ArticlePreviewFull({
             <Button onClick={handleCopyAnchor}>{copied ? "Copied!" : "📋 Copy Anchor"}</Button>
             <Button onClick={() => setShowQR(prev => !prev)}>🧾 {showQR ? "Hide QR" : "Show QR"}</Button>
           </Row>
+          {shareUrl && (
+            <small style={{ wordBreak: 'break-all', color: '#64748b', marginTop: '0.5rem' }}>
+              🔗 {shareUrl}
+            </small>
+          )}
           {showQR && shareUrl && (
-            <div style={{ textAlign: "center", marginTop: "1rem" }}>
+            <div style={{ textAlign: "center", marginTop: "1rem", padding: "1rem", background: "#fff", borderRadius: "0.75rem", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }}>
               <QRCode value={shareUrl} size={180} />
             </div>
           )}
