@@ -1,8 +1,8 @@
 // components/AppLayout.tsx
-import React, { useEffect, useState } from 'react';
-import styled from 'styled-components';
-import SidebarNav from './SidebarNav';
-import TopNavBar from './TopNavBar';
+import React, { useEffect, useState } from "react";
+import styled from "styled-components";
+import SidebarNav from "./SidebarNav";
+import TopNavBar from "./TopNavBar";
 
 const Container = styled.div`
   display: flex;
@@ -19,15 +19,15 @@ const Main = styled.main`
   overflow: hidden;
 `;
 
-const ContentWrapper = styled.section`
+const ContentWrapper = styled.section<{ fullScreen?: boolean }>`
   flex: 1;
   overflow-y: auto;
-  padding: 2rem 1.5rem;
   background: linear-gradient(to right, #0f172a, #1e293b);
+  padding: ${(props) => (props.fullScreen ? "0" : "2rem 1.5rem")};
   z-index: 1;
 
   @media (max-width: 768px) {
-    padding: 1.2rem 1rem;
+    padding: ${(props) => (props.fullScreen ? "0" : "1.2rem 1rem")};
   }
 
   &::-webkit-scrollbar {
@@ -39,7 +39,12 @@ const ContentWrapper = styled.section`
   }
 `;
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+interface Props {
+  children: React.ReactNode;
+  fullScreen?: boolean;
+}
+
+export default function AppLayout({ children, fullScreen }: Props) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -54,7 +59,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {!isMobile && <SidebarNav />}
       <Main role="main">
         <TopNavBar />
-        <ContentWrapper role="region" aria-label="Main Content">
+        <ContentWrapper fullScreen={fullScreen} role="region" aria-label="Main Content">
           {children}
         </ContentWrapper>
       </Main>
