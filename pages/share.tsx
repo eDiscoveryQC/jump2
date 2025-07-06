@@ -1,3 +1,4 @@
+// pages/share.tsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import styled from "styled-components";
 import Head from "next/head";
@@ -12,26 +13,28 @@ import AppLayout from "@/components/AppLayout";
 
 const Canvas = styled.div`
   width: 100%;
-  min-height: 100vh;
-  padding: 5rem 4vw 6rem;
-  display: flex;
-  flex-direction: column;
+  height: 100%;
+  padding: 3rem;
   background: linear-gradient(to right, #0f172a, #1e293b);
   color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 `;
 
 const Title = styled.h1`
-  font-size: 3.4rem;
+  font-size: 3rem;
   font-weight: 900;
   color: #facc15;
-  text-shadow: 0 2px 12px #0ea5e988;
-  margin-bottom: 1.2rem;
+  text-shadow: 0 2px 10px rgba(14, 165, 233, 0.4);
+  margin-bottom: 0.75rem;
 `;
 
 const Subtitle = styled.p`
   font-size: 1.25rem;
   color: #cbd5e1;
-  max-width: 980px;
+  max-width: 960px;
+  text-align: center;
   margin-bottom: 2.5rem;
 `;
 
@@ -39,46 +42,52 @@ const Form = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
+  justify-content: center;
+  align-items: center;
   margin-bottom: 2rem;
 
   input[type="text"] {
-    flex: 1;
-    padding: 1rem 1.4rem;
-    font-size: 1.1rem;
-    border-radius: 0.6rem;
+    padding: 1rem;
+    font-size: 1rem;
+    border-radius: 0.5rem;
     border: 1px solid #334155;
     background: #1e293b;
     color: white;
-    min-width: 360px;
+    width: 420px;
   }
 
   input::placeholder {
     color: #94a3b8;
   }
 
-  label,
-  button {
-    padding: 1rem 1.5rem;
-    border-radius: 0.6rem;
-    font-size: 1.1rem;
+  button,
+  label {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.5rem;
+    padding: 0.9rem 1.3rem;
+    font-size: 1rem;
     border: none;
+    border-radius: 0.5rem;
     cursor: pointer;
     color: white;
-    white-space: nowrap;
+    transition: background 0.2s;
   }
 
   button {
-    background-color: #16a34a;
+    background: #16a34a;
   }
+
   button:hover {
-    background-color: #15803d;
+    background: #15803d;
   }
 
   label {
-    background-color: #0ea5e9;
+    background: #0ea5e9;
+  }
+
+  label:hover {
+    background: #0284c7;
   }
 
   input[type="file"] {
@@ -86,15 +95,17 @@ const Form = styled.div`
   }
 `;
 
-const Assistant = styled(motion.div)`
-  padding: 1.5rem 2rem;
+const Tip = styled(motion.div)`
   background: #1e293b;
   border: 1px solid #334155;
+  padding: 1.25rem 1.5rem;
   border-radius: 0.75rem;
-  box-shadow: 0 0 28px #0ea5e9aa;
   font-size: 1rem;
   color: #e2e8f0;
+  box-shadow: 0 0 28px rgba(14, 165, 233, 0.3);
   margin-bottom: 2rem;
+  max-width: 700px;
+  text-align: center;
 `;
 
 function isValidURL(str: string): boolean {
@@ -130,7 +141,7 @@ export default function SharePage() {
   useEffect(() => {
     if (!localStorage.getItem("visitedShare")) {
       localStorage.setItem("visitedShare", "true");
-      toast("🚀 You can highlight, timestamp, and generate memes after sharing!");
+      toast("✨ You can highlight, timestamp, and generate memes after sharing!");
     }
   }, []);
 
@@ -142,7 +153,7 @@ export default function SharePage() {
       if (valid) {
         setSubmittedUrl(trimmed);
         setMode("url");
-        setTip("✅ Link detected. Scroll down to highlight, meme, or timestamp.");
+        setTip("✅ Link detected. Scroll down to highlight or timestamp.");
         setFileName("");
       }
     }, 400);
@@ -154,7 +165,7 @@ export default function SharePage() {
     if (isValidURL(trimmed)) {
       setSubmittedUrl(trimmed);
       setMode("url");
-      setTip("🔗 URL loaded. Scroll down to begin.");
+      setTip("🔗 URL loaded. Scroll to preview.");
       setFileName("");
       setTimeout(() => previewRef.current?.scrollIntoView({ behavior: "smooth" }), 200);
     } else {
@@ -190,7 +201,8 @@ export default function SharePage() {
       <Canvas>
         <Title>Create a Shareable Moment</Title>
         <Subtitle>
-          Paste a link or upload a file — highlight key content, generate memes, timestamp insights, and generate smart share links.
+          Paste a link or upload a file — highlight key content, generate memes, timestamp insights,
+          and generate smart share links.
         </Subtitle>
         <Form>
           <input
@@ -214,15 +226,11 @@ export default function SharePage() {
             </button>
           )}
         </Form>
-        <Assistant
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
+        <Tip initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
           {tip}
-        </Assistant>
-        {mode === "file" && fileName && (
-          <p style={{ color: "#fef08a" }}>
+        </Tip>
+        {mode === 'file' && fileName && (
+          <p style={{ color: "#fef08a", marginBottom: "1.5rem" }}>
             ⏳ Parsing support for <strong>{fileName}</strong> coming soon…
           </p>
         )}
