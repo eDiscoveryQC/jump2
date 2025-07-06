@@ -1,10 +1,11 @@
 // pages/share.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import Head from 'next/head';
 import SmartInputPanel from '@/components/SmartInputPanel';
 import ArticlePreviewFull from '@/components/ArticlePreviewFull';
 import Footer from '@/components/Footer';
+import { Toaster, toast } from 'react-hot-toast';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(10px); }
@@ -21,15 +22,26 @@ const PageWrapper = styled.div`
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: linear-gradient(to right, #0f172a, #1e293b);
+  background: radial-gradient(circle at top left, #1e293b, #0f172a);
   color: #ffffff;
-  animation: ${fadeIn} 0.6s ease-out;
+  position: relative;
+`;
+
+const StickyNav = styled.div`
+  width: 100%;
+  padding: 1rem 2rem;
+  background: #0f172a;
+  border-bottom: 1px solid #1e293b;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  font-weight: bold;
+  font-size: 1.2rem;
 `;
 
 const Header = styled.header`
-  padding: 2rem;
+  padding: 3rem 2rem 2rem;
   text-align: center;
-  animation: ${fadeIn} 0.8s ease forwards;
 `;
 
 const Title = styled.h1`
@@ -52,13 +64,26 @@ const Subtitle = styled.p`
   margin-right: auto;
 `;
 
+const Callout = styled.div`
+  margin-top: 2rem;
+  background: #1e293b;
+  padding: 1.5rem;
+  border: 1px solid #334155;
+  border-radius: 1rem;
+  max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 1.05rem;
+  color: #94a3b8;
+  animation: ${fadeIn} 1s ease forwards;
+`;
+
 const Body = styled.main`
   flex: 1;
-  padding: 2rem 1rem 4rem;
+  padding: 3rem 1rem 5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  animation: ${fadeIn} 1s ease forwards;
 `;
 
 const Divider = styled.hr`
@@ -66,17 +91,26 @@ const Divider = styled.hr`
   max-width: 800px;
   border: none;
   border-top: 1px solid #334155;
-  margin: 3rem 0 2rem;
+  margin: 4rem 0 2rem;
 `;
 
 const PreviewWrapper = styled.div`
   width: 100%;
   max-width: 1200px;
   margin-top: 2rem;
+  animation: ${fadeIn} 1s ease-in-out;
 `;
 
 export default function SharePage() {
   const [shareUrl, setShareUrl] = useState<string>('');
+  const previewRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (shareUrl && previewRef.current) {
+      previewRef.current.scrollIntoView({ behavior: 'smooth' });
+      toast.success('Preview loaded successfully!');
+    }
+  }, [shareUrl]);
 
   return (
     <PageWrapper>
@@ -84,11 +118,16 @@ export default function SharePage() {
         <title>Jump2 Share — Smarter Sharing Starts Here</title>
         <meta name="description" content="Jump2 lets you create highlight-rich shareable links to videos, articles, and more." />
       </Head>
+      <StickyNav>🚀 Jump2</StickyNav>
+
       <Header>
         <Title>Jump2 Share</Title>
         <Subtitle>
-          Paste any article, YouTube link, or content URL. Highlight what matters. Create a shareable smart link. Welcome to the world's first ShareTech platform.
+          Paste any article, YouTube link, or content URL. Highlight what matters. Create a shareable smart link.
         </Subtitle>
+        <Callout>
+          ✨ Tip: After pasting a URL or uploading a file, your preview will appear automatically. Jump2 makes content sharing human again.
+        </Callout>
       </Header>
 
       <Body>
@@ -97,7 +136,7 @@ export default function SharePage() {
         {shareUrl && (
           <>
             <Divider />
-            <PreviewWrapper>
+            <PreviewWrapper ref={previewRef}>
               <ArticlePreviewFull
                 url={shareUrl}
                 supportArticles
@@ -110,6 +149,7 @@ export default function SharePage() {
       </Body>
 
       <Footer contactEmail="support@jump2share.com" />
+      <Toaster position="bottom-center" />
     </PageWrapper>
   );
 }

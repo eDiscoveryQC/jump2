@@ -1,6 +1,10 @@
 import styled from "styled-components";
 import { useEffect, useState } from "react";
 
+interface FooterProps {
+  contactEmail: string;
+}
+
 const FooterBar = styled.footer.attrs({ role: "contentinfo" })`
   width: 100%;
   background: linear-gradient(to right, #0f172a, #1e293b);
@@ -114,7 +118,7 @@ const BackToTop = styled.button`
   }
 `;
 
-export default function Footer() {
+export default function Footer({ contactEmail }: FooterProps) {
   const [showTop, setShowTop] = useState(false);
 
   useEffect(() => {
@@ -154,7 +158,7 @@ export default function Footer() {
           <a href="/privacy">Privacy</a>
           <a href="/terms">Terms</a>
           <a href="/status">Status</a>
-          <a href="mailto:support@jump2share.com">Contact</a>
+          <a href={`mailto:${contactEmail}`}>Contact</a>
         </PolicyLinks>
 
         <Copyright>
