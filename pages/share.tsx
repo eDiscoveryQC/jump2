@@ -19,22 +19,23 @@ const Canvas = styled.div`
   color: white;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
+  max-width: 1200px;
+  margin: 0 auto;
 `;
 
 const Title = styled.h1`
-  font-size: 3rem;
+  font-size: 3.2rem;
   font-weight: 900;
   color: #facc15;
-  text-shadow: 0 2px 10px rgba(14, 165, 233, 0.4);
-  margin-bottom: 0.75rem;
+  text-shadow: 0 2px 12px rgba(14, 165, 233, 0.5);
+  margin-bottom: 1rem;
 `;
 
 const Subtitle = styled.p`
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   color: #cbd5e1;
   max-width: 960px;
-  text-align: center;
   margin-bottom: 2.5rem;
 `;
 
@@ -42,7 +43,6 @@ const Form = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 1rem;
-  justify-content: center;
   align-items: center;
   margin-bottom: 2rem;
 
@@ -105,7 +105,6 @@ const Tip = styled(motion.div)`
   box-shadow: 0 0 28px rgba(14, 165, 233, 0.3);
   margin-bottom: 2rem;
   max-width: 700px;
-  text-align: center;
 `;
 
 function isValidURL(str: string): boolean {
