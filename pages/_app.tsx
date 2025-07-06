@@ -1,15 +1,21 @@
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
-import { createContext, useReducer, ReactNode, useContext } from 'react';
+import { createContext, useReducer, useContext, ReactNode } from 'react';
 import { ThemeProvider, createGlobalStyle } from 'styled-components';
-import Menu from '../components/Menu';
-import Footer from '../components/Footer';
-import ErrorBoundary from '../components/ErrorBoundary';
+import styled from 'styled-components';
 
+import Menu from '@/components/Menu';
+import Footer from '@/components/Footer';
+import ErrorBoundary from '@/components/ErrorBoundary';
+
+//
+// 🎨 Global Styles
+//
 const GlobalStyle = createGlobalStyle`
   *, *::before, *::after {
     box-sizing: border-box;
   }
+
   html, body {
     margin: 0;
     padding: 0;
@@ -18,27 +24,33 @@ const GlobalStyle = createGlobalStyle`
     color: #d4e2fc;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
       Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    scroll-behavior: smooth;
   }
+
   a {
     color: #3b82f6;
     text-decoration: none;
-    transition: color 0.18s;
+    transition: color 0.18s ease-in-out;
+
     &:hover,
     &:focus {
       color: #ffd100;
       text-decoration: underline;
     }
   }
+
   #__next {
-    min-height: 100vh;
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
   }
 `;
 
+//
+// 🎨 Theme
+//
 const theme = {
   colors: {
     primary: '#3b82f6',
@@ -52,6 +64,9 @@ const theme = {
   },
 };
 
+//
+// ⚙️ App State & Context
+//
 type State = {
   link: string;
   highlight: string;
@@ -112,25 +127,21 @@ export function useAppContext() {
 
 function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
-  return (
-    <AppContext.Provider value={{ state, dispatch }}>
-      {children}
-    </AppContext.Provider>
-  );
+  return <AppContext.Provider value={{ state, dispatch }}>{children}</AppContext.Provider>;
 }
 
-import styled from 'styled-components';
-
+//
+// 🧱 Styled Layout Containers
+//
 const Main = styled.main`
-  flex: 1 0 auto;
+  flex: 1;
+  max-width: 1100px;
   width: 100%;
-  max-width: 900px;
   margin: 0 auto;
-  padding: 2.5em 1.1em 2em 1.1em;
-  min-height: 62vh;
-  @media (max-width: 700px) {
-    padding: 1.2em 0.4em 1.8em 0.4em;
-    min-height: 56vh;
+  padding: 3rem 1.5rem 4rem;
+
+  @media (max-width: 768px) {
+    padding: 2rem 1rem;
   }
 `;
 
@@ -141,13 +152,14 @@ const SkipToContent = styled.a`
   width: 1px;
   height: 1px;
   overflow: hidden;
-  z-index: 2000;
+  z-index: 9999;
   background: #fff200;
   color: #14213d;
-  font-weight: bold;
+  font-weight: 600;
   padding: 0.8em 1.2em;
   border-radius: 0 0 1em 1em;
-  transition: left 0.2s;
+  transition: left 0.2s ease;
+
   &:focus {
     left: 12px;
     width: auto;
@@ -157,22 +169,27 @@ const SkipToContent = styled.a`
   }
 `;
 
+//
+// 🚀 App Entry
+//
 export default function MyApp({ Component, pageProps }: AppProps) {
   return (
     <>
       <Head>
-        <title>Jump2 — The Fastest, Easiest File Sharing for Everyone</title>
+        <title>Jump2 — The Future of Smarter Sharing</title>
         <meta
           name="description"
           content="Jump2 lets you share files instantly, securely, and beautifully. No signups, no friction — just send and receive. Try it now and fall in love with simple sharing!"
         />
         <meta property="og:title" content="Jump2 — Share Files Instantly" />
-        <meta property="og:description" content="Jump2 lets you share files instantly, securely, and beautifully. No signups, no friction — just send and receive. Try it now and fall in love with simple sharing!" />
+        <meta property="og:description" content="Jump2 lets you share files instantly, securely, and beautifully." />
         <meta property="og:image" content="/jump2-social-card.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
+
       <GlobalStyle />
+
       <ThemeProvider theme={theme}>
         <ErrorBoundary>
           <AppProvider>
@@ -181,7 +198,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
             <Main id="main-content">
               <Component {...pageProps} />
             </Main>
-            <Footer />
+            <Footer contactEmail="support@jump2share.com" />
           </AppProvider>
         </ErrorBoundary>
       </ThemeProvider>
