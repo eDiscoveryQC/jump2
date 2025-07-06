@@ -1,7 +1,8 @@
 // components/SmartInputPanel.tsx
 import React, { useState, useCallback, useEffect } from "react";
 import styled from "styled-components";
-import { FaLink, FaUpload, FaWandMagicSparkles, FaTimesCircle } from "react-icons/fa6";
+import { FaLink, FaUpload, FaWandMagicSparkles } from "react-icons/fa6";
+import { FaTimesCircle } from "react-icons/fa"; // ✅ Patched to avoid build failure
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 
@@ -9,13 +10,14 @@ const Panel = styled(motion.div)`
   background: linear-gradient(to bottom right, #1e293b, #0f172a);
   border: 1px solid #334155;
   padding: 2rem;
-  border-radius: 1rem;
-  box-shadow: 0 0 50px rgba(14, 165, 233, 0.3);
+  border-radius: 1.2rem;
+  box-shadow: 0 0 40px rgba(14, 165, 233, 0.2);
   width: 100%;
   max-width: 800px;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  position: relative;
 `;
 
 const Row = styled.div`
@@ -25,13 +27,19 @@ const Row = styled.div`
 `;
 
 const Input = styled.input`
-  padding: 1rem 1.2rem;
-  font-size: 1.1rem;
-  border-radius: 0.6rem;
+  padding: 1.1rem 1.4rem;
+  font-size: 1.15rem;
+  border-radius: 0.7rem;
   border: 1px solid #334155;
   background: #0f172a;
   color: white;
   width: 100%;
+  transition: border 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #0ea5e9;
+  }
 
   &::placeholder {
     color: #64748b;
@@ -45,16 +53,17 @@ const ButtonRow = styled.div`
 
   button,
   label {
-    padding: 0.9rem 1.4rem;
+    padding: 0.85rem 1.3rem;
     font-size: 1rem;
-    border-radius: 0.5rem;
+    border-radius: 0.6rem;
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    transition: all 0.2s;
+    transition: all 0.25s ease;
     color: white;
+    font-weight: 500;
   }
 
   button.primary {
@@ -83,30 +92,21 @@ const ButtonRow = styled.div`
 `;
 
 const Tip = styled(motion.div)`
-  font-size: 1rem;
+  font-size: 1.05rem;
   color: #cbd5e1;
   padding-top: 0.5rem;
+  min-height: 1.5rem;
+  text-align: center;
 `;
 
 export default function SmartInputPanel({
-  url,
-  setUrl,
-  setSubmittedUrl,
-  fileName,
-  setFileName,
-  setMode,
-  tip,
-  setTip,
+  onShareGenerated,
 }: {
-  url: string;
-  setUrl: (val: string) => void;
-  setSubmittedUrl: (val: string | null) => void;
-  fileName: string;
-  setFileName: (val: string) => void;
-  setMode: (val: 'url' | 'file') => void;
-  tip: string;
-  setTip: (val: string) => void;
+  onShareGenerated: (url: string) => void;
 }) {
+  const [url, setUrl] = useState("");
+  const [fileName, setFileName] = useState("");
+  const [tip, setTip] = useState("Paste a link or upload a file to begin.");
   const [isValid, setIsValid] = useState(false);
 
   useEffect(() => {
@@ -114,7 +114,7 @@ export default function SmartInputPanel({
       const trimmed = url.trim();
       try {
         const u = new URL(trimmed);
-        setIsValid(u.protocol === 'http:' || u.protocol === 'https:');
+        setIsValid(u.protocol === "http:" || u.protocol === "https:");
       } catch {
         setIsValid(false);
       }
@@ -126,11 +126,11 @@ export default function SmartInputPanel({
     const trimmed = url.trim();
     try {
       const parsed = new URL(trimmed);
-      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-        setSubmittedUrl(trimmed);
-        setMode("url");
-        setTip("🔗 Ready. Scroll to preview.");
+      if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+        setTip("🔗 URL accepted. Loading preview...");
+        onShareGenerated(trimmed);
         setFileName("");
+        toast.success("🔗 Smart link created");
         return;
       }
     } catch {
@@ -142,17 +142,14 @@ export default function SmartInputPanel({
     const file = e.target.files?.[0];
     if (!file) return;
     setFileName(file.name);
-    setSubmittedUrl(null);
-    setMode("file");
-    setTip("📄 File uploaded. Parsing coming soon.");
+    setUrl("");
+    setTip("📄 File uploaded. Smart parsing coming soon.");
     toast.success(`📁 ${file.name} uploaded`);
   }, []);
 
   const clear = useCallback(() => {
     setUrl("");
-    setSubmittedUrl(null);
     setFileName("");
-    setMode("url");
     setTip("Paste a link or upload a file to begin.");
   }, []);
 
@@ -160,7 +157,7 @@ export default function SmartInputPanel({
     <Panel
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.6 }}
     >
       <Row>
         <Input
@@ -171,6 +168,7 @@ export default function SmartInputPanel({
           onKeyDown={(e) => e.key === "Enter" && handlePaste()}
         />
       </Row>
+
       <ButtonRow>
         <button onClick={handlePaste} className="primary" disabled={!isValid}>
           <FaLink /> Share URL
@@ -179,12 +177,13 @@ export default function SmartInputPanel({
           <FaUpload /> Upload File
           <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} />
         </label>
-        {fileName && (
+        {(fileName || url) && (
           <button onClick={clear} className="clear">
             <FaTimesCircle /> Clear
           </button>
         )}
       </ButtonRow>
+
       <Tip
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
