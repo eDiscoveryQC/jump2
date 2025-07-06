@@ -20,7 +20,7 @@ function extractYouTubeID(url: string): string {
 
 function parseTimeInput(input: string): number | null {
   if (/^\d+$/.test(input)) return parseInt(input, 10);
-  const [m, s] = input.split(":" ).map(Number);
+  const [m, s] = input.split(":").map(Number);
   return m >= 0 && !isNaN(s) ? m * 60 + s : null;
 }
 
@@ -40,10 +40,9 @@ function sanitizeWithHighlights(html: string, highlights: Highlight[]): string {
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  max-width: 1280px;
-  margin: 2rem auto;
-  padding: 1rem;
-  gap: 2rem;
+  height: 100%;
+  width: 100%;
+  padding: 0;
   animation: ${fadeIn} 0.6s ease-in;
   font-family: 'Segoe UI', sans-serif;
   color: #1e293b;
@@ -59,45 +58,41 @@ const Title = styled.h2`
 `;
 
 const LayoutSplit = styled.div`
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 2rem;
-  @media (max-width: 960px) {
-    grid-template-columns: 1fr;
-  }
+  display: flex;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
 `;
 
 const ContentPanel = styled.div`
+  flex: 1;
   background: #ffffff;
   padding: 2rem;
-  border-radius: 1rem;
-  box-shadow: 0 2px 24px rgba(0,0,0,0.05);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #94a3b8 #f1f5f9;
 `;
 
 const SidePanel = styled.div`
-  background: #f1f5f9;
-  padding: 1.5rem;
-  border-radius: 1rem;
+  width: 380px;
+  background: #f8fafc;
+  padding: 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.04);
-  @media (max-width: 640px) {
-    padding: 1rem;
-  }
+  gap: 1.4rem;
+  border-left: 1px solid #e2e8f0;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.03);
 `;
 
 const Preview = styled.div`
-  font-size: 1.1rem;
-  line-height: 1.75;
+  font-size: 1.12rem;
+  line-height: 1.8;
   .jump2-highlight {
     animation: ${pulse} 1s ease;
     cursor: pointer;
     border-radius: 0.3rem;
-    padding: 0.1rem 0.4rem;
+    padding: 0.15rem 0.45rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   }
 `;
 
@@ -111,15 +106,16 @@ const FrameWrapper = styled.div`
     width: 100%;
     height: 100%;
     border: none;
+    border-radius: 0.75rem;
   }
 `;
 
 const Input = styled.input`
-  padding: 0.7rem;
+  padding: 0.8rem 1rem;
   font-size: 1rem;
   border-radius: 0.6rem;
-  border: 1px solid #94a3b8;
-  background: #fff;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
   color: #0f172a;
   width: 100%;
 `;
@@ -127,13 +123,14 @@ const Input = styled.input`
 const Button = styled.button`
   background: #0ea5e9;
   color: white;
-  padding: 0.7rem 1.2rem;
+  padding: 0.75rem 1.2rem;
   font-size: 1rem;
   border-radius: 0.6rem;
   border: none;
   cursor: pointer;
   width: 100%;
   transition: background 0.2s;
+  font-weight: 600;
   &:hover {
     background: #0284c7;
   }
@@ -190,7 +187,9 @@ export default function ArticlePreviewFull({
   const [error, setError] = useState<string | null>(null);
 
   const sanitizedHtml = sanitizeWithHighlights(html, highlightData);
-  const missingHighlights = highlightData.filter(h => !html.toLowerCase().includes(h.text.trim().toLowerCase()));
+  const missingHighlights = highlightData.filter(h =>
+    !html.toLowerCase().includes(h.text.trim().toLowerCase())
+  );
 
   useEffect(() => {
     if (isYouTube || !supportArticles) return;
@@ -240,6 +239,7 @@ export default function ArticlePreviewFull({
               />
             </FrameWrapper>
           )}
+
           {!isYouTube && supportArticles && (
             <>
               {loading && <p>Loading article preview...</p>}
@@ -278,7 +278,7 @@ export default function ArticlePreviewFull({
               htmlContent={html}
               initialHighlights={highlightData}
               onHighlightsChange={setHighlightData}
-              onShare={() => { toast.success("✅ Highlights updated!") }}
+              onShare={() => toast.success("✅ Highlights updated!")}
             />
           )}
 
@@ -289,16 +289,29 @@ export default function ArticlePreviewFull({
             onChange={(e) => setAnchorInput(e.target.value)}
           />
           <Row>
-            <Button onClick={handleCopyAnchor}>{copied ? "Copied!" : "📋 Copy Anchor"}</Button>
-            <Button onClick={() => setShowQR(prev => !prev)}>🧾 {showQR ? "Hide QR" : "Show QR"}</Button>
+            <Button onClick={handleCopyAnchor}>
+              {copied ? "Copied!" : "📋 Copy Anchor"}
+            </Button>
+            <Button onClick={() => setShowQR(prev => !prev)}>
+              🧾 {showQR ? "Hide QR" : "Show QR"}
+            </Button>
           </Row>
+
           {shareUrl && (
-            <small style={{ wordBreak: 'break-all', color: '#64748b', marginTop: '0.5rem' }}>
+            <small style={{ wordBreak: "break-all", color: "#64748b", marginTop: "0.5rem" }}>
               🔗 {shareUrl}
             </small>
           )}
+
           {showQR && shareUrl && (
-            <div style={{ textAlign: "center", marginTop: "1rem", padding: "1rem", background: "#fff", borderRadius: "0.75rem", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }}>
+            <div style={{
+              textAlign: "center",
+              marginTop: "1rem",
+              padding: "1rem",
+              background: "#fff",
+              borderRadius: "0.75rem",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.1)"
+            }}>
               <QRCode value={shareUrl} size={180} />
             </div>
           )}
