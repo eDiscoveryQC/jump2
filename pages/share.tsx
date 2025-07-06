@@ -1,4 +1,3 @@
-// pages/share.tsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import styled from "styled-components";
 import Head from "next/head";
@@ -11,60 +10,46 @@ import { logEvent } from "@/lib/log";
 import { generateShortCode } from "@/lib/shortCode";
 import AppLayout from "@/components/AppLayout";
 
-const FullPage = styled.div`
+const Canvas = styled.div`
+  width: 100%;
+  min-height: 100vh;
+  padding: 5rem 4vw 6rem;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  width: 100%;
   background: linear-gradient(to right, #0f172a, #1e293b);
   color: white;
-  padding: 3rem 2rem;
-  @media (max-width: 768px) {
-    padding: 1.2rem;
-  }
-`;
-
-const Section = styled.section`
-  max-width: 1440px;
-  margin: 0 auto;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 `;
 
 const Title = styled.h1`
-  font-size: 3rem;
+  font-size: 3.4rem;
   font-weight: 900;
   color: #facc15;
-  text-shadow: 0 2px 6px rgba(14, 165, 233, 0.4);
-  margin-bottom: 1rem;
-  text-align: center;
+  text-shadow: 0 2px 12px #0ea5e988;
+  margin-bottom: 1.2rem;
 `;
 
 const Subtitle = styled.p`
   font-size: 1.25rem;
-  max-width: 840px;
-  text-align: center;
   color: #cbd5e1;
+  max-width: 980px;
+  margin-bottom: 2.5rem;
 `;
 
 const Form = styled.div`
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  margin: 2.5rem 0 3rem;
   gap: 1rem;
+  margin-bottom: 2rem;
 
   input[type="text"] {
-    padding: 0.85rem 1.2rem;
-    font-size: 1rem;
-    border-radius: 0.5rem;
+    flex: 1;
+    padding: 1rem 1.4rem;
+    font-size: 1.1rem;
+    border-radius: 0.6rem;
     border: 1px solid #334155;
     background: #1e293b;
     color: white;
-    width: 460px;
+    min-width: 360px;
   }
 
   input::placeholder {
@@ -73,22 +58,21 @@ const Form = styled.div`
 
   label,
   button {
-    padding: 0.85rem 1.3rem;
-    border-radius: 0.5rem;
-    font-size: 1rem;
+    padding: 1rem 1.5rem;
+    border-radius: 0.6rem;
+    font-size: 1.1rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.6rem;
     border: none;
     cursor: pointer;
     color: white;
+    white-space: nowrap;
   }
 
   button {
     background-color: #16a34a;
-    transition: background 0.2s;
   }
-
   button:hover {
     background-color: #15803d;
   }
@@ -100,35 +84,17 @@ const Form = styled.div`
   input[type="file"] {
     display: none;
   }
-
-  @media (max-width: 640px) {
-    flex-direction: column;
-    input,
-    button,
-    label {
-      width: 100%;
-    }
-  }
 `;
 
 const Assistant = styled(motion.div)`
-  padding: 1.6rem;
+  padding: 1.5rem 2rem;
   background: #1e293b;
   border: 1px solid #334155;
-  color: #e2e8f0;
   border-radius: 0.75rem;
-  max-width: 900px;
-  text-align: center;
+  box-shadow: 0 0 28px #0ea5e9aa;
+  font-size: 1rem;
+  color: #e2e8f0;
   margin-bottom: 2rem;
-  box-shadow: 0 0 28px #0ea5e9cc;
-`;
-
-const Divider = styled.hr`
-  width: 100%;
-  max-width: 940px;
-  border: none;
-  border-top: 1px solid #334155;
-  margin: 2rem 0;
 `;
 
 function isValidURL(str: string): boolean {
@@ -221,69 +187,68 @@ export default function SharePage() {
         <meta name="description" content="Highlight. Meme. Timestamp. Upload. Welcome to Sharing-as-a-Service." />
       </Head>
       <Toaster position="top-right" />
-      <FullPage>
-        <Section>
-          <Title>Create a Shareable Moment</Title>
-          <Subtitle>Paste a link or upload a file — highlight key content, generate memes, timestamp insights, and generate smart share links.</Subtitle>
-          <Form>
-            <input
-              type="text"
-              placeholder="Paste article or YouTube link..."
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handlePaste()}
-              aria-label="Paste a link"
-            />
-            <button onClick={handlePaste} disabled={!isValid}>
-              <FaLink /> Share URL
+      <Canvas>
+        <Title>Create a Shareable Moment</Title>
+        <Subtitle>
+          Paste a link or upload a file — highlight key content, generate memes, timestamp insights, and generate smart share links.
+        </Subtitle>
+        <Form>
+          <input
+            type="text"
+            placeholder="Paste article or YouTube link..."
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handlePaste()}
+            aria-label="Paste a link"
+          />
+          <button onClick={handlePaste} disabled={!isValid}>
+            <FaLink /> Share URL
+          </button>
+          <label>
+            <FaUpload /> Upload
+            <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} />
+          </label>
+          {fileName && (
+            <button onClick={clearInputs}>
+              <FaTimesCircle /> Clear
             </button>
-            <label>
-              <FaUpload /> Upload
-              <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} />
-            </label>
-            {fileName && (
-              <button onClick={clearInputs}>
-                <FaTimesCircle /> Clear
-              </button>
-            )}
-          </Form>
-          <Assistant
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            {tip}
-          </Assistant>
-          <Divider />
-          {mode === 'file' && fileName && (
-            <p style={{ color: "#fef08a" }}>
-              ⏳ Parsing support for <strong>{fileName}</strong> coming soon…
-            </p>
           )}
-          {submittedUrl && (
-            <div ref={previewRef} style={{ width: "100%" }}>
-              <ArticlePreviewFull
-                url={submittedUrl}
-                scrapeEngine="scrapingbee"
-                enableYouTubeTimestamp
-                supportArticles
-                supportMemes
-                onGenerateLink={async (link) => {
-                  const shortLink = await createJump2Link(link);
-                  if (shortLink) {
-                    toast.success(`🔗 Jump2 link created & copied!`);
-                    try {
-                      await navigator.clipboard.writeText(shortLink);
-                    } catch {
-                      console.warn("Clipboard copy failed.");
-                    }
+        </Form>
+        <Assistant
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          {tip}
+        </Assistant>
+        {mode === "file" && fileName && (
+          <p style={{ color: "#fef08a" }}>
+            ⏳ Parsing support for <strong>{fileName}</strong> coming soon…
+          </p>
+        )}
+        {submittedUrl && (
+          <div ref={previewRef} style={{ width: "100%" }}>
+            <ArticlePreviewFull
+              url={submittedUrl}
+              scrapeEngine="scrapingbee"
+              enableYouTubeTimestamp
+              supportArticles
+              supportMemes
+              onGenerateLink={async (link) => {
+                const shortLink = await createJump2Link(link);
+                if (shortLink) {
+                  toast.success(`🔗 Jump2 link created & copied!`);
+                  try {
+                    await navigator.clipboard.writeText(shortLink);
+                  } catch {
+                    console.warn("Clipboard copy failed.");
                   }
-                }}
-              />
-            </div>
-          )}
-        </Section>
-      </FullPage>
+                }
+              }}
+            />
+          </div>
+        )}
+      </Canvas>
     </AppLayout>
   );
 }
