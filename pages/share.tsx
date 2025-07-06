@@ -144,7 +144,11 @@ async function createJump2Link(originalUrl: string): Promise<string | null> {
   const code = await generateShortCode();
   const { error } = await supabase.from("links").insert([{ code, url: originalUrl }]);
   if (error) return toast.error("Error creating short link.");
-  await logEvent("create_link", { code, url: originalUrl }).catch(console.warn);
+  try {
+    await logEvent("create_link", { code, url: originalUrl });
+  } catch (err) {
+    console.warn(err);
+  }
   return `https://jump2.link/${code}`;
 }
 
