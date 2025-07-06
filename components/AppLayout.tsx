@@ -23,11 +23,11 @@ const Main = styled.main`
 `;
 
 // Fullscreen content region, no internal borders or boxy constraints
-const Content = styled.section`
+const Content = styled.section<{ fullScreen?: boolean }>`
   flex: 1;
   overflow-y: auto;
   background: linear-gradient(to right, #0f172a, #1e293b);
-  padding: 0;
+  padding: ${(props) => (props.fullScreen ? "0" : "2rem 1.5rem")};
   margin: 0;
 
   &::-webkit-scrollbar {
@@ -42,9 +42,10 @@ const Content = styled.section`
 
 interface Props {
   children: React.ReactNode;
+  fullScreen?: boolean;
 }
 
-export default function AppLayout({ children }: Props) {
+export default function AppLayout({ children, fullScreen = false }: Props) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -59,7 +60,7 @@ export default function AppLayout({ children }: Props) {
       {!isMobile && <SidebarNav />}
       <Main>
         <TopNavBar />
-        <Content role="region" aria-label="Main Content">
+        <Content role="region" aria-label="Main Content" fullScreen={fullScreen}>
           {children}
         </Content>
       </Main>
