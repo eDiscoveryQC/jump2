@@ -1,17 +1,19 @@
-// components/AppLayout.tsx
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import SidebarNav from "./SidebarNav";
 import TopNavBar from "./TopNavBar";
 
+// Styled container: full-height, edge-to-edge layout
 const Container = styled.div`
   display: flex;
   height: 100vh;
+  width: 100vw;
+  overflow: hidden;
   background-color: #0f172a;
   color: white;
-  overflow: hidden;
 `;
 
+// Sidebar + Main split
 const Main = styled.main`
   flex: 1;
   display: flex;
@@ -19,16 +21,13 @@ const Main = styled.main`
   overflow: hidden;
 `;
 
-const ContentWrapper = styled.section<{ fullScreen?: boolean }>`
+// Truly full-screen content with no boxy padding
+const Content = styled.section`
   flex: 1;
   overflow-y: auto;
   background: linear-gradient(to right, #0f172a, #1e293b);
-  padding: ${(props) => (props.fullScreen ? "0" : "2rem 1.5rem")};
-  z-index: 1;
-
-  @media (max-width: 768px) {
-    padding: ${(props) => (props.fullScreen ? "0" : "1.2rem 1rem")};
-  }
+  padding: 0;
+  margin: 0;
 
   &::-webkit-scrollbar {
     width: 8px;
@@ -41,10 +40,10 @@ const ContentWrapper = styled.section<{ fullScreen?: boolean }>`
 
 interface Props {
   children: React.ReactNode;
-  fullScreen?: boolean;
 }
 
-export default function AppLayout({ children, fullScreen }: Props) {
+// Responsive, edge-to-edge layout with top nav and sidebar
+export default function WorkspaceLayout({ children }: Props) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -55,13 +54,13 @@ export default function AppLayout({ children, fullScreen }: Props) {
   }, []);
 
   return (
-    <Container className="jump2-app-layout" data-theme="dark">
+    <Container className="workspace-layout" data-theme="dark">
       {!isMobile && <SidebarNav />}
-      <Main role="main">
+      <Main>
         <TopNavBar />
-        <ContentWrapper fullScreen={fullScreen} role="region" aria-label="Main Content">
+        <Content role="region" aria-label="Main Workspace Content">
           {children}
-        </ContentWrapper>
+        </Content>
       </Main>
     </Container>
   );
