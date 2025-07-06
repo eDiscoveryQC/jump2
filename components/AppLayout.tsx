@@ -1,9 +1,10 @@
+// components/AppLayout.tsx
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import SidebarNav from "./SidebarNav";
 import TopNavBar from "./TopNavBar";
 
-// Styled container: full-height, edge-to-edge layout
+// Outer container: full viewport edge-to-edge layout
 const Container = styled.div`
   display: flex;
   height: 100vh;
@@ -13,7 +14,7 @@ const Container = styled.div`
   color: white;
 `;
 
-// Sidebar + Main split
+// Main content section, with optional sidebar
 const Main = styled.main`
   flex: 1;
   display: flex;
@@ -21,7 +22,7 @@ const Main = styled.main`
   overflow: hidden;
 `;
 
-// Truly full-screen content with no boxy padding
+// Fullscreen content region, no internal borders or boxy constraints
 const Content = styled.section`
   flex: 1;
   overflow-y: auto;
@@ -32,6 +33,7 @@ const Content = styled.section`
   &::-webkit-scrollbar {
     width: 8px;
   }
+
   &::-webkit-scrollbar-thumb {
     background: #334155;
     border-radius: 4px;
@@ -42,23 +44,22 @@ interface Props {
   children: React.ReactNode;
 }
 
-// Responsive, edge-to-edge layout with top nav and sidebar
-export default function WorkspaceLayout({ children }: Props) {
+export default function AppLayout({ children }: Props) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (
-    <Container className="workspace-layout" data-theme="dark">
+    <Container className="app-layout" data-theme="dark">
       {!isMobile && <SidebarNav />}
       <Main>
         <TopNavBar />
-        <Content role="region" aria-label="Main Workspace Content">
+        <Content role="region" aria-label="Main Content">
           {children}
         </Content>
       </Main>
