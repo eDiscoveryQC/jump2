@@ -14,7 +14,6 @@ import {
   Section,
   Heading,
   Text,
-  StatBar,
   VideoPreview,
   Footer,
   SearchBar,
