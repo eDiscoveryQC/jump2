@@ -1,10 +1,13 @@
 // components/SmartInputPanel.tsx
 import React, { useState, useCallback, useEffect } from "react";
 import styled from "styled-components";
-import { FaLink, FaUpload, FaWandMagicSparkles } from "react-icons/fa6";
-import { FaTimesCircle } from "react-icons/fa"; // ✅ Patched to avoid build failure
+import { FaLink, FaUpload, FaTimesCircle } from "react-icons/fa";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import { useRouter } from "next/router";
+import { createShortCode } from "@/lib/shortCode";
+import { supabase } from "@/lib/supabase";
+import { logEvent } from "@/lib/log";
 
 const Panel = styled(motion.div)`
   background: linear-gradient(to bottom right, #1e293b, #0f172a);
@@ -99,15 +102,13 @@ const Tip = styled(motion.div)`
   text-align: center;
 `;
 
-export default function SmartInputPanel({
-  onShareGenerated,
-}: {
-  onShareGenerated: (url: string) => void;
-}) {
+export default function SmartInputPanel({ onShareGenerated }: { onShareGenerated?: (url: string) => void }) {
   const [url, setUrl] = useState("");
   const [fileName, setFileName] = useState("");
   const [tip, setTip] = useState("Paste a link or upload a file to begin.");
   const [isValid, setIsValid] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -122,29 +123,66 @@ export default function SmartInputPanel({
     return () => clearTimeout(t);
   }, [url]);
 
-  const handlePaste = useCallback(() => {
+  const handlePaste = useCallback(async () => {
     const trimmed = url.trim();
     try {
       const parsed = new URL(trimmed);
       if (parsed.protocol === "http:" || parsed.protocol === "https:") {
-        setTip("🔗 URL accepted. Loading preview...");
-        onShareGenerated(trimmed);
-        setFileName("");
+        setTip("🔗 URL accepted. Generating link...");
+        toast.loading("Generating smart link...");
+
+        const { shortcode } = await createShortCode({ type: "url", value: trimmed });
+        await logEvent("share:url_submitted", { url: trimmed, shortcode });
+
+        toast.dismiss();
         toast.success("🔗 Smart link created");
+        setFileName("");
+
+        const link = `/preview/${shortcode}`;
+        if (onShareGenerated) onShareGenerated(link);
+        else router.push(link);
         return;
       }
     } catch {
+      toast.dismiss();
       toast.error("Invalid URL");
     }
   }, [url]);
 
-  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setFileName(file.name);
     setUrl("");
-    setTip("📄 File uploaded. Smart parsing coming soon.");
-    toast.success(`📁 ${file.name} uploaded`);
+    setTip("📄 Uploading file...");
+    setUploading(true);
+    toast.loading("Uploading file...");
+
+    try {
+      const { data, error } = await supabase.storage
+        .from("uploads")
+        .upload(`incoming/${Date.now()}-${file.name}`, file);
+
+      if (error || !data?.path) throw error;
+
+      const publicUrl = supabase.storage.from("uploads").getPublicUrl(data.path).data.publicUrl;
+      const { shortcode } = await createShortCode({ type: "file", value: publicUrl, filename: file.name });
+
+      await logEvent("share:file_uploaded", { name: file.name, size: file.size, shortcode });
+
+      toast.dismiss();
+      toast.success("📁 File uploaded & link created");
+
+      const link = `/preview/${shortcode}`;
+      if (onShareGenerated) onShareGenerated(link);
+      else router.push(link);
+    } catch (err) {
+      toast.dismiss();
+      console.error("File upload error:", err);
+      toast.error("Upload failed.");
+    } finally {
+      setUploading(false);
+    }
   }, []);
 
   const clear = useCallback(() => {
@@ -154,11 +192,7 @@ export default function SmartInputPanel({
   }, []);
 
   return (
-    <Panel
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-    >
+    <Panel initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
       <Row>
         <Input
           type="text"
@@ -170,12 +204,12 @@ export default function SmartInputPanel({
       </Row>
 
       <ButtonRow>
-        <button onClick={handlePaste} className="primary" disabled={!isValid}>
+        <button onClick={handlePaste} className="primary" disabled={!isValid || uploading}>
           <FaLink /> Share URL
         </button>
         <label className="upload">
-          <FaUpload /> Upload File
-          <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} />
+          <FaUpload /> {uploading ? "Uploading..." : "Upload File"}
+          <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} disabled={uploading} />
         </label>
         {(fileName || url) && (
           <button onClick={clear} className="clear">
@@ -184,11 +218,7 @@ export default function SmartInputPanel({
         )}
       </ButtonRow>
 
-      <Tip
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-      >
+      <Tip initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
         {tip}
       </Tip>
     </Panel>
