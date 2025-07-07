@@ -1,179 +1,111 @@
-// pages/index.tsx — Meta-Grade Unicorn Home
+// pages/index.tsx — Meta-Grade Unicorn Home v13.0+ (Production Ready)
 
-import React from "react";
+import React, { useState } from "react";
 import Head from "next/head";
-import styled, { keyframes } from "styled-components";
-import { motion } from "framer-motion";
-
-const pulseGlow = keyframes`
-  0%, 100% { box-shadow: 0 0 0px #facc15; }
-  50% { box-shadow: 0 0 16px #facc15aa; }
-`;
-
-const Hero = styled.section`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  padding: 6rem 2rem 4rem;
-  background: linear-gradient(to right, #0f172a, #1e293b);
-  color: #fff;
-`;
-
-const Logo = styled(motion.h1)`
-  font-size: 4rem;
-  font-weight: 900;
-  letter-spacing: -1px;
-  color: #facc15;
-  animation: ${pulseGlow} 3s infinite;
-  text-shadow: 0 3px 12px #0ea5e9;
-`;
-
-const Subtitle = styled.h2`
-  font-size: 1.9rem;
-  max-width: 780px;
-  margin-top: 1.2rem;
-  color: #fef08a;
-`;
-
-const CTAGroup = styled.div`
-  margin-top: 2.8rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.2rem;
-
-  a {
-    padding: 1rem 2rem;
-    font-weight: 700;
-    font-size: 1.1rem;
-    border-radius: 0.75rem;
-    text-decoration: none;
-    transition: 0.25s ease;
-  }
-
-  .primary {
-    background: #facc15;
-    color: #0f172a;
-  }
-
-  .primary:hover {
-    background: #eab308;
-  }
-
-  .secondary {
-    border: 2px solid #facc15;
-    color: #facc15;
-  }
-
-  .secondary:hover {
-    background: #facc15;
-    color: #0f172a;
-  }
-`;
-
-const Section = styled.section`
-  padding: 4rem 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  text-align: center;
-`;
-
-const Heading = styled.h3`
-  font-size: 2.5rem;
-  font-weight: 800;
-  margin-bottom: 1.6rem;
-  color: #f8fafc;
-`;
-
-const Text = styled.p`
-  font-size: 1.2rem;
-  color: #cbd5e1;
-  max-width: 800px;
-  margin: 0 auto 2rem;
-`;
-
-const StatBar = styled.div`
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 2rem;
-  color: #fef08a;
-  font-weight: 600;
-  margin-top: 2rem;
-`;
-
-const Footer = styled.footer`
-  background: #0f172a;
-  color: #cbd5e1;
-  padding: 4rem 2rem;
-  text-align: center;
-  font-size: 1rem;
-`;
+import Lottie from "lottie-react";
+import animationData from "../public/animated-preview.json";
+import { useSpring, animated } from "@react-spring/web";
+import {
+  Hero,
+  Logo,
+  Subtitle,
+  CTAGroup,
+  Section,
+  Heading,
+  Text,
+  StatBar,
+  VideoPreview,
+  Footer,
+  SearchBar,
+  HelpBeacon,
+  HelpModal
+} from "../styles/metaHomeStyles";
 
 export default function Home() {
+  const [showHelp, setShowHelp] = useState(false);
+
+  const stats = [
+    { label: "Jump2s created this week", value: 1187542 },
+    { label: "Countries active", value: 102 },
+    { label: "Creator accounts", value: 83241 }
+  ];
+
+  const animatedCounters = stats.map(stat =>
+    useSpring({ from: { val: 0 }, to: { val: stat.value }, config: { duration: 1200 } })
+  );
+
   return (
     <>
       <Head>
         <title>Jump2 — The First Share-Tech Company</title>
-        <meta name="description" content="Share the exact moment that matters. Jump2 lets you highlight, timestamp, or meme anything — and share it smarter." />
+        <meta name="description" content="Jump2 lets you highlight, timestamp, and share the exact moment that matters." />
+        <meta property="og:image" content="https://jump2share.com/og-image.jpg" />
         <meta property="og:title" content="Jump2 — Share the Moment, Not the Mess" />
-        <meta property="og:image" content="https://jump2.link/og-image.jpg" />
-        <meta property="og:url" content="https://jump2.link" />
         <meta property="og:description" content="Create viral links from quotes, timestamps, and memes — Jump2 is your toolkit for sharing smarter." />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
 
       <Hero>
         <Logo
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8 }}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
         >
           Jump2
         </Logo>
-        <Subtitle>
-          Share the moment — not the mess. The new internet is precision-first.
-        </Subtitle>
+        <Subtitle>Share the moment — not the mess. Welcome to Share-Tech.</Subtitle>
         <CTAGroup>
-          <a href="/share" className="primary">Create Your First Jump2</a>
-          <a href="/features" className="secondary">Explore Features</a>
+          <a href="/share" className="primary" aria-label="Create a Jump2 link">Create a Jump2</a>
+          <a href="/contact" className="secondary" aria-label="Contact support">Contact</a>
         </CTAGroup>
+        <SearchBar placeholder="🔍 Try 'Taylor Swift quote'..." aria-label="Jump2 smart search" />
       </Hero>
 
-      <Section>
-        <Heading>Built for Creators. Backed by Virality.</Heading>
-        <Text>
-          Jump2 pioneered Share-Tech: a smarter layer of sharing where precision meets performance. Highlight videos, quotes, or audio and instantly link to the moment that matters.
-        </Text>
+      <Section
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+      >
+        <Heading>Jump2 Momentum</Heading>
+        <Text>We're building the new layer of the internet — one highlight at a time.</Text>
         <StatBar>
-          <div>📈 1M+ Links Generated</div>
-          <div>🌍 Used in 100+ Countries</div>
-          <div>🚀 Trusted by Top Creators & Teams</div>
+          {animatedCounters.map((props, i) => (
+            <animated.div key={i}>{props.val.to(val => Math.floor(val).toLocaleString())} {stats[i].label}</animated.div>
+          ))}
         </StatBar>
       </Section>
 
-      <Section>
-        <Heading>Why Share-Tech Wins</Heading>
-        <Text>
-          URLs weren’t made for storytelling. Jump2 transforms links into bite-sized context bombs — ready for X, Discord, Slack, TikTok, and more.
-        </Text>
+      <Section
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+      >
+        <Heading>Product in Action</Heading>
+        <VideoPreview>
+          <video src="/preview.mp4" autoPlay muted loop playsInline />
+        </VideoPreview>
       </Section>
 
-      <Section>
-        <Heading>Join the Precision Internet</Heading>
-        <Text>
-          Whether you're a creator, strategist, or investor — Jump2 is building the new standard for content velocity. Clarity is the new currency.
-        </Text>
-        <CTAGroup>
-          <a href="/contact" className="primary">Get Involved</a>
-        </CTAGroup>
+      <Section
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.4 }}
+      >
+        <Heading>Interactive Visual</Heading>
+        <Lottie animationData={animationData} style={{ maxWidth: 520, margin: "0 auto" }} />
       </Section>
 
       <Footer>
         <div><strong>Jump2 — The First Share-Tech Company</strong></div>
-        <div style={{ marginTop: "0.8rem" }}>Crafted for clarity. Designed to go viral.</div>
-        <div style={{ marginTop: "0.5rem" }}>support@jump2.link | GitHub | Terms</div>
+        <div style={{ marginTop: "0.6rem" }}>support@jump2share.com | GitHub | Terms</div>
       </Footer>
+
+      <HelpBeacon onClick={() => setShowHelp(!showHelp)} aria-label="Open help dialog">💬 Help</HelpBeacon>
+      {showHelp && (
+        <HelpModal>
+          Need help? Contact us at <strong>support@jump2share.com</strong> or try our <a href="/contact">contact form</a>.
+        </HelpModal>
+      )}
     </>
   );
 }
