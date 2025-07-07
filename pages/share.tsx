@@ -1,9 +1,8 @@
-// pages/share.tsx
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import SmartInputPanel from "@/components/SmartInputPanel";
-import LivePreview from "@/components/LivePreview";
 import { useRouter } from "next/router";
+import SmartInputPanel from "@/components/SmartInputPanel";
+import ArticlePreviewFull from "@/components/ArticlePreviewFull";
 
 const PageWrapper = styled.div`
   background: linear-gradient(135deg, #0f172a, #1e293b);
@@ -28,13 +27,12 @@ const Content = styled.main`
 const Title = styled.h1`
   font-size: 3rem;
   font-weight: 800;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
   color: #facc15;
   text-align: center;
   text-shadow: 0 0 20px #facc15aa;
 `;
 
-// Highlight glow styling
 const GlobalStyle = styled.div`
   .highlighted-jump2 {
     background-color: #facc15;
@@ -52,6 +50,8 @@ export default function SharePage() {
   const router = useRouter();
   const { hl } = router.query;
 
+  const [url, setUrl] = useState<string>("");
+
   useEffect(() => {
     if (!hl) return;
 
@@ -67,7 +67,6 @@ export default function SharePage() {
       });
     };
 
-    // Wait a bit to ensure content is rendered
     const timeout = setTimeout(scrollToHighlights, 800);
     return () => clearTimeout(timeout);
   }, [hl]);
@@ -76,9 +75,20 @@ export default function SharePage() {
     <PageWrapper>
       <GlobalStyle />
       <Content>
-        <Title>Smart Link Share</Title>
-        <SmartInputPanel />
-        <LivePreview />
+        <Title>🔗 Create Your Jump2 Link</Title>
+
+        {/* Input/drop panel */}
+        <SmartInputPanel onSubmit={(link: string) => setUrl(link)} />
+
+        {/* Conditional render of article preview */}
+        {url && (
+          <ArticlePreviewFull
+            url={url}
+            supportArticles
+            supportMemes
+            enableYouTubeTimestamp
+          />
+        )}
       </Content>
     </PageWrapper>
   );
