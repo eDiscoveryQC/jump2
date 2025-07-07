@@ -132,7 +132,7 @@ export default function SmartInputPanel({ onShareGenerated }: { onShareGenerated
         toast.loading("Generating smart link...");
 
         const { shortcode } = await createShortCode({ type: "url", value: trimmed });
-        await logEvent("share:url_submitted", { url: trimmed, shortcode });
+        logEvent("share:url_submitted", { url: trimmed, shortcode });
 
         toast.dismiss();
         toast.success("🔗 Smart link created");
@@ -168,7 +168,7 @@ export default function SmartInputPanel({ onShareGenerated }: { onShareGenerated
       const publicUrl = supabase.storage.from("uploads").getPublicUrl(data.path).data.publicUrl;
       const { shortcode } = await createShortCode({ type: "file", value: publicUrl, filename: file.name });
 
-      await logEvent("share:file_uploaded", { name: file.name, size: file.size, shortcode });
+      logEvent("share:file_uploaded", { name: file.name, size: file.size, shortcode });
 
       toast.dismiss();
       toast.success("📁 File uploaded & link created");
