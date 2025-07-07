@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
-import { useRouter } from "next/router";
 import SmartInputPanel from "@/components/SmartInputPanel";
-import ArticlePreviewFull from "@/components/ArticlePreviewFull";
 
 const PageWrapper = styled.div`
   background: linear-gradient(135deg, #0f172a, #1e293b);
@@ -25,69 +23,95 @@ const Content = styled.main`
 `;
 
 const Title = styled.h1`
-  font-size: 3rem;
+  font-size: 2.8rem;
   font-weight: 800;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   color: #facc15;
   text-align: center;
-  text-shadow: 0 0 20px #facc15aa;
+  text-shadow: 0 0 20px #0ea5e977;
 `;
 
-const GlobalStyle = styled.div`
-  .highlighted-jump2 {
-    background-color: #facc15;
-    padding: 0 4px;
-    border-radius: 4px;
-    transition: box-shadow 0.3s ease;
-  }
+const Description = styled.p`
+  font-size: 1.1rem;
+  color: #cbd5e1;
+  text-align: center;
+  max-width: 720px;
+  margin-bottom: 3rem;
+`;
 
-  .highlighted-active {
-    box-shadow: 0 0 14px 4px #facc15aa;
+const ShareCard = styled.div`
+  background: #0f172a;
+  border: 1px solid #334155;
+  padding: 1.75rem;
+  border-radius: 1rem;
+  margin-top: 2.5rem;
+  text-align: center;
+  max-width: 720px;
+  width: 100%;
+  animation: fadeIn 0.6s ease;
+`;
+
+const ShareLink = styled.code`
+  font-family: monospace;
+  display: block;
+  margin: 1rem 0;
+  font-size: 1rem;
+  word-break: break-all;
+  color: #38bdf8;
+`;
+
+const CopyButton = styled.button`
+  background: #0ea5e9;
+  color: white;
+  font-size: 1rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.6rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: 600;
+
+  &:hover {
+    background: #0284c7;
   }
 `;
 
 export default function SharePage() {
-  const router = useRouter();
-  const { hl } = router.query;
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
-  const [url, setUrl] = useState<string>("");
+  const handleShareGenerated = (link: string) => {
+    const fullLink = `${window.location.origin}${link}`;
+    setGeneratedLink(fullLink);
+    setCopied(false);
+  };
 
-  useEffect(() => {
-    if (!hl) return;
-
-    const highlightIds = String(hl).split(",").map(id => id.trim());
-
-    const scrollToHighlights = () => {
-      highlightIds.forEach(id => {
-        const el = document.getElementById(`highlight-${id}`);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-          el.classList.add("highlighted-active");
-        }
-      });
-    };
-
-    const timeout = setTimeout(scrollToHighlights, 800);
-    return () => clearTimeout(timeout);
-  }, [hl]);
+  const handleCopy = () => {
+    if (generatedLink) {
+      navigator.clipboard.writeText(generatedLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }
+  };
 
   return (
     <PageWrapper>
-      <GlobalStyle />
       <Content>
-        <Title>🔗 Create Your Jump2 Link</Title>
+        <Title>🔗 Create a Smart Jump2 Link</Title>
+        <Description>
+          Paste any article or video URL below. Instantly generate a smart, shareable link that highlights the exact quote or timestamp.
+        </Description>
 
-        {/* Input/drop panel */}
-        <SmartInputPanel onSubmit={(link: string) => setUrl(link)} />
+        <SmartInputPanel onShareGenerated={handleShareGenerated} />
 
-        {/* Conditional render of article preview */}
-        {url && (
-          <ArticlePreviewFull
-            url={url}
-            supportArticles
-            supportMemes
-            enableYouTubeTimestamp
-          />
+        {generatedLink && (
+          <ShareCard>
+            <strong>✅ Your Jump2 Link is Ready:</strong>
+            <ShareLink>{generatedLink}</ShareLink>
+            <CopyButton onClick={handleCopy}>
+              {copied ? "Copied!" : "📋 Copy Link"}
+            </CopyButton>
+          </ShareCard>
         )}
       </Content>
     </PageWrapper>
