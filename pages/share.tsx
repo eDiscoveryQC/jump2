@@ -1,10 +1,17 @@
-// pages/share.tsx — Meta-Grade Web App Page with Layout
-
-import React from "react";
+// pages/share.tsx
+import React, { useEffect } from "react";
 import styled from "styled-components";
-import Layout from "@/components/Layout";
 import SmartInputPanel from "@/components/SmartInputPanel";
 import LivePreview from "@/components/LivePreview";
+import { useRouter } from "next/router";
+
+const PageWrapper = styled.div`
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: #ffffff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+`;
 
 const Content = styled.main`
   flex: 1;
@@ -27,64 +34,52 @@ const Title = styled.h1`
   text-shadow: 0 0 20px #facc15aa;
 `;
 
-const Subtitle = styled.p`
-  font-size: 1.25rem;
-  font-weight: 400;
-  text-align: center;
-  color: #cbd5e1;
-  max-width: 720px;
-  margin-bottom: 3rem;
-`;
+// Highlight glow styling
+const GlobalStyle = styled.div`
+  .highlighted-jump2 {
+    background-color: #facc15;
+    padding: 0 4px;
+    border-radius: 4px;
+    transition: box-shadow 0.3s ease;
+  }
 
-const FlexPanel = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  gap: 2rem;
-  width: 100%;
-  max-width: 1200px;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: center;
-    gap: 2rem;
+  .highlighted-active {
+    box-shadow: 0 0 14px 4px #facc15aa;
   }
 `;
 
-const PanelBox = styled.div`
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  padding: 2rem;
-  width: 100%;
-  max-width: 500px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-`;
-
 export default function SharePage() {
+  const router = useRouter();
+  const { hl } = router.query;
+
+  useEffect(() => {
+    if (!hl) return;
+
+    const highlightIds = String(hl).split(",").map(id => id.trim());
+
+    const scrollToHighlights = () => {
+      highlightIds.forEach(id => {
+        const el = document.getElementById(`highlight-${id}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.classList.add("highlighted-active");
+        }
+      });
+    };
+
+    // Wait a bit to ensure content is rendered
+    const timeout = setTimeout(scrollToHighlights, 800);
+    return () => clearTimeout(timeout);
+  }, [hl]);
+
   return (
-    <Layout>
+    <PageWrapper>
+      <GlobalStyle />
       <Content>
-        <Title>Jump2: The Creator’s Drop Zone</Title>
-        <Subtitle>
-          Paste a link, upload a file, or drop a doc. Instantly generate a smart preview,
-          protect your content, and track performance — built with creators in mind.
-        </Subtitle>
-
-        <FlexPanel>
-          <PanelBox>
-            <SmartInputPanel
-              onShareGenerated={(url) => {
-                console.log("Generated:", url);
-                // Future: route to /preview/[slug] or update global state
-              }}
-            />
-          </PanelBox>
-
-          <PanelBox>
-            <LivePreview />
-          </PanelBox>
-        </FlexPanel>
+        <Title>Smart Link Share</Title>
+        <SmartInputPanel />
+        <LivePreview />
       </Content>
-    </Layout>
+    </PageWrapper>
   );
 }

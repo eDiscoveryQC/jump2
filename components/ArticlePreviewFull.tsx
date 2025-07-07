@@ -1,4 +1,3 @@
-// components/ArticlePreviewFull.tsx
 import React, { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import DOMPurify from "isomorphic-dompurify";
@@ -30,7 +29,7 @@ function sanitizeWithHighlights(html: string, highlights: Highlight[]): string {
   let result = "", pos = 0;
   for (const { start, end, color, id } of sorted) {
     if (start > pos) result += DOMPurify.sanitize(html.slice(pos, start));
-    result += `<mark class="jump2-highlight" style="--highlight-color:${color};background:${color}" data-id="${id}" tabindex="0">${DOMPurify.sanitize(html.slice(start, end))}</mark>`;
+    result += `<mark id="highlight-${id}" class="jump2-highlight" style="--highlight-color:${color};background:${color}" data-id="${id}" tabindex="0">${DOMPurify.sanitize(html.slice(start, end))}</mark>`;
     pos = end;
   }
   if (pos < html.length) result += DOMPurify.sanitize(html.slice(pos));
@@ -278,7 +277,7 @@ export default function ArticlePreviewFull({
               htmlContent={html}
               initialHighlights={highlightData}
               onHighlightsChange={setHighlightData}
-              onShare={() => { toast.success("✅ Highlights updated!"); }}
+              onShare={() => toast.success("✅ Highlights updated!")}
             />
           )}
 
