@@ -1,155 +1,132 @@
-// pages/share.tsx
-import React, { useState, useRef, useEffect } from 'react';
-import styled, { keyframes } from 'styled-components';
-import Head from 'next/head';
-import SmartInputPanel from '@/components/SmartInputPanel';
-import ArticlePreviewFull from '@/components/ArticlePreviewFull';
-import Footer from '@/components/Footer';
-import { Toaster, toast } from 'react-hot-toast';
+import React from "react";
+import Head from "next/head";
+import styled from "styled-components";
+import SmartInputPanel from "@/components/SmartInputPanel";
+import Layout from "@/components/Layout";
 
-const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
-
-const pulseGradient = keyframes`
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-`;
-
-const PageWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: radial-gradient(circle at top left, #1e293b, #0f172a);
-  color: #ffffff;
-  position: relative;
-`;
-
-const StickyNav = styled.div`
-  width: 100%;
-  padding: 1rem 2rem;
-  background: #0f172a;
-  border-bottom: 1px solid #1e293b;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  font-weight: bold;
-  font-size: 1.2rem;
-`;
-
-const Header = styled.header`
-  padding: 3rem 2rem 2rem;
-  text-align: center;
-`;
-
-const Title = styled.h1`
-  font-size: 3.6rem;
-  font-weight: 900;
-  letter-spacing: -1.4px;
-  background: linear-gradient(270deg, #22d3ee, #9333ea, #3b82f6);
-  background-size: 600% 600%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: ${pulseGradient} 8s ease infinite;
-`;
-
-const Subtitle = styled.p`
-  font-size: 1.25rem;
-  margin-top: 1rem;
-  color: #cbd5e1;
-  max-width: 680px;
-  margin-left: auto;
-  margin-right: auto;
-`;
-
-const Callout = styled.div`
-  margin-top: 2rem;
-  background: #1e293b;
-  padding: 1.5rem;
-  border: 1px solid #334155;
-  border-radius: 1rem;
-  max-width: 680px;
-  margin-left: auto;
-  margin-right: auto;
-  font-size: 1.05rem;
-  color: #94a3b8;
-  animation: ${fadeIn} 1s ease forwards;
-`;
-
-const Body = styled.main`
-  flex: 1;
-  padding: 3rem 1rem 5rem;
+const ShareHero = styled.section`
   display: flex;
   flex-direction: column;
   align-items: center;
+  text-align: center;
+  padding: 4rem 1.5rem 3rem;
+  background: linear-gradient(135deg, #0f172a 30%, #1e3a8a 100%);
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 32px rgba(14, 165, 233, 0.25);
+
+  h1 {
+    font-size: 3.2rem;
+    font-weight: 900;
+    color: #facc15;
+    margin-bottom: 1rem;
+    text-shadow: 0 4px 20px #0ea5e9;
+  }
+
+  p {
+    font-size: 1.25rem;
+    max-width: 760px;
+    color: #cbd5e1;
+  }
+
+  @media (max-width: 640px) {
+    padding: 3rem 1rem;
+    h1 {
+      font-size: 2.4rem;
+    }
+    p {
+      font-size: 1rem;
+    }
+  }
 `;
 
-const Divider = styled.hr`
+const PanelWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
   width: 100%;
-  max-width: 800px;
-  border: none;
-  border-top: 1px solid #334155;
-  margin: 4rem 0 2rem;
+  gap: 2rem;
+  margin-top: 3.5rem;
+
+  @media (max-width: 960px) {
+    flex-direction: column;
+    align-items: center;
+  }
 `;
 
-const PreviewWrapper = styled.div`
-  width: 100%;
-  max-width: 1200px;
-  margin-top: 2rem;
-  animation: ${fadeIn} 1s ease-in-out;
+const InputBox = styled.div`
+  flex: 1;
+  padding: 2.2rem;
+  border-radius: 1.5rem;
+  background: #020617;
+  border: 1px solid #334155;
+  box-shadow: 0 8px 30px rgba(14, 165, 233, 0.2);
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 12px 40px rgba(14, 165, 233, 0.35);
+    transform: translateY(-2px);
+  }
+`;
+
+const PreviewBox = styled.div`
+  flex: 1;
+  padding: 2.2rem;
+  border-radius: 1.5rem;
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #f1f5f9;
+  box-shadow: inset 0 0 0 2px #1e3a8a55;
+  transition: all 0.3s ease;
+
+  h3 {
+    font-size: 1.2rem;
+    color: #7dd3fc;
+    margin-top: 0;
+    margin-bottom: 1.2rem;
+  }
+
+  p {
+    font-size: 1rem;
+    color: #cbd5e1;
+  }
+
+  &:hover {
+    box-shadow: inset 0 0 0 3px #3b82f6aa;
+  }
 `;
 
 export default function SharePage() {
-  const [shareUrl, setShareUrl] = useState<string>('');
-  const previewRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (shareUrl && previewRef.current) {
-      previewRef.current.scrollIntoView({ behavior: 'smooth' });
-      toast.success('Preview loaded successfully!');
-    }
-  }, [shareUrl]);
-
   return (
-    <PageWrapper>
+    <Layout>
       <Head>
-        <title>Jump2 Share — Smarter Sharing Starts Here</title>
-        <meta name="description" content="Jump2 lets you create highlight-rich shareable links to videos, articles, and more." />
+        <title>Jump2 — Share Smarter</title>
+        <meta
+          name="description"
+          content="Jump2 makes sharing faster, smarter, and more beautiful. Paste a link or drop a file."
+        />
       </Head>
-      <StickyNav>🚀 Jump2</StickyNav>
 
-      <Header>
-        <Title>Jump2 Share</Title>
-        <Subtitle>
-          Paste any article, YouTube link, or content URL. Highlight what matters. Create a shareable smart link.
-        </Subtitle>
-        <Callout>
-          ✨ Tip: After pasting a URL or uploading a file, your preview will appear automatically. Jump2 makes content sharing human again.
-        </Callout>
-      </Header>
+      <ShareHero>
+        <h1>Jump2: The Creator’s Drop Zone</h1>
+        <p>
+          Paste a URL, upload a file, or drop a doc. Jump2 instantly transforms it into a smart
+          shareable link with previews, protection, and tracking — built for creators.
+        </p>
+      </ShareHero>
 
-      <Body>
-        <SmartInputPanel onShareGenerated={(url) => setShareUrl(url)} />
+      <PanelWrapper>
+        <InputBox>
+          <SmartInputPanel />
+        </InputBox>
 
-        {shareUrl && (
-          <>
-            <Divider />
-            <PreviewWrapper ref={previewRef}>
-              <ArticlePreviewFull
-                url={shareUrl}
-                supportArticles
-                enableYouTubeTimestamp
-                supportMemes
-              />
-            </PreviewWrapper>
-          </>
-        )}
-      </Body>
-
-      <Footer contactEmail="support@jump2share.com" />
-      <Toaster position="bottom-center" />
-    </PageWrapper>
+        <PreviewBox>
+          <h3>Live Smart Preview</h3>
+          <p>
+            See a visual preview of your shared content before generating your Jump2 link.
+            Real-time, secure, and frictionless.
+          </p>
+        </PreviewBox>
+      </PanelWrapper>
+    </Layout>
   );
 }
