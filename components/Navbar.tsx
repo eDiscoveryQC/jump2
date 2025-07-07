@@ -1,8 +1,11 @@
-// components/Navbar.tsx
+// components/Navbar.tsx (Meta-Unicorn Final)
+
 import Link from "next/link";
 import styled, { css, keyframes } from "styled-components";
 import { useRouter } from "next/router";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
+import { FaBars, FaTimes } from "react-icons/fa";
+import { motion } from "framer-motion";
 
 const pulse = keyframes`
   0%, 100% { box-shadow: 0 0 0px #facc15; }
@@ -13,70 +16,82 @@ const NavBarWrapper = styled.nav`
   width: 100%;
   position: sticky;
   top: 0;
-  z-index: 100;
-  background: rgba(15, 23, 42, 0.9);
-  backdrop-filter: blur(10px);
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(14px);
   border-bottom: 1px solid #334155;
-  box-shadow: 0 4px 20px rgba(14, 165, 233, 0.1);
+  box-shadow: 0 4px 30px rgba(14, 165, 233, 0.15);
 `;
 
 const Container = styled.div`
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0.8rem 1.2rem;
+  padding: 0.9rem 1.4rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
 `;
 
 const Logo = styled.a`
-  font-size: 1.8rem;
+  font-size: 2rem;
   font-weight: 900;
   color: #facc15;
-  letter-spacing: -0.5px;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
   animation: ${pulse} 3s infinite;
-  text-shadow: 0 1px 3px #0ea5e9;
+  text-shadow: 0 2px 4px #0ea5e9;
   cursor: pointer;
 `;
 
-const Menu = styled.div`
+const Menu = styled.div<{ open?: boolean }>`
   display: flex;
   gap: 2rem;
   align-items: center;
 
   @media (max-width: 768px) {
-    display: none;
+    position: absolute;
+    top: 64px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    background: #0f172a;
+    padding: 1.5rem;
+    display: ${({ open }) => (open ? "flex" : "none")};
+    border-top: 1px solid #334155;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   }
 `;
 
-const MenuLink = styled.a<{ active?: boolean }>`
+const MenuLink = styled(motion.a)<{ active?: boolean }>`
   color: ${({ active }) => (active ? "#facc15" : "#e2e8f0")};
   font-weight: 500;
   font-size: 1rem;
-  transition: color 0.3s ease;
   position: relative;
+  transition: all 0.3s ease;
+  transform-origin: center;
 
   &:hover {
     color: #facc15;
+    transform: scale(1.05);
   }
+`;
 
-  &::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -5px;
-    height: 2px;
-    background: ${({ active }) => (active ? "#facc15" : "transparent")};
-    transition: background 0.3s;
+const MobileToggle = styled.button`
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #facc15;
+  cursor: pointer;
+
+  @media (max-width: 768px) {
+    display: block;
   }
 `;
 
 export default function Navbar() {
   const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
 
   const links = [
     { href: "/", label: "Home" },
@@ -87,15 +102,31 @@ export default function Navbar() {
   ];
 
   return (
-    <NavBarWrapper>
+    <NavBarWrapper role="navigation" aria-label="Main Navigation">
       <Container>
         <Link href="/" passHref legacyBehavior>
-          <Logo>Jump2</Logo>
+          <Logo aria-label="Jump2 homepage">Jump2</Logo>
         </Link>
-        <Menu>
+
+        <MobileToggle
+          aria-label="Toggle Menu"
+          onClick={() => setIsOpen(!isOpen)}
+          aria-expanded={isOpen}
+        >
+          {isOpen ? <FaTimes /> : <FaBars />}
+        </MobileToggle>
+
+        <Menu open={isOpen} role="menu">
           {links.map((link) => (
-            <Link href={link.href} passHref legacyBehavior key={link.href}>
-              <MenuLink active={router.pathname === link.href}>{link.label}</MenuLink>
+            <Link href={link.href} passHref legacyBehavior key={link.href} prefetch>
+              <MenuLink
+                active={router.pathname === link.href}
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.96 }}
+                role="menuitem"
+              >
+                {link.label}
+              </MenuLink>
             </Link>
           ))}
         </Menu>
