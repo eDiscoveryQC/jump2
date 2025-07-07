@@ -1,3 +1,5 @@
+// components/LivePreview.tsx
+
 import React from "react";
 import styled, { keyframes } from "styled-components";
 import { motion } from "framer-motion";
@@ -90,4 +92,3 @@ export default function LivePreview() {
     </PreviewWrapper>
   );
 }
- 
