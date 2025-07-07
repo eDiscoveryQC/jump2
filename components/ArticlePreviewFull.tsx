@@ -18,7 +18,7 @@ function extractYouTubeID(url: string): string {
 }
 
 function parseTimeInput(input: string): number | null {
-  if (/^\\d+$/.test(input)) return parseInt(input, 10);
+  if (/^\d+$/.test(input)) return parseInt(input, 10);
   const [m, s] = input.split(":").map(Number);
   return m >= 0 && !isNaN(s) ? m * 60 + s : null;
 }
@@ -288,7 +288,10 @@ export default function ArticlePreviewFull({
               htmlContent={html}
               initialHighlights={highlightData}
               onHighlightsChange={setHighlightData}
-              onShare={() => toast.success("✅ Highlights updated!")}
+              onShare={() => {
+                toast.success("✅ Highlights updated!");
+                return;
+              }}
             />
           )}
 
