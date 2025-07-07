@@ -96,6 +96,11 @@ const PreviewBox = styled.div`
 `;
 
 export default function SharePage() {
+  const handleShareGenerated = (url: string) => {
+    console.log("✅ Share link generated:", url);
+    // Add custom logic here if needed (copy to clipboard, show toast, etc.)
+  };
+
   return (
     <Layout>
       <Head>
@@ -116,7 +121,7 @@ export default function SharePage() {
 
       <PanelWrapper>
         <InputBox>
-          <SmartInputPanel />
+          <SmartInputPanel onShareGenerated={handleShareGenerated} />
         </InputBox>
 
         <PreviewBox>
