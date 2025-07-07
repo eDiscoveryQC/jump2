@@ -1,4 +1,4 @@
-// components/HeroSection.tsx — Final Meta-Style Hero Component
+// components/HeroSection.tsx — Final Meta-Grade Hero Component (Full Polish)
 
 import React from "react";
 import { useSpring, animated } from "@react-spring/web";
@@ -21,7 +21,7 @@ const HeroSection = () => {
   ];
 
   const animatedStats = stats.map(stat =>
-    useSpring({ from: { val: 0 }, to: { val: stat.value }, config: { duration: 1000 } })
+    useSpring({ from: { val: 0 }, to: { val: stat.value }, config: { duration: 1200 } })
   );
 
   return (
@@ -38,15 +38,15 @@ const HeroSection = () => {
       </Subtitle>
       <CTAGroup>
         <a href="/share" className="primary" aria-label="Create a Jump2 link">
-          Create a Jump2
+          🚀 Create a Jump2
         </a>
         <a href="/contact" className="secondary" aria-label="Contact support">
-          Contact
+          💬 Contact
         </a>
         <LightToggle />
       </CTAGroup>
       <SearchBar
-        placeholder="🔍 Try 'Taylor Swift quote'..."
+        placeholder="🔍 Try 'Taylor Swift quote' or 'YouTube timestamp'..."
         aria-label="Jump2 smart search"
       />
       <StatBarWrapper>
