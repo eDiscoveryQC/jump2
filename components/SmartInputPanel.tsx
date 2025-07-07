@@ -1,26 +1,45 @@
-// components/SmartInputPanel.tsx
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import styled from "styled-components";
-import { FaLink, FaUpload, FaTimesCircle } from "react-icons/fa";
+import { FaLink, FaTimesCircle, FaUpload } from "react-icons/fa";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
-import { useRouter } from "next/router";
-import { createShortCode } from "@/lib/shortCode";
-import { supabase } from "@/lib/supabase";
-import { logEvent } from "@/lib/log";
 
 const Panel = styled(motion.div)`
   background: linear-gradient(to bottom right, #1e293b, #0f172a);
   border: 1px solid #334155;
-  padding: 2rem;
-  border-radius: 1.2rem;
-  box-shadow: 0 0 40px rgba(14, 165, 233, 0.2);
+  padding: 2.2rem;
+  border-radius: 1.4rem;
+  box-shadow: 0 0 50px rgba(14, 165, 233, 0.25);
   width: 100%;
-  max-width: 800px;
+  max-width: 820px;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.75rem;
   position: relative;
+  transition: all 0.4s ease;
+`;
+
+const DropZone = styled.div<{ isDragging: boolean }>`
+  border: 2px dashed #0ea5e9;
+  padding: 2rem;
+  border-radius: 1rem;
+  background: ${({ isDragging }) => (isDragging ? "#0ea5e91a" : "#1e293b")};
+  color: #cbd5e1;
+  text-align: center;
+  transition: background 0.3s ease;
+`;
+
+const MetaPreview = styled.div`
+  background: #0f172a;
+  border: 1px solid #334155;
+  padding: 1.25rem;
+  border-radius: 1rem;
+  color: #f8fafc;
+  font-size: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  line-height: 1.6;
 `;
 
 const Row = styled.div`
@@ -30,18 +49,20 @@ const Row = styled.div`
 `;
 
 const Input = styled.input`
-  padding: 1.1rem 1.4rem;
+  padding: 1.2rem 1.5rem;
   font-size: 1.15rem;
-  border-radius: 0.7rem;
+  border-radius: 0.75rem;
   border: 1px solid #334155;
   background: #0f172a;
   color: white;
   width: 100%;
   transition: border 0.3s ease;
+  box-shadow: inset 0 0 6px #0ea5e966;
 
   &:focus {
     outline: none;
     border-color: #0ea5e9;
+    box-shadow: 0 0 6px #0ea5e9aa;
   }
 
   &::placeholder {
@@ -54,11 +75,10 @@ const ButtonRow = styled.div`
   gap: 1rem;
   flex-wrap: wrap;
 
-  button,
-  label {
-    padding: 0.85rem 1.3rem;
+  button {
+    padding: 0.9rem 1.4rem;
     font-size: 1rem;
-    border-radius: 0.6rem;
+    border-radius: 0.65rem;
     border: none;
     cursor: pointer;
     display: flex;
@@ -66,31 +86,21 @@ const ButtonRow = styled.div`
     gap: 0.5rem;
     transition: all 0.25s ease;
     color: white;
-    font-weight: 500;
+    font-weight: 600;
   }
 
-  button.primary {
+  .primary {
     background: #16a34a;
   }
-
-  button.primary:hover {
+  .primary:hover {
     background: #15803d;
   }
 
-  label.upload {
-    background: #0ea5e9;
-  }
-
-  label.upload:hover {
-    background: #0284c7;
-  }
-
-  button.clear {
+  .clear {
     background: #334155;
   }
-
-  input[type="file"] {
-    display: none;
+  .clear:hover {
+    background: #1e293b;
   }
 `;
 
@@ -102,123 +112,144 @@ const Tip = styled(motion.div)`
   text-align: center;
 `;
 
-export default function SmartInputPanel({ onShareGenerated }: { onShareGenerated?: (url: string) => void }) {
+const PulseGlow = styled.div`
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #0ea5e9;
+  box-shadow: 0 0 15px 4px #0ea5e9aa;
+  animation: pulse 2s infinite;
+
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    70% {
+      transform: scale(1.7);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0;
+    }
+  }
+`;
+
+export default function SmartInputPanel({ onSubmit, onAutoExtract }: { onSubmit?: (url: string) => void; onAutoExtract?: (url: string) => void }) {
   const [url, setUrl] = useState("");
-  const [fileName, setFileName] = useState("");
-  const [tip, setTip] = useState("Paste a link or upload a file to begin.");
+  const [tip, setTip] = useState("Paste any article or YouTube link — or drop a file.");
   const [isValid, setIsValid] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const router = useRouter();
+  const [isDragging, setIsDragging] = useState(false);
+  const [meta, setMeta] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => {
-      const trimmed = url.trim();
       try {
-        const u = new URL(trimmed);
-        setIsValid(u.protocol === "http:" || u.protocol === "https:");
+        const parsed = new URL(url.trim());
+        const isLink = parsed.protocol === "http:" || parsed.protocol === "https:";
+        setIsValid(isLink);
+
+        if (isLink && parsed.hostname.includes("youtube")) {
+          const id = parsed.searchParams.get("v") ?? "";
+          setMeta(`🎬 YouTube video detected${id ? ` (Video ID: ${id})` : ""}`);
+        } else if (isLink) {
+          setMeta("📰 Article detected — preview will extract title, author, and more.");
+        } else {
+          setMeta(null);
+        }
       } catch {
         setIsValid(false);
+        setMeta(null);
       }
-    }, 300);
+    }, 250);
     return () => clearTimeout(t);
   }, [url]);
 
-  const handlePaste = useCallback(async () => {
+  const handleSubmit = useCallback(() => {
     const trimmed = url.trim();
     try {
       const parsed = new URL(trimmed);
       if (parsed.protocol === "http:" || parsed.protocol === "https:") {
-        setTip("🔗 URL accepted. Generating link...");
-        toast.loading("Generating smart link...");
-
-        const { shortcode } = await createShortCode({ type: "url", value: trimmed });
-        logEvent("share:url_submitted", { url: trimmed, shortcode });
-
-        toast.dismiss();
-        toast.success("🔗 Smart link created");
-        setFileName("");
-
-        const link = `/preview/${shortcode}`;
-        if (onShareGenerated) onShareGenerated(link);
-        else router.push(link);
-        return;
+        toast.success("✅ Link accepted");
+        setTip("🔗 Smart preview loading...");
+        onSubmit?.(trimmed);
+        onAutoExtract?.(trimmed);
       }
     } catch {
-      toast.dismiss();
-      toast.error("Invalid URL");
+      toast.error("⚠️ Invalid URL");
+      setTip("Please enter a valid link.");
     }
-  }, [url]);
-
-  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setFileName(file.name);
-    setUrl("");
-    setTip("📄 Uploading file...");
-    setUploading(true);
-    toast.loading("Uploading file...");
-
-    try {
-      const { data, error } = await supabase.storage
-        .from("uploads")
-        .upload(`incoming/${Date.now()}-${file.name}`, file);
-
-      if (error || !data?.path) throw error;
-
-      const publicUrl = supabase.storage.from("uploads").getPublicUrl(data.path).data.publicUrl;
-      const { shortcode } = await createShortCode({ type: "file", value: publicUrl, filename: file.name });
-
-      logEvent("share:file_uploaded", { name: file.name, size: file.size, shortcode });
-
-      toast.dismiss();
-      toast.success("📁 File uploaded & link created");
-
-      const link = `/preview/${shortcode}`;
-      if (onShareGenerated) onShareGenerated(link);
-      else router.push(link);
-    } catch (err) {
-      toast.dismiss();
-      console.error("File upload error:", err);
-      toast.error("Upload failed.");
-    } finally {
-      setUploading(false);
-    }
-  }, []);
+  }, [url, onSubmit]);
 
   const clear = useCallback(() => {
     setUrl("");
-    setFileName("");
-    setTip("Paste a link or upload a file to begin.");
+    setTip("Paste any article or YouTube link — or drop a file.");
+    setMeta(null);
   }, []);
 
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    toast.success(`📁 File "${file.name}" loaded.`);
+    const blobUrl = URL.createObjectURL(file);
+    onSubmit?.(blobUrl);
+  }, [onSubmit]);
+
   return (
-    <Panel initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+    <Panel
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      <PulseGlow />
+      <DropZone
+        isDragging={isDragging}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={handleDrop}
+      >
+        📥 Drop a file here — or paste a link below to get started.
+      </DropZone>
+
       <Row>
         <Input
+          ref={inputRef}
           type="text"
-          placeholder="Paste article or video link..."
+          placeholder="Paste an article or YouTube link..."
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handlePaste()}
+          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
         />
+
+        {meta && <MetaPreview>{meta}</MetaPreview>}
       </Row>
 
       <ButtonRow>
-        <button onClick={handlePaste} className="primary" disabled={!isValid || uploading}>
-          <FaLink /> Share URL
+        <button onClick={handleSubmit} className="primary" disabled={!isValid}>
+          <FaLink /> Load Preview
         </button>
-        <label className="upload">
-          <FaUpload /> {uploading ? "Uploading..." : "Upload File"}
-          <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleFileUpload} disabled={uploading} />
-        </label>
-        {(fileName || url) && (
+        {url && (
           <button onClick={clear} className="clear">
             <FaTimesCircle /> Clear
           </button>
         )}
       </ButtonRow>
 
-      <Tip initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+      <Tip
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
         {tip}
       </Tip>
     </Panel>
