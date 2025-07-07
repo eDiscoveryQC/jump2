@@ -1,7 +1,6 @@
 import React from "react";
 import styled from "styled-components";
 import SmartInputPanel from "@/components/SmartInputPanel";
-import Navbar from "@/components/Navbar";
 import LivePreview from "@/components/LivePreview"; // Optional – mocked preview component
 
 const PageWrapper = styled.div`
@@ -76,7 +75,6 @@ const Divider = styled.hr`
 export default function SharePage() {
   return (
     <PageWrapper>
-      <Navbar />
 
       <Content>
         <Title>Jump2: The Creator’s Drop Zone</Title>
