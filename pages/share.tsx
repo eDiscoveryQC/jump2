@@ -96,7 +96,7 @@ export default function SharePage() {
 
         <Section>
           <LeftPane>
-            <SmartInputPanel />
+            <SmartInputPanel onShareGenerated={(url) => console.log("Generated:", url)} />
           </LeftPane>
 
           <RightPane>
