@@ -1,15 +1,10 @@
+// pages/share.tsx — Meta-Grade Web App Page with Layout
+
 import React from "react";
 import styled from "styled-components";
+import Layout from "@/components/Layout";
 import SmartInputPanel from "@/components/SmartInputPanel";
-import LivePreview from "@/components/LivePreview"; // Optional – mocked preview component
-
-const PageWrapper = styled.div`
-  background: linear-gradient(135deg, #0f172a, #1e293b);
-  color: #ffffff;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-`;
+import LivePreview from "@/components/LivePreview";
 
 const Content = styled.main`
   flex: 1;
@@ -65,17 +60,9 @@ const PanelBox = styled.div`
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 `;
 
-const Divider = styled.hr`
-  border: none;
-  height: 1px;
-  margin: 2rem 0;
-  background: linear-gradient(to right, transparent, #334155, transparent);
-`;
-
 export default function SharePage() {
   return (
-    <PageWrapper>
-
+    <Layout>
       <Content>
         <Title>Jump2: The Creator’s Drop Zone</Title>
         <Subtitle>
@@ -98,6 +85,6 @@ export default function SharePage() {
           </PanelBox>
         </FlexPanel>
       </Content>
-    </PageWrapper>
+    </Layout>
   );
 }
