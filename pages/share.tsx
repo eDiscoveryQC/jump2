@@ -4,103 +4,79 @@ import styled from "styled-components";
 import SmartInputPanel from "@/components/SmartInputPanel";
 import Layout from "@/components/Layout";
 
-const ShareHero = styled.section`
+const Container = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 4rem 1.5rem 3rem;
-  background: linear-gradient(135deg, #0f172a 30%, #1e3a8a 100%);
-  border-radius: 1.5rem;
-  box-shadow: 0 8px 32px rgba(14, 165, 233, 0.25);
-
-  h1 {
-    font-size: 3.2rem;
-    font-weight: 900;
-    color: #facc15;
-    margin-bottom: 1rem;
-    text-shadow: 0 4px 20px #0ea5e9;
-  }
-
-  p {
-    font-size: 1.25rem;
-    max-width: 760px;
-    color: #cbd5e1;
-  }
-
-  @media (max-width: 640px) {
-    padding: 3rem 1rem;
-    h1 {
-      font-size: 2.4rem;
-    }
-    p {
-      font-size: 1rem;
-    }
-  }
+  padding: 4rem 1.5rem;
+  background: linear-gradient(145deg, #0f172a 20%, #1e3a8a 100%);
+  min-height: 100vh;
+  width: 100vw;
+  color: #fff;
+  margin: 0;
 `;
 
-const PanelWrapper = styled.div`
+const Title = styled.h1`
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  color: #facc15;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(250, 204, 21, 0.5);
+`;
+
+const Subtitle = styled.p`
+  font-size: 1.25rem;
+  max-width: 780px;
+  margin: 0 auto;
+  text-align: center;
+  color: #cbd5e1;
+`;
+
+const Section = styled.section`
   display: flex;
-  flex-direction: row;
   justify-content: space-between;
-  width: 100%;
+  margin-top: 4rem;
   gap: 2rem;
-  margin-top: 3.5rem;
 
   @media (max-width: 960px) {
     flex-direction: column;
-    align-items: center;
   }
 `;
 
-const InputBox = styled.div`
+const LeftPane = styled.div`
   flex: 1;
-  padding: 2.2rem;
-  border-radius: 1.5rem;
   background: #020617;
-  border: 1px solid #334155;
-  box-shadow: 0 8px 30px rgba(14, 165, 233, 0.2);
-  transition: all 0.3s ease;
+  padding: 2.5rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 0 30px rgba(14, 165, 233, 0.15);
+  transition: 0.3s ease all;
 
   &:hover {
-    box-shadow: 0 12px 40px rgba(14, 165, 233, 0.35);
     transform: translateY(-2px);
+    box-shadow: 0 0 40px rgba(14, 165, 233, 0.3);
   }
 `;
 
-const PreviewBox = styled.div`
+const RightPane = styled.div`
   flex: 1;
-  padding: 2.2rem;
-  border-radius: 1.5rem;
   background: #1e293b;
-  border: 1px solid #334155;
-  color: #f1f5f9;
-  box-shadow: inset 0 0 0 2px #1e3a8a55;
-  transition: all 0.3s ease;
+  padding: 2.5rem;
+  border-radius: 1.5rem;
+  box-shadow: inset 0 0 0 2px #3b82f6aa;
 
   h3 {
-    font-size: 1.2rem;
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
     color: #7dd3fc;
-    margin-top: 0;
-    margin-bottom: 1.2rem;
   }
 
   p {
-    font-size: 1rem;
     color: #cbd5e1;
-  }
-
-  &:hover {
-    box-shadow: inset 0 0 0 3px #3b82f6aa;
+    line-height: 1.6;
   }
 `;
 
 export default function SharePage() {
-  const handleShareGenerated = (url: string) => {
-    console.log("✅ Share link generated:", url);
-    // Add custom logic here if needed (copy to clipboard, show toast, etc.)
-  };
-
   return (
     <Layout>
       <Head>
@@ -111,27 +87,27 @@ export default function SharePage() {
         />
       </Head>
 
-      <ShareHero>
-        <h1>Jump2: The Creator’s Drop Zone</h1>
-        <p>
-          Paste a URL, upload a file, or drop a doc. Jump2 instantly transforms it into a smart
-          shareable link with previews, protection, and tracking — built for creators.
-        </p>
-      </ShareHero>
+      <Container>
+        <Title>Jump2: The Creator’s Drop Zone</Title>
+        <Subtitle>
+          Paste a link, upload a file, or drop a doc. Instantly generate a smart preview, protect
+          your content, and track performance — built with creators in mind.
+        </Subtitle>
 
-      <PanelWrapper>
-        <InputBox>
-          <SmartInputPanel onShareGenerated={handleShareGenerated} />
-        </InputBox>
+        <Section>
+          <LeftPane>
+            <SmartInputPanel />
+          </LeftPane>
 
-        <PreviewBox>
-          <h3>Live Smart Preview</h3>
-          <p>
-            See a visual preview of your shared content before generating your Jump2 link.
-            Real-time, secure, and frictionless.
-          </p>
-        </PreviewBox>
-      </PanelWrapper>
+          <RightPane>
+            <h3>Live Smart Preview</h3>
+            <p>
+              Instantly preview your content before it goes live. Jump2 generates a real-time
+              visualization so you always know exactly what your audience will see.
+            </p>
+          </RightPane>
+        </Section>
+      </Container>
     </Layout>
   );
 }
