@@ -11,6 +11,7 @@ import {
   StatBarWrapper,
   StatItem
 } from "../styles/metaHomeStyles";
+import LightToggle from "./LightToggle";
 
 const HeroSection = () => {
   const stats = [
@@ -42,6 +43,7 @@ const HeroSection = () => {
         <a href="/contact" className="secondary" aria-label="Contact support">
           Contact
         </a>
+        <LightToggle />
       </CTAGroup>
       <SearchBar
         placeholder="🔍 Try 'Taylor Swift quote'..."
