@@ -1,10 +1,11 @@
-// pages/index.tsx — Meta-Grade Unicorn Home v13.0+ (Production Ready)
+// pages/index.tsx — Meta-Grade Unicorn Home v14.0 (Full Meta Enhancements)
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import Lottie from "lottie-react";
 import animationData from "../public/animated-preview.json";
 import { useSpring, animated } from "@react-spring/web";
+import dynamic from "next/dynamic";
 import {
   Hero,
   Logo,
@@ -21,8 +22,20 @@ import {
   HelpModal
 } from "../styles/metaHomeStyles";
 
+const LightToggle = dynamic(() => import("../components/LightToggle"), { ssr: false });
+const WalkthroughOverlay = dynamic(() => import("../components/WalkthroughOverlay"), { ssr: false });
+
 export default function Home() {
   const [showHelp, setShowHelp] = useState(false);
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
+
+  useEffect(() => {
+    const firstVisit = localStorage.getItem("firstVisitDone");
+    if (!firstVisit) {
+      setShowWalkthrough(true);
+      localStorage.setItem("firstVisitDone", "true");
+    }
+  }, []);
 
   const stats = [
     { label: "Jump2s created this week", value: 1187542 },
@@ -44,6 +57,8 @@ export default function Home() {
         <meta property="og:description" content="Create viral links from quotes, timestamps, and memes — Jump2 is your toolkit for sharing smarter." />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
+
+      <LightToggle />
 
       <Hero>
         <Logo
@@ -70,7 +85,12 @@ export default function Home() {
         <Text>We're building the new layer of the internet — one highlight at a time.</Text>
         <StatBar>
           {animatedCounters.map((props, i) => (
-            <animated.div key={i}>{props.val.to(val => Math.floor(val).toLocaleString())} {stats[i].label}</animated.div>
+            <animated.div key={i} style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+              <animated.span>
+                {props.val.to(val => `${Math.floor(val).toLocaleString()}`)}
+              </animated.span>
+              <span>{stats[i].label}</span>
+            </animated.div>
           ))}
         </StatBar>
       </Section>
@@ -106,6 +126,8 @@ export default function Home() {
           Need help? Contact us at <strong>support@jump2share.com</strong> or try our <a href="/contact">contact form</a>.
         </HelpModal>
       )}
+
+      {showWalkthrough && <WalkthroughOverlay onClose={() => setShowWalkthrough(false)} />}
     </>
   );
 }

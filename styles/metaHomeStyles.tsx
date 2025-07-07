@@ -1,4 +1,4 @@
-// styles/metaHomeStyles.tsx
+// styles/metaHomeStyles.tsx — Unified Meta Styling System
 
 import styled from "styled-components";
 import { motion } from "framer-motion";
@@ -7,124 +7,91 @@ export const Hero = styled(motion.section)`
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: 8rem 2rem 4rem;
-  background: radial-gradient(circle at top left, #0f172a, #1e293b);
+  padding: 5rem 1.5rem 6rem;
+  background: linear-gradient(to right, #0f172a, #1e293b);
   color: #ffffff;
-  min-height: 100vh;
-
-  @media (max-width: 768px) {
-    padding: 6rem 1.2rem 3rem;
-  }
 `;
 
 export const Logo = styled(motion.h1)`
-  font-size: 3.8rem;
+  font-size: 3.6rem;
   font-weight: 900;
-  letter-spacing: -1px;
+  letter-spacing: -1.4px;
+  margin-bottom: 1.4rem;
   color: #facc15;
-  text-shadow: 0 4px 8px rgba(14, 165, 233, 0.4);
-
-  @media (max-width: 768px) {
-    font-size: 2.8rem;
-  }
+  text-shadow: 0 2px 6px #0ea5e9aa;
 `;
 
-export const Subtitle = styled.h2`
-  font-size: 1.5rem;
-  max-width: 700px;
-  margin: 1.4rem auto 2rem;
-  color: #cbd5e1;
-  font-weight: 500;
-
-  @media (max-width: 768px) {
-    font-size: 1.25rem;
-  }
+export const Subtitle = styled.p`
+  font-size: 1.4rem;
+  font-weight: 400;
+  max-width: 600px;
+  margin-bottom: 2rem;
+  line-height: 1.6;
 `;
 
 export const CTAGroup = styled.div`
   display: flex;
-  gap: 1.2rem;
-  margin-top: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2.4rem;
 
-  a {
-    padding: 0.9rem 1.6rem;
-    border-radius: 999px;
+  a.primary {
+    background: #8b5cf6;
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
     font-weight: 600;
-    font-size: 1rem;
-    transition: all 0.3s ease;
     text-decoration: none;
-
-    &.primary {
-      background: #6366f1;
-      color: white;
-      &:hover {
-        background: #4f46e5;
-        transform: scale(1.05);
-      }
-    }
-
-    &.secondary {
-      background: transparent;
-      color: #cbd5e1;
-      border: 1px solid #475569;
-      &:hover {
-        background: #334155;
-        transform: scale(1.05);
-      }
+    transition: background 0.3s ease;
+    &:hover {
+      background: #7c3aed;
     }
   }
 
-  @media (max-width: 480px) {
-    flex-direction: column;
-    width: 100%;
-    a {
-      width: 100%;
-      text-align: center;
+  a.secondary {
+    background: transparent;
+    color: #e2e8f0;
+    border: 1px solid #64748b;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: border 0.3s ease, color 0.3s ease;
+    &:hover {
+      color: #fff;
+      border-color: #fff;
     }
   }
 `;
 
 export const SearchBar = styled.input`
-  margin-top: 2rem;
-  padding: 1rem 1.4rem;
-  width: 100%;
-  max-width: 460px;
-  border-radius: 999px;
-  font-size: 1rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
   border: none;
-  outline: none;
-  background-color: #1e293b;
-  color: #f1f5f9;
+  max-width: 420px;
+  width: 100%;
+  font-size: 1rem;
   box-shadow: 0 0 0 1px #334155;
+  background: #1e293b;
+  color: #e2e8f0;
 
   &::placeholder {
     color: #94a3b8;
   }
-
-  &:focus {
-    box-shadow: 0 0 0 2px #3b82f6;
-  }
 `;
 
 export const Section = styled(motion.section)`
-  padding: 5rem 2rem;
+  padding: 4rem 1.5rem;
   text-align: center;
-
-  @media (max-width: 768px) {
-    padding: 4rem 1rem;
-  }
 `;
 
-export const Heading = styled.h3`
-  font-size: 2.2rem;
-  font-weight: 800;
-  color: #f8fafc;
+export const Heading = styled.h2`
+  font-size: 2rem;
   margin-bottom: 1rem;
-
-  @media (max-width: 768px) {
-    font-size: 1.8rem;
-  }
+  color: #f8fafc;
 `;
 
 export const Text = styled.p`
@@ -138,18 +105,18 @@ export const StatBar = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  font-size: 1.2rem;
-  color: #f8fafc;
-  font-weight: 600;
+  margin-top: 2rem;
+  align-items: center;
+  font-size: 1.15rem;
+  color: #e0f2fe;
 `;
 
 export const VideoPreview = styled.div`
-  margin: 2rem auto 3rem;
-  max-width: 640px;
-  border-radius: 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
   video {
     width: 100%;
     height: auto;
@@ -158,54 +125,50 @@ export const VideoPreview = styled.div`
 `;
 
 export const Footer = styled.footer`
+  padding: 3rem 1.5rem;
   text-align: center;
-  padding: 3rem 1rem;
-  background: #0f172a;
+  font-size: 0.9rem;
   color: #94a3b8;
-  font-size: 0.95rem;
+  background: #0f172a;
+  line-height: 1.6;
 `;
 
 export const HelpBeacon = styled.button`
   position: fixed;
-  bottom: 1.8rem;
-  right: 1.8rem;
-  background: #0ea5e9;
-  color: white;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  background: #38bdf8;
+  color: #0f172a;
+  font-size: 1.3rem;
+  padding: 0.6rem 1rem;
   border: none;
-  border-radius: 999px;
-  padding: 0.8rem 1.2rem;
-  font-weight: 600;
-  font-size: 1rem;
-  box-shadow: 0 8px 20px rgba(14, 165, 233, 0.5);
+  border-radius: 50px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
   cursor: pointer;
-  transition: background 0.3s ease;
-
+  z-index: 9999;
   &:hover {
-    background: #0284c7;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 0.85rem;
-    padding: 0.6rem 1rem;
+    background: #0ea5e9;
   }
 `;
 
 export const HelpModal = styled.div`
   position: fixed;
-  bottom: 5.2rem;
-  right: 1.8rem;
+  bottom: 4.5rem;
+  right: 1.5rem;
   background: #1e293b;
+  color: #f1f5f9;
   padding: 1.2rem 1.4rem;
-  border-radius: 1rem;
-  color: #f8fafc;
-  width: 300px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+  border-radius: 12px;
+  max-width: 300px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   font-size: 0.95rem;
-  z-index: 999;
-
+  line-height: 1.6;
+  z-index: 10000;
   a {
-    color: #3b82f6;
+    color: #38bdf8;
     text-decoration: underline;
-    font-weight: 500;
+    &:hover {
+      color: #0ea5e9;
+    }
   }
 `;
