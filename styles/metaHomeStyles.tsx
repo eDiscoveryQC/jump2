@@ -1,7 +1,13 @@
-// styles/metaHomeStyles.tsx — Unified Meta Styling System
+// styles/metaHomeStyles.tsx — Final Meta-Style + Mobile Responsive
 
 import styled from "styled-components";
 import { motion } from "framer-motion";
+
+// Reusable breakpoint
+const breakpoints = {
+  sm: "640px",
+  md: "768px"
+};
 
 export const Hero = styled(motion.section)`
   display: flex;
@@ -12,6 +18,10 @@ export const Hero = styled(motion.section)`
   padding: 5rem 1.5rem 6rem;
   background: linear-gradient(to right, #0f172a, #1e293b);
   color: #ffffff;
+
+  @media (max-width: ${breakpoints.sm}) {
+    padding: 3rem 1rem 4rem;
+  }
 `;
 
 export const Logo = styled(motion.h1)`
@@ -21,6 +31,10 @@ export const Logo = styled(motion.h1)`
   margin-bottom: 1.4rem;
   color: #facc15;
   text-shadow: 0 2px 6px #0ea5e9aa;
+
+  @media (max-width: ${breakpoints.sm}) {
+    font-size: 2.4rem;
+  }
 `;
 
 export const Subtitle = styled.p`
@@ -29,6 +43,11 @@ export const Subtitle = styled.p`
   max-width: 600px;
   margin-bottom: 2rem;
   line-height: 1.6;
+
+  @media (max-width: ${breakpoints.sm}) {
+    font-size: 1.1rem;
+    padding: 0 1rem;
+  }
 `;
 
 export const CTAGroup = styled.div`
@@ -36,6 +55,7 @@ export const CTAGroup = styled.div`
   gap: 1rem;
   flex-wrap: wrap;
   margin-bottom: 2.4rem;
+  justify-content: center;
 
   a.primary {
     background: #8b5cf6;
@@ -64,6 +84,16 @@ export const CTAGroup = styled.div`
       border-color: #fff;
     }
   }
+
+  @media (max-width: ${breakpoints.sm}) {
+    flex-direction: column;
+    align-items: stretch;
+
+    a {
+      width: 100%;
+      text-align: center;
+    }
+  }
 `;
 
 export const SearchBar = styled.input`
@@ -81,17 +111,30 @@ export const SearchBar = styled.input`
   &::placeholder {
     color: #94a3b8;
   }
+
+  @media (max-width: ${breakpoints.sm}) {
+    font-size: 0.95rem;
+    padding: 0.65rem 1rem;
+  }
 `;
 
 export const Section = styled(motion.section)`
   padding: 4rem 1.5rem;
   text-align: center;
+
+  @media (max-width: ${breakpoints.sm}) {
+    padding: 3rem 1rem;
+  }
 `;
 
 export const Heading = styled.h2`
   font-size: 2rem;
   margin-bottom: 1rem;
   color: #f8fafc;
+
+  @media (max-width: ${breakpoints.sm}) {
+    font-size: 1.6rem;
+  }
 `;
 
 export const Text = styled.p`
@@ -99,9 +142,13 @@ export const Text = styled.p`
   color: #cbd5e1;
   max-width: 660px;
   margin: 0 auto 2rem;
+
+  @media (max-width: ${breakpoints.sm}) {
+    font-size: 1rem;
+  }
 `;
 
-export const StatBar = styled.div`
+export const StatBarWrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -109,6 +156,18 @@ export const StatBar = styled.div`
   align-items: center;
   font-size: 1.15rem;
   color: #e0f2fe;
+
+  @media (max-width: ${breakpoints.sm}) {
+    font-size: 1rem;
+    gap: 0.75rem;
+  }
+`;
+
+export const StatItem = styled.div`
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  font-weight: 500;
 `;
 
 export const VideoPreview = styled.div`

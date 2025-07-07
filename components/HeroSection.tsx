@@ -1,9 +1,28 @@
-// components/HeroSection.tsx — Meta-Style Hero Component
+// components/HeroSection.tsx — Final Meta-Style Hero Component
 
 import React from "react";
-import { Hero, Logo, Subtitle, CTAGroup, SearchBar } from "../styles/metaHomeStyles";
+import { useSpring, animated } from "@react-spring/web";
+import {
+  Hero,
+  Logo,
+  Subtitle,
+  CTAGroup,
+  SearchBar,
+  StatBarWrapper,
+  StatItem
+} from "../styles/metaHomeStyles";
 
 const HeroSection = () => {
+  const stats = [
+    { label: "Jump2s created this week", value: 1187542 },
+    { label: "Countries active", value: 102 },
+    { label: "Creator accounts", value: 83241 }
+  ];
+
+  const animatedStats = stats.map(stat =>
+    useSpring({ from: { val: 0 }, to: { val: stat.value }, config: { duration: 1000 } })
+  );
+
   return (
     <Hero>
       <Logo
@@ -13,7 +32,9 @@ const HeroSection = () => {
       >
         Jump2
       </Logo>
-      <Subtitle>Share the moment — not the mess. Welcome to Share-Tech.</Subtitle>
+      <Subtitle>
+        Share the moment — not the mess. Welcome to Share-Tech.
+      </Subtitle>
       <CTAGroup>
         <a href="/share" className="primary" aria-label="Create a Jump2 link">
           Create a Jump2
@@ -22,7 +43,22 @@ const HeroSection = () => {
           Contact
         </a>
       </CTAGroup>
-      <SearchBar placeholder="🔍 Try 'Taylor Swift quote'..." aria-label="Jump2 smart search" />
+      <SearchBar
+        placeholder="🔍 Try 'Taylor Swift quote'..."
+        aria-label="Jump2 smart search"
+      />
+      <StatBarWrapper>
+        {animatedStats.map((style, index) => (
+          <StatItem key={index}>
+            <strong>
+              <animated.span>
+                {style.val.to(val => Math.floor(val).toLocaleString())}
+              </animated.span>
+            </strong>{" "}
+            {stats[index].label}
+          </StatItem>
+        ))}
+      </StatBarWrapper>
     </Hero>
   );
 };
