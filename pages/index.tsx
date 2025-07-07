@@ -3,14 +3,17 @@
 import React, { useState } from "react";
 import Head from "next/head";
 import dynamic from "next/dynamic";
-import Lottie from "lottie-react";
-import animationData from "../public/animated-preview.json";
 import Layout from "../components/Layout";
-import HeroSection from "../components/HeroSection";
 import {
   Section,
   Heading,
   Text,
+  ButtonGroup,
+  CTA,
+  SecondaryCTA,
+  FeatureGrid,
+  FeatureCard,
+  TimelineVisualizer,
   VideoPreview,
   HelpBeacon,
   HelpModal
@@ -38,31 +41,67 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
 
-      <HeroSection />
-
-      {/* Section: Product Video */}
-      <Section
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-      >
-        <Heading>Product in Action</Heading>
-        <VideoPreview>
-          <video src="/preview.mp4" autoPlay muted loop playsInline />
-        </VideoPreview>
+      {/* Hero Section */}
+      <Section>
+        <Heading>Share Smarter. Jump2 It.</Heading>
+        <Text>
+          Smart links for the moments that matter — not the whole thing.
+        </Text>
+        <ButtonGroup>
+          <CTA href="/share">Try Jump2 Free</CTA>
+          <SecondaryCTA href="#demo">See How It Works</SecondaryCTA>
+        </ButtonGroup>
       </Section>
 
-      {/* Section: Interactive Lottie */}
-      <Section
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-      >
-        <Heading>Live Interactive Preview</Heading>
-        <Lottie
-          animationData={animationData}
-          style={{ maxWidth: 520, margin: "0 auto" }}
-        />
+      {/* What is Share-Tech */}
+      <Section>
+        <Heading>What is Share-Tech?</Heading>
+        <Text>
+          Jump2 created the world’s first Share-Tech platform — tools built to share moments, not media dumps.
+        </Text>
+        <TimelineVisualizer />
+      </Section>
+
+      {/* Tools & Features Section */}
+      <Section>
+        <Heading>Powered by Jump2</Heading>
+        <FeatureGrid>
+          <FeatureCard icon="🖍️" title="Highlight Link" />
+          <FeatureCard icon="⏱️" title="Timestamp Link" />
+          <FeatureCard icon="🧠" title="Meme Generator" />
+          <FeatureCard icon="🌐" title="Chrome Extension" />
+          <FeatureCard icon="📊" title="Smart Dashboard" />
+        </FeatureGrid>
+      </Section>
+
+      {/* Creator Personalization */}
+      <Section>
+        <Heading>Make Every Link Yours</Heading>
+        <Text>
+          Customize your smart links with personal styles, branded handles, and creator-first design.
+        </Text>
+      </Section>
+
+      {/* Growth Loop Section */}
+      <Section>
+        <Heading>Built for Growth</Heading>
+        <Text>
+          Every tool includes built-in share loops, meme virality, and click insights.
+        </Text>
+        <FeatureGrid>
+          <FeatureCard icon="📈" title="Share Analytics" />
+          <FeatureCard icon="🔁" title="Re-share Tools" />
+          <FeatureCard icon="💥" title="Auto-Meme Watermarking" />
+        </FeatureGrid>
+      </Section>
+
+      {/* Final CTA */}
+      <Section>
+        <Heading>Start sharing like it’s 2025.</Heading>
+        <ButtonGroup>
+          <CTA href="/share">Join Beta</CTA>
+          <SecondaryCTA href="#demo">Watch Demo</SecondaryCTA>
+        </ButtonGroup>
       </Section>
 
       {/* Help Floating Button */}
@@ -73,7 +112,7 @@ export default function Home() {
       {/* Help Modal */}
       {showHelp && (
         <HelpModal>
-          Need help? Contact us at <strong>support@jump2share.com</strong> or try our{' '}
+          Need help? Contact us at <strong>support@jump2share.com</strong> or try our{" "}
           <a href="/contact">contact form</a>.
         </HelpModal>
       )}
