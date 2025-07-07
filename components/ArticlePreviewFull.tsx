@@ -18,13 +18,13 @@ function extractYouTubeID(url: string): string {
 }
 
 function parseTimeInput(input: string): number | null {
-  if (/^\d+$/.test(input)) return parseInt(input, 10);
+  if (/^\\d+$/.test(input)) return parseInt(input, 10);
   const [m, s] = input.split(":").map(Number);
   return m >= 0 && !isNaN(s) ? m * 60 + s : null;
 }
 
 function sanitizeWithHighlights(html: string, highlights: Highlight[]): string {
-  if (!highlights.length) return DOMPurify.sanitize(html);
+  if (!html || !highlights.length) return DOMPurify.sanitize(html);
   const sorted = [...highlights].sort((a, b) => a.start - b.start);
   let result = "", pos = 0;
   for (const { start, end, color, id } of sorted) {
@@ -68,8 +68,6 @@ const ContentPanel = styled.div`
   background: #ffffff;
   padding: 2rem;
   overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #94a3b8 #f1f5f9;
 `;
 
 const SidePanel = styled.div`
@@ -92,6 +90,9 @@ const Preview = styled.div`
     border-radius: 0.3rem;
     padding: 0.15rem 0.45rem;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .highlighted-active {
+    box-shadow: 0 0 14px 4px #facc15aa;
   }
 `;
 
@@ -204,6 +205,16 @@ export default function ArticlePreviewFull({
       .catch(() => setError("Failed to parse article."))
       .finally(() => setLoading(false));
   }, [url]);
+
+  useEffect(() => {
+    if (!loading && html && highlightData.length > 0) {
+      const el = document.getElementById(`highlight-${highlightData[0].id}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("highlighted-active");
+      }
+    }
+  }, [loading, html, highlightData]);
 
   const handleGenerateTimestamp = () => {
     const secs = parseTimeInput(manualTime);
