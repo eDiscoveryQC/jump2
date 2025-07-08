@@ -1,118 +1,91 @@
-// styles/metaHomeStyles.ts — ✨ Meta-Perfect UI/UX Styling
+// styles/metaHomeStyles.ts — Meta-Grade Styling, Responsive, and Export Ready
 
 import styled from "styled-components";
 import { motion } from "framer-motion";
 
-// Breakpoints
+// Responsive breakpoints
 const breakpoints = {
   sm: "640px",
   md: "768px",
-  lg: "1024px",
 };
 
-// 🎯 Hero Section
+// HERO SECTION
 export const Hero = styled(motion.section)`
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 6rem 2rem 7rem;
-  background: linear-gradient(135deg, #0f172a, #1e293b);
   text-align: center;
+  padding: 5rem 1.5rem 6rem;
+  background: linear-gradient(to right, #0f172a, #1e293b);
   color: #ffffff;
 
   @media (max-width: ${breakpoints.sm}) {
-    padding: 3.5rem 1.25rem 5rem;
+    padding: 3rem 1rem 4rem;
   }
 `;
 
-// 🟡 Logo Heading
 export const Logo = styled(motion.h1)`
-  font-size: 3.8rem;
+  font-size: 3.6rem;
   font-weight: 900;
-  letter-spacing: -1.5px;
+  letter-spacing: -1.4px;
+  margin-bottom: 1.4rem;
   color: #facc15;
-  text-shadow: 0 3px 10px rgba(14, 165, 233, 0.7);
-  margin-bottom: 1.5rem;
+  text-shadow: 0 2px 6px #0ea5e9aa;
 
   @media (max-width: ${breakpoints.sm}) {
-    font-size: 2.6rem;
+    font-size: 2.4rem;
   }
 `;
 
-// 🧾 Subtitle Text
 export const Subtitle = styled.p`
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 400;
-  max-width: 640px;
-  line-height: 1.65;
-  color: #e2e8f0;
-  margin-bottom: 2.5rem;
+  max-width: 600px;
+  margin-bottom: 2rem;
+  line-height: 1.6;
 
   @media (max-width: ${breakpoints.sm}) {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     padding: 0 1rem;
   }
 `;
 
-// 🔎 Search Input
-export const SearchBar = styled.input`
-  margin-top: 1rem;
-  padding: 0.8rem 1.3rem;
-  border-radius: 10px;
-  max-width: 420px;
-  width: 100%;
-  font-size: 1rem;
-  background: #1e293b;
-  color: #e2e8f0;
-  border: none;
-  box-shadow: 0 0 0 1px #334155;
-
-  &::placeholder {
-    color: #94a3b8;
-  }
-
-  @media (max-width: ${breakpoints.sm}) {
-    font-size: 0.95rem;
-    padding: 0.65rem 1rem;
-  }
-`;
-
-// 🧭 CTA Buttons
-export const CTA = styled.a`
-  background: #8b5cf6;
-  color: #ffffff;
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background 0.3s ease;
-  &:hover {
-    background: #7c3aed;
-  }
-`;
-
-export const SecondaryCTA = styled.a`
-  background: transparent;
-  color: #e2e8f0;
-  border: 1px solid #64748b;
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  &:hover {
-    color: #ffffff;
-    border-color: #ffffff;
-  }
-`;
-
-export const ButtonGroup = styled.div`
+// CTA Group with Buttons
+export const CTAGroup = styled.div`
   display: flex;
-  flex-wrap: wrap;
   gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2.4rem;
   justify-content: center;
-  margin: 2rem 0;
+
+  a.primary {
+    background: #8b5cf6;
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.3s ease;
+    &:hover {
+      background: #7c3aed;
+    }
+  }
+
+  a.secondary {
+    background: transparent;
+    color: #e2e8f0;
+    border: 1px solid #64748b;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: border 0.3s ease, color 0.3s ease;
+    &:hover {
+      color: #fff;
+      border-color: #fff;
+    }
+  }
 
   @media (max-width: ${breakpoints.sm}) {
     flex-direction: column;
@@ -125,24 +98,45 @@ export const ButtonGroup = styled.div`
   }
 `;
 
-// 🧠 Section Layout
-export const Section = styled(motion.section)`
-  padding: 5rem 2rem;
-  text-align: center;
-  background: #0f172a;
+export const SearchBar = styled.input`
+  margin-top: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  border: none;
+  max-width: 420px;
+  width: 100%;
+  font-size: 1rem;
+  box-shadow: 0 0 0 1px #334155;
+  background: #1e293b;
+  color: #e2e8f0;
+
+  &::placeholder {
+    color: #94a3b8;
+  }
 
   @media (max-width: ${breakpoints.sm}) {
-    padding: 3rem 1.25rem;
+    font-size: 0.95rem;
+    padding: 0.65rem 1rem;
+  }
+`;
+
+// SECTION BLOCK
+export const Section = styled(motion.section)`
+  padding: 4rem 1.5rem;
+  text-align: center;
+
+  @media (max-width: ${breakpoints.sm}) {
+    padding: 3rem 1rem;
   }
 `;
 
 export const Heading = styled.h2`
-  font-size: 2.2rem;
-  color: #f8fafc;
+  font-size: 2rem;
   margin-bottom: 1rem;
+  color: #f8fafc;
 
   @media (max-width: ${breakpoints.sm}) {
-    font-size: 1.75rem;
+    font-size: 1.6rem;
   }
 `;
 
@@ -157,15 +151,15 @@ export const Text = styled.p`
   }
 `;
 
-// 📊 Stats
+// STATS / METRICS
 export const StatBarWrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin-top: 2.5rem;
+  margin-top: 2rem;
   align-items: center;
-  color: #e0f2fe;
   font-size: 1.15rem;
+  color: #e0f2fe;
 
   @media (max-width: ${breakpoints.sm}) {
     font-size: 1rem;
@@ -180,13 +174,13 @@ export const StatItem = styled.div`
   font-weight: 500;
 `;
 
-// 🎥 Video Preview
+// VIDEO PREVIEW BLOCK
 export const VideoPreview = styled.div`
   max-width: 800px;
   margin: 0 auto;
-  border-radius: 16px;
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
 
   video {
     width: 100%;
@@ -195,17 +189,17 @@ export const VideoPreview = styled.div`
   }
 `;
 
-// 🦶 Footer
+// FOOTER
 export const Footer = styled.footer`
-  background: #0f172a;
   padding: 3rem 1.5rem;
   text-align: center;
+  font-size: 0.9rem;
   color: #94a3b8;
-  font-size: 0.95rem;
+  background: #0f172a;
   line-height: 1.6;
 `;
 
-// 🆘 Help Button + Modal
+// HELP FLOATING COMPONENTS
 export const HelpBeacon = styled.button`
   position: fixed;
   bottom: 1.5rem;
@@ -230,10 +224,10 @@ export const HelpModal = styled.div`
   right: 1.5rem;
   background: #1e293b;
   color: #f1f5f9;
-  padding: 1.25rem 1.5rem;
+  padding: 1.2rem 1.4rem;
   border-radius: 12px;
-  max-width: 320px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+  max-width: 300px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   font-size: 0.95rem;
   line-height: 1.6;
   z-index: 10000;
@@ -246,3 +240,21 @@ export const HelpModal = styled.div`
     }
   }
 `;
+
+// ✅ Export everything
+export {
+  Hero,
+  Logo,
+  Subtitle,
+  CTAGroup,
+  SearchBar,
+  Section,
+  Heading,
+  Text,
+  StatBarWrapper,
+  StatItem,
+  VideoPreview,
+  Footer,
+  HelpBeacon,
+  HelpModal,
+};
