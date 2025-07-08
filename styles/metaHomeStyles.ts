@@ -1,35 +1,27 @@
-// styles/metaHomeStyles.ts — Meta-Grade Styling, Responsive, and Export Ready
-
+// styles/metaHomeStyles.ts
 import styled from "styled-components";
 import { motion } from "framer-motion";
 
-// Responsive breakpoints
+// BREAKPOINTS
 const breakpoints = {
   sm: "640px",
   md: "768px",
 };
 
-// HERO SECTION
+// HERO STYLES
 export const Hero = styled(motion.section)`
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   text-align: center;
-  padding: 5rem 1.5rem 6rem;
+  padding: 5rem 1.5rem;
   background: linear-gradient(to right, #0f172a, #1e293b);
   color: #ffffff;
-
-  @media (max-width: ${breakpoints.sm}) {
-    padding: 3rem 1rem 4rem;
-  }
 `;
 
 export const Logo = styled(motion.h1)`
   font-size: 3.6rem;
   font-weight: 900;
-  letter-spacing: -1.4px;
-  margin-bottom: 1.4rem;
   color: #facc15;
   text-shadow: 0 2px 6px #0ea5e9aa;
 
@@ -44,29 +36,37 @@ export const Subtitle = styled.p`
   max-width: 600px;
   margin-bottom: 2rem;
   line-height: 1.6;
-
-  @media (max-width: ${breakpoints.sm}) {
-    font-size: 1.1rem;
-    padding: 0 1rem;
-  }
+  color: #e2e8f0;
 `;
 
-// CTA Group with Buttons
 export const CTAGroup = styled.div`
   display: flex;
   gap: 1rem;
+  margin-top: 2rem;
   flex-wrap: wrap;
-  margin-bottom: 2.4rem;
   justify-content: center;
+`;
+
+// ✅ ButtonGroup for index.tsx
+export const ButtonGroup = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-top: 2.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+
+  a {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
 
   a.primary {
     background: #8b5cf6;
     color: #fff;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    text-decoration: none;
-    transition: background 0.3s ease;
     &:hover {
       background: #7c3aed;
     }
@@ -76,11 +76,6 @@ export const CTAGroup = styled.div`
     background: transparent;
     color: #e2e8f0;
     border: 1px solid #64748b;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 500;
-    text-decoration: none;
-    transition: border 0.3s ease, color 0.3s ease;
     &:hover {
       color: #fff;
       border-color: #fff;
@@ -89,8 +84,6 @@ export const CTAGroup = styled.div`
 
   @media (max-width: ${breakpoints.sm}) {
     flex-direction: column;
-    align-items: stretch;
-
     a {
       width: 100%;
       text-align: center;
@@ -98,46 +91,15 @@ export const CTAGroup = styled.div`
   }
 `;
 
-export const SearchBar = styled.input`
-  margin-top: 1rem;
-  padding: 0.75rem 1.25rem;
-  border-radius: 10px;
-  border: none;
-  max-width: 420px;
-  width: 100%;
-  font-size: 1rem;
-  box-shadow: 0 0 0 1px #334155;
-  background: #1e293b;
-  color: #e2e8f0;
-
-  &::placeholder {
-    color: #94a3b8;
-  }
-
-  @media (max-width: ${breakpoints.sm}) {
-    font-size: 0.95rem;
-    padding: 0.65rem 1rem;
-  }
-`;
-
-// SECTION BLOCK
 export const Section = styled(motion.section)`
   padding: 4rem 1.5rem;
   text-align: center;
-
-  @media (max-width: ${breakpoints.sm}) {
-    padding: 3rem 1rem;
-  }
 `;
 
 export const Heading = styled.h2`
   font-size: 2rem;
   margin-bottom: 1rem;
   color: #f8fafc;
-
-  @media (max-width: ${breakpoints.sm}) {
-    font-size: 1.6rem;
-  }
 `;
 
 export const Text = styled.p`
@@ -145,13 +107,19 @@ export const Text = styled.p`
   color: #cbd5e1;
   max-width: 660px;
   margin: 0 auto 2rem;
-
-  @media (max-width: ${breakpoints.sm}) {
-    font-size: 1rem;
-  }
 `;
 
-// STATS / METRICS
+export const SearchBar = styled.input`
+  margin-top: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  background: #1e293b;
+  color: #e2e8f0;
+  border: none;
+  max-width: 420px;
+  width: 100%;
+`;
+
 export const StatBarWrapper = styled.div`
   display: flex;
   flex-direction: column;
@@ -160,11 +128,6 @@ export const StatBarWrapper = styled.div`
   align-items: center;
   font-size: 1.15rem;
   color: #e0f2fe;
-
-  @media (max-width: ${breakpoints.sm}) {
-    font-size: 1rem;
-    gap: 0.75rem;
-  }
 `;
 
 export const StatItem = styled.div`
@@ -174,32 +137,37 @@ export const StatItem = styled.div`
   font-weight: 500;
 `;
 
-// VIDEO PREVIEW BLOCK
 export const VideoPreview = styled.div`
   max-width: 800px;
   margin: 0 auto;
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-
-  video {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
 `;
 
-// FOOTER
+export const FeatureGrid = styled.div`
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin-top: 2rem;
+`;
+
+export const FeatureCard = styled.div`
+  background: #1e293b;
+  border-radius: 1rem;
+  padding: 2rem;
+  color: #f8fafc;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+`;
+
 export const Footer = styled.footer`
   padding: 3rem 1.5rem;
   text-align: center;
   font-size: 0.9rem;
   color: #94a3b8;
   background: #0f172a;
-  line-height: 1.6;
 `;
 
-// HELP FLOATING COMPONENTS
 export const HelpBeacon = styled.button`
   position: fixed;
   bottom: 1.5rem;
@@ -208,14 +176,11 @@ export const HelpBeacon = styled.button`
   color: #0f172a;
   font-size: 1.3rem;
   padding: 0.6rem 1rem;
-  border: none;
   border-radius: 50px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   z-index: 9999;
-  &:hover {
-    background: #0ea5e9;
-  }
+  border: none;
 `;
 
 export const HelpModal = styled.div`
@@ -230,30 +195,29 @@ export const HelpModal = styled.div`
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   font-size: 0.95rem;
   line-height: 1.6;
-  z-index: 10000;
 
   a {
     color: #38bdf8;
     text-decoration: underline;
-    &:hover {
-      color: #0ea5e9;
-    }
   }
 `;
 
-// ✅ Export everything
+// Export everything
 export {
   Hero,
   Logo,
   Subtitle,
   CTAGroup,
-  SearchBar,
+  ButtonGroup,
   Section,
   Heading,
   Text,
+  SearchBar,
   StatBarWrapper,
   StatItem,
   VideoPreview,
+  FeatureGrid,
+  FeatureCard,
   Footer,
   HelpBeacon,
   HelpModal,
