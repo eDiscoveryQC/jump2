@@ -5,20 +5,17 @@ import Head from "next/head";
 import dynamic from "next/dynamic";
 import Layout from "../components/Layout";
 import {
-  Hero,
-  Logo,
-  Subtitle,
-  ButtonGroup,
-  CTAGroup,
   Section,
   Heading,
   Text,
+  ButtonGroup,
+  CTA,
+  SecondaryCTA,
   FeatureGrid,
   FeatureCard,
-  TimelineVisualizer,
   VideoPreview,
   HelpBeacon,
-  HelpModal,
+  HelpModal
 } from "../styles/metaHomeStyles";
 
 const LightToggle = dynamic(() => import("../components/LightToggle"), { ssr: false });
@@ -44,44 +41,27 @@ export default function Home() {
       </Head>
 
       {/* Hero Section */}
-      <Hero
-        initial={{ opacity: 0, y: -30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-      >
-        <Logo>Jump2</Logo>
-        <Subtitle>Smart links for the moments that matter — not the whole thing.</Subtitle>
+      <Section>
+        <Heading>Share Smarter. Jump2 It.</Heading>
+        <Text>
+          Smart links for the moments that matter — not the whole thing.
+        </Text>
         <ButtonGroup>
-          <a className="primary" href="/share">
-            Try Jump2 Free
-          </a>
-          <a className="secondary" href="#demo">
-            See How It Works
-          </a>
+          <CTA href="/share">Try Jump2 Free</CTA>
+          <SecondaryCTA href="#demo">See How It Works</SecondaryCTA>
         </ButtonGroup>
-      </Hero>
+      </Section>
 
       {/* What is Share-Tech */}
-      <Section
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-      >
+      <Section>
         <Heading>What is Share-Tech?</Heading>
         <Text>
           Jump2 created the world’s first Share-Tech platform — tools built to share moments, not media dumps.
         </Text>
-        <TimelineVisualizer />
       </Section>
 
       {/* Tools & Features Section */}
-      <Section
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-      >
+      <Section>
         <Heading>Powered by Jump2</Heading>
         <FeatureGrid>
           <FeatureCard icon="🖍️" title="Highlight Link" />
@@ -93,12 +73,7 @@ export default function Home() {
       </Section>
 
       {/* Creator Personalization */}
-      <Section
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-      >
+      <Section>
         <Heading>Make Every Link Yours</Heading>
         <Text>
           Customize your smart links with personal styles, branded handles, and creator-first design.
@@ -106,12 +81,7 @@ export default function Home() {
       </Section>
 
       {/* Growth Loop Section */}
-      <Section
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-      >
+      <Section>
         <Heading>Built for Growth</Heading>
         <Text>
           Every tool includes built-in share loops, meme virality, and click insights.
@@ -124,28 +94,20 @@ export default function Home() {
       </Section>
 
       {/* Final CTA */}
-      <Section
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-      >
+      <Section>
         <Heading>Start sharing like it’s 2025.</Heading>
         <ButtonGroup>
-          <a className="primary" href="/share">
-            Join Beta
-          </a>
-          <a className="secondary" href="#demo">
-            Watch Demo
-          </a>
+          <CTA href="/share">Join Beta</CTA>
+          <SecondaryCTA href="#demo">Watch Demo</SecondaryCTA>
         </ButtonGroup>
       </Section>
 
-      {/* Help Button + Modal */}
+      {/* Help Floating Button */}
       <HelpBeacon onClick={() => setShowHelp(!showHelp)} aria-label="Open help dialog">
         💬 Help
       </HelpBeacon>
 
+      {/* Help Modal */}
       {showHelp && (
         <HelpModal>
           Need help? Contact us at <strong>support@jump2share.com</strong> or try our{" "}
