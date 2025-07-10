@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import styled from "styled-components";
-import { FaLink, FaTimesCircle, FaUpload } from "react-icons/fa";
+import { FaLink, FaTimesCircle } from "react-icons/fa";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 
+// Styled Components
 const Panel = styled(motion.div)`
   background: linear-gradient(to bottom right, #1e293b, #0f172a);
   border: 1px solid #334155;
@@ -16,7 +17,6 @@ const Panel = styled(motion.div)`
   flex-direction: column;
   gap: 1.75rem;
   position: relative;
-  transition: all 0.4s ease;
 `;
 
 const DropZone = styled.div<{ isDragging: boolean }>`
@@ -26,7 +26,6 @@ const DropZone = styled.div<{ isDragging: boolean }>`
   background: ${({ isDragging }) => (isDragging ? "#0ea5e91a" : "#1e293b")};
   color: #cbd5e1;
   text-align: center;
-  transition: background 0.3s ease;
 `;
 
 const MetaPreview = styled.div`
@@ -39,7 +38,6 @@ const MetaPreview = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  line-height: 1.6;
 `;
 
 const Row = styled.div`
@@ -56,7 +54,6 @@ const Input = styled.input`
   background: #0f172a;
   color: white;
   width: 100%;
-  transition: border 0.3s ease;
   box-shadow: inset 0 0 6px #0ea5e966;
 
   &:focus {
@@ -84,31 +81,28 @@ const ButtonRow = styled.div`
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    transition: all 0.25s ease;
     color: white;
     font-weight: 600;
   }
 
   .primary {
     background: #16a34a;
-  }
-  .primary:hover {
-    background: #15803d;
+    &:hover {
+      background: #15803d;
+    }
   }
 
   .clear {
     background: #334155;
-  }
-  .clear:hover {
-    background: #1e293b;
+    &:hover {
+      background: #1e293b;
+    }
   }
 `;
 
 const Tip = styled(motion.div)`
   font-size: 1.05rem;
   color: #cbd5e1;
-  padding-top: 0.5rem;
-  min-height: 1.5rem;
   text-align: center;
 `;
 
@@ -139,7 +133,18 @@ const PulseGlow = styled.div`
   }
 `;
 
-export default function SmartInputPanel({ onSubmit, onAutoExtract }: { onSubmit?: (url: string) => void; onAutoExtract?: (url: string) => void }) {
+// ✅ Updated Props
+interface SmartInputPanelProps {
+  onSubmit?: (url: string) => void;
+  onAutoExtract?: (url: string) => void;
+  onShareGenerated?: (link: string) => void; // ✅ NEW PROP
+}
+
+export default function SmartInputPanel({
+  onSubmit,
+  onAutoExtract,
+  onShareGenerated,
+}: SmartInputPanelProps) {
   const [url, setUrl] = useState("");
   const [tip, setTip] = useState("Paste any article or YouTube link — or drop a file.");
   const [isValid, setIsValid] = useState(false);
@@ -179,12 +184,13 @@ export default function SmartInputPanel({ onSubmit, onAutoExtract }: { onSubmit?
         setTip("🔗 Smart preview loading...");
         onSubmit?.(trimmed);
         onAutoExtract?.(trimmed);
+        onShareGenerated?.(trimmed); // ✅ TRIGGER EVENT
       }
     } catch {
       toast.error("⚠️ Invalid URL");
       setTip("Please enter a valid link.");
     }
-  }, [url, onSubmit]);
+  }, [url, onSubmit, onAutoExtract, onShareGenerated]);
 
   const clear = useCallback(() => {
     setUrl("");
@@ -192,22 +198,22 @@ export default function SmartInputPanel({ onSubmit, onAutoExtract }: { onSubmit?
     setMeta(null);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-    toast.success(`📁 File "${file.name}" loaded.`);
-    const blobUrl = URL.createObjectURL(file);
-    onSubmit?.(blobUrl);
-  }, [onSubmit]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setIsDragging(false);
+      const file = e.dataTransfer.files?.[0];
+      if (!file) return;
+      toast.success(`📁 File "${file.name}" loaded.`);
+      const blobUrl = URL.createObjectURL(file);
+      onSubmit?.(blobUrl);
+      onShareGenerated?.(blobUrl); // ✅ TRIGGER EVENT
+    },
+    [onSubmit, onShareGenerated]
+  );
 
   return (
-    <Panel
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-    >
+    <Panel initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
       <PulseGlow />
       <DropZone
         isDragging={isDragging}
@@ -230,7 +236,6 @@ export default function SmartInputPanel({ onSubmit, onAutoExtract }: { onSubmit?
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
         />
-
         {meta && <MetaPreview>{meta}</MetaPreview>}
       </Row>
 
@@ -245,11 +250,7 @@ export default function SmartInputPanel({ onSubmit, onAutoExtract }: { onSubmit?
         )}
       </ButtonRow>
 
-      <Tip
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-      >
+      <Tip initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
         {tip}
       </Tip>
     </Panel>
