@@ -1,14 +1,14 @@
-// styles/metaHomeStyles.tsx — Final Meta-Style + Mobile Responsive
+// styles/metaHomeStyles.tsx — Meta-Grade Final with ButtonGroup + Motion + Mobile Polish
 
 import styled from "styled-components";
 import { motion } from "framer-motion";
 
-// Reusable breakpoint
 const breakpoints = {
   sm: "640px",
-  md: "768px"
+  md: "768px",
 };
 
+// === HERO SECTION ===
 export const Hero = styled(motion.section)`
   display: flex;
   flex-direction: column;
@@ -50,21 +50,27 @@ export const Subtitle = styled.p`
   }
 `;
 
-export const CTAGroup = styled.div`
+// === BUTTON GROUP ===
+export const ButtonGroup = styled.div`
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
-  margin-bottom: 2.4rem;
+  margin-bottom: 2.5rem;
   justify-content: center;
+
+  a {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: all 0.25s ease-in-out;
+  }
 
   a.primary {
     background: #8b5cf6;
     color: #fff;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    text-decoration: none;
-    transition: background 0.3s ease;
     &:hover {
       background: #7c3aed;
     }
@@ -72,23 +78,17 @@ export const CTAGroup = styled.div`
 
   a.secondary {
     background: transparent;
-    color: #e2e8f0;
     border: 1px solid #64748b;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 500;
-    text-decoration: none;
-    transition: border 0.3s ease, color 0.3s ease;
+    color: #e2e8f0;
     &:hover {
-      color: #fff;
       border-color: #fff;
+      color: #fff;
     }
   }
 
   @media (max-width: ${breakpoints.sm}) {
     flex-direction: column;
     align-items: stretch;
-
     a {
       width: 100%;
       text-align: center;
@@ -96,6 +96,7 @@ export const CTAGroup = styled.div`
   }
 `;
 
+// === SEARCH BAR ===
 export const SearchBar = styled.input`
   margin-top: 1rem;
   padding: 0.75rem 1.25rem;
@@ -118,6 +119,7 @@ export const SearchBar = styled.input`
   }
 `;
 
+// === SECTION HEADINGS + TEXT ===
 export const Section = styled(motion.section)`
   padding: 4rem 1.5rem;
   text-align: center;
@@ -148,6 +150,7 @@ export const Text = styled.p`
   }
 `;
 
+// === STATS BAR ===
 export const StatBarWrapper = styled.div`
   display: flex;
   flex-direction: column;
@@ -170,6 +173,7 @@ export const StatItem = styled.div`
   font-weight: 500;
 `;
 
+// === VIDEO PREVIEW ===
 export const VideoPreview = styled.div`
   max-width: 800px;
   margin: 0 auto;
@@ -183,6 +187,7 @@ export const VideoPreview = styled.div`
   }
 `;
 
+// === FOOTER ===
 export const Footer = styled.footer`
   padding: 3rem 1.5rem;
   text-align: center;
@@ -192,6 +197,7 @@ export const Footer = styled.footer`
   line-height: 1.6;
 `;
 
+// === HELP MODAL + BEACON ===
 export const HelpBeacon = styled.button`
   position: fixed;
   bottom: 1.5rem;
