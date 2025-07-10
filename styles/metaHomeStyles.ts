@@ -200,12 +200,3 @@ export const HelpModal = styled.div`
     text-decoration: underline;
   }
 `;
-
-// ✅ Final Export Block
-export {
-  ButtonGroup,
-  CTA,
-  SecondaryCTA,
-  FeatureGrid,
-  FeatureCard
-};
