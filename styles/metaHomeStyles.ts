@@ -201,3 +201,27 @@ export const HelpModal = styled.div`
     text-decoration: underline;
   }
 `;
+
+// Clean named exports for IDE intellisense and clarity
+export {
+  breakpoints,
+  Hero,
+  Logo,
+  Subtitle,
+  CTAGroup,
+  ButtonGroup,
+  CTA,
+  SecondaryCTA,
+  Section,
+  Heading,
+  Text,
+  SearchBar,
+  StatBarWrapper,
+  StatItem,
+  VideoPreview,
+  FeatureGrid,
+  FeatureCard,
+  Footer,
+  HelpBeacon,
+  HelpModal,
+};
