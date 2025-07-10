@@ -1,4 +1,3 @@
-// styles/metaHomeStyles.ts
 import styled from "styled-components";
 import { motion } from "framer-motion";
 
@@ -47,7 +46,6 @@ export const CTAGroup = styled.div`
   justify-content: center;
 `;
 
-// ✅ ButtonGroup for index.tsx
 export const ButtonGroup = styled.div`
   display: flex;
   gap: 1rem;
@@ -55,39 +53,40 @@ export const ButtonGroup = styled.div`
   flex-wrap: wrap;
   justify-content: center;
 
-  a {
-    display: inline-block;
-    padding: 0.75rem 1.5rem;
-    font-weight: 600;
-    border-radius: 8px;
-    text-decoration: none;
-    transition: all 0.3s ease;
-  }
-
-  a.primary {
-    background: #8b5cf6;
-    color: #fff;
-    &:hover {
-      background: #7c3aed;
-    }
-  }
-
-  a.secondary {
-    background: transparent;
-    color: #e2e8f0;
-    border: 1px solid #64748b;
-    &:hover {
-      color: #fff;
-      border-color: #fff;
-    }
-  }
-
   @media (max-width: ${breakpoints.sm}) {
     flex-direction: column;
     a {
       width: 100%;
       text-align: center;
     }
+  }
+`;
+
+export const CTA = styled.a`
+  background: #8b5cf6;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.3s ease;
+  &:hover {
+    background: #7c3aed;
+  }
+`;
+
+export const SecondaryCTA = styled.a`
+  background: transparent;
+  color: #e2e8f0;
+  border: 1px solid #64748b;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: border 0.3s ease, color 0.3s ease;
+  &:hover {
+    color: #fff;
+    border-color: #fff;
   }
 `;
 
@@ -201,24 +200,3 @@ export const HelpModal = styled.div`
     text-decoration: underline;
   }
 `;
-
-// Export everything
-export {
-  Hero,
-  Logo,
-  Subtitle,
-  CTAGroup,
-  ButtonGroup,
-  Section,
-  Heading,
-  Text,
-  SearchBar,
-  StatBarWrapper,
-  StatItem,
-  VideoPreview,
-  FeatureGrid,
-  FeatureCard,
-  Footer,
-  HelpBeacon,
-  HelpModal,
-};
