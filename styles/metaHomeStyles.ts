@@ -7,7 +7,8 @@ const breakpoints = {
   md: "768px",
 };
 
-// HERO STYLES
+// COMPONENTS
+
 export const Hero = styled(motion.section)`
   display: flex;
   flex-direction: column;
@@ -200,26 +201,3 @@ export const HelpModal = styled.div`
     text-decoration: underline;
   }
 `;
-
-// ✅ FULL EXPORTS
-export {
-  Hero,
-  Logo,
-  Subtitle,
-  CTAGroup,
-  ButtonGroup,
-  CTA,
-  SecondaryCTA,
-  Section,
-  Heading,
-  Text,
-  SearchBar,
-  StatBarWrapper,
-  StatItem,
-  VideoPreview,
-  FeatureGrid,
-  FeatureCard,
-  Footer,
-  HelpBeacon,
-  HelpModal
-};
