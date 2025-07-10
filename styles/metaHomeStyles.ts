@@ -200,3 +200,26 @@ export const HelpModal = styled.div`
     text-decoration: underline;
   }
 `;
+
+// ✅ FULL EXPORTS
+export {
+  Hero,
+  Logo,
+  Subtitle,
+  CTAGroup,
+  ButtonGroup,
+  CTA,
+  SecondaryCTA,
+  Section,
+  Heading,
+  Text,
+  SearchBar,
+  StatBarWrapper,
+  StatItem,
+  VideoPreview,
+  FeatureGrid,
+  FeatureCard,
+  Footer,
+  HelpBeacon,
+  HelpModal
+};
