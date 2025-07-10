@@ -9,44 +9,6 @@ const breakpoints = {
 
 // COMPONENTS
 
-export const Hero = styled(motion.section)`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 5rem 1.5rem;
-  background: linear-gradient(to right, #0f172a, #1e293b);
-  color: #ffffff;
-`;
-
-export const Logo = styled(motion.h1)`
-  font-size: 3.6rem;
-  font-weight: 900;
-  color: #facc15;
-  text-shadow: 0 2px 6px #0ea5e9aa;
-
-  @media (max-width: ${breakpoints.sm}) {
-    font-size: 2.4rem;
-  }
-`;
-
-export const Subtitle = styled.p`
-  font-size: 1.4rem;
-  font-weight: 400;
-  max-width: 600px;
-  margin-bottom: 2rem;
-  line-height: 1.6;
-  color: #e2e8f0;
-`;
-
-export const CTAGroup = styled.div`
-  display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
-  flex-wrap: wrap;
-  justify-content: center;
-`;
-
 export const ButtonGroup = styled.div`
   display: flex;
   gap: 1rem;
@@ -202,13 +164,8 @@ export const HelpModal = styled.div`
   }
 `;
 
-// ✅ EXPORT EVERYTHING CLEANLY
 export {
   breakpoints,
-  Hero,
-  Logo,
-  Subtitle,
-  CTAGroup,
   ButtonGroup,
   CTA,
   SecondaryCTA,
